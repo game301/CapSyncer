@@ -653,7 +653,7 @@ function TeamView({
                 },
               },
               {
-                header: "Time % Busy",
+                header: "Capacity Utilization",
                 accessor: (c) => {
                   const stats = calculateCoworkerStats(c.id);
                   return (
@@ -1165,7 +1165,7 @@ function PersonalView({
 
           <div className="rounded-lg border border-slate-700 bg-slate-800 p-6">
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-white">Time % Busy</h3>
+              <h3 className="text-lg font-semibold text-white">Capacity Utilization</h3>
               <span
                 className={`text-2xl font-bold ${stats.percentage > 100 ? "text-red-400" : stats.percentage > 80 ? "text-yellow-400" : "text-green-400"}`}
               >
