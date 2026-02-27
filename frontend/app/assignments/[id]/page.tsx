@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import { PageLayout } from "../../../components/PageLayout";
 import { Button } from "../../../components/Button";
 
@@ -17,8 +18,7 @@ interface Assignment {
 interface Coworker {
   id: number;
   name: string;
-  email: string;
-  role: string;
+  capacity: number;
 }
 
 interface TaskItem {
@@ -33,9 +33,6 @@ interface TaskItem {
 interface Project {
   id: number;
   name: string;
-  description: string;
-  startDate: string;
-  endDate?: string;
 }
 
 export default function AssignmentDetailPage() {
@@ -50,15 +47,18 @@ export default function AssignmentDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const apiBaseUrl =
+    process.env.NEXT_PUBLIC_API_BASEURL || "http://localhost:5128";
+
   useEffect(() => {
     async function fetchData() {
       try {
         const [assignmentRes, coworkersRes, tasksRes, projectsRes] =
           await Promise.all([
-            fetch(`/api/assignments/${assignmentId}`),
-            fetch("/api/coworkers"),
-            fetch("/api/tasks"),
-            fetch("/api/projects"),
+            fetch(`${apiBaseUrl}/api/assignments/${assignmentId}`),
+            fetch(`${apiBaseUrl}/api/coworkers`),
+            fetch(`${apiBaseUrl}/api/tasks`),
+            fetch(`${apiBaseUrl}/api/projects`),
           ]);
 
         if (!assignmentRes.ok) {
@@ -96,13 +96,16 @@ export default function AssignmentDetailPage() {
     }
 
     fetchData();
-  }, [assignmentId]);
+  }, [assignmentId, apiBaseUrl]);
 
   if (loading) {
     return (
       <PageLayout>
-        <div className="flex min-h-screen items-center justify-center">
-          <div className="text-xl text-white">Loading...</div>
+        <div className="flex min-h-[60vh] items-center justify-center">
+          <div className="text-center">
+            <div className="mb-4 h-12 w-12 animate-spin rounded-full border-4 border-slate-700 border-t-blue-500 mx-auto"></div>
+            <p className="text-slate-400">Loading assignment details...</p>
+          </div>
         </div>
       </PageLayout>
     );
@@ -111,9 +114,18 @@ export default function AssignmentDetailPage() {
   if (error || !assignment) {
     return (
       <PageLayout>
-        <div className="flex min-h-screen items-center justify-center">
-          <div className="text-xl text-red-400">
-            {error || "Assignment not found"}
+        <div className="flex min-h-[60vh] items-center justify-center p-8">
+          <div className="rounded-lg border border-red-700 bg-red-900/20 p-6 max-w-2xl">
+            <p className="font-semibold text-red-300">
+              {error || "Assignment not found"}
+            </p>
+            <Button
+              className="mt-4"
+              variant="secondary"
+              onClick={() => router.push("/dashboard")}
+            >
+              Back to Dashboard
+            </Button>
           </div>
         </div>
       </PageLayout>
@@ -122,7 +134,7 @@ export default function AssignmentDetailPage() {
 
   return (
     <PageLayout>
-      <div className="mx-auto max-w-4xl px-4 py-8">
+      <div className="mx-auto max-w-5xl px-6 py-8">
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">
           <Button onClick={() => router.back()} variant="secondary">
@@ -147,7 +159,7 @@ export default function AssignmentDetailPage() {
         <div className="mb-8 rounded-lg border border-slate-700 bg-slate-800 p-6">
           <div className="flex items-start justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-white">
+              <h1 className="text-4xl font-bold text-white">
                 Assignment Details
               </h1>
               <p className="mt-2 text-slate-400">
@@ -174,7 +186,7 @@ export default function AssignmentDetailPage() {
         </div>
 
         {/* Hours Allocated */}
-        <div className="mb-8 rounded-lg border border-slate-700 bg-linear-to-br from-blue-900/20 to-purple-900/20 p-8 text-center">
+        <div className="mb-8 rounded-lg border border-slate-700 bg-gradient-to-br from-blue-900/20 to-purple-900/20 p-8 text-center">
           <div className="text-sm font-medium uppercase tracking-wide text-slate-400">
             Hours Allocated
           </div>
@@ -185,12 +197,17 @@ export default function AssignmentDetailPage() {
 
         {/* Team Member Card */}
         {coworker ? (
-          <div
-            className="mb-6 cursor-pointer rounded-lg border border-slate-700 bg-slate-800 p-6 transition-colors hover:bg-slate-700"
-            onClick={() => router.push(`/coworkers/${coworker.id}`)}
-          >
-            <div className="mb-3 text-sm font-medium uppercase tracking-wide text-slate-400">
-              Assigned To
+          <div className="mb-6 rounded-lg border border-slate-700 bg-slate-800 p-6">
+            <div className="mb-4 flex items-center justify-between">
+              <div className="text-sm font-medium uppercase tracking-wide text-slate-400">
+                Assigned To
+              </div>
+              <Link
+                href={`/coworkers/${coworker.id}`}
+                className="text-sm text-blue-400 hover:text-blue-300 hover:underline"
+              >
+                View Profile &rarr;
+              </Link>
             </div>
             <div className="flex items-center gap-4">
               <div className="rounded-full bg-blue-600 p-4">
@@ -212,22 +229,10 @@ export default function AssignmentDetailPage() {
                 <h2 className="text-2xl font-bold text-white">
                   {coworker.name}
                 </h2>
-                <p className="mt-1 text-slate-400">{coworker.role}</p>
-                <p className="text-sm text-slate-500">{coworker.email}</p>
+                <p className="mt-1 text-slate-400">
+                  Weekly Capacity: {coworker.capacity}h
+                </p>
               </div>
-              <svg
-                className="h-6 w-6 text-slate-400"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 5l7 7-7 7"
-                />
-              </svg>
             </div>
           </div>
         ) : (
@@ -240,12 +245,17 @@ export default function AssignmentDetailPage() {
 
         {/* Task Card */}
         {task ? (
-          <div
-            className="mb-6 cursor-pointer rounded-lg border border-slate-700 bg-slate-800 p-6 transition-colors hover:bg-slate-700"
-            onClick={() => router.push(`/tasks/${task.id}`)}
-          >
-            <div className="mb-3 text-sm font-medium uppercase tracking-wide text-slate-400">
-              Task
+          <div className="mb-6 rounded-lg border border-slate-700 bg-slate-800 p-6">
+            <div className="mb-4 flex items-center justify-between">
+              <div className="text-sm font-medium uppercase tracking-wide text-slate-400">
+                Task
+              </div>
+              <Link
+                href={`/tasks/${task.id}`}
+                className="text-sm text-blue-400 hover:text-blue-300 hover:underline"
+              >
+                View Task &rarr;
+              </Link>
             </div>
             <div className="flex items-start justify-between">
               <div className="flex-1">
@@ -253,11 +263,13 @@ export default function AssignmentDetailPage() {
                 <div className="mt-3 flex flex-wrap gap-2">
                   <span
                     className={`rounded px-2 py-1 text-xs font-semibold ${
-                      task.priority === "High"
-                        ? "bg-red-900 text-red-200"
-                        : task.priority === "Medium"
-                          ? "bg-yellow-900 text-yellow-200"
-                          : "bg-green-900 text-green-200"
+                      task.priority === "Critical"
+                        ? "bg-red-950 text-red-200 border border-red-800"
+                        : task.priority === "High"
+                          ? "bg-orange-900 text-orange-200"
+                          : task.priority === "Normal"
+                            ? "bg-yellow-900 text-yellow-200"
+                            : "bg-green-900 text-green-200"
                     }`}
                   >
                     {task.priority} Priority
@@ -266,9 +278,11 @@ export default function AssignmentDetailPage() {
                     className={`rounded px-2 py-1 text-xs font-semibold ${
                       task.status === "Completed"
                         ? "bg-green-900 text-green-200"
-                        : task.status === "In Progress"
+                        : task.status === "In progress"
                           ? "bg-yellow-900 text-yellow-200"
-                          : "bg-blue-900 text-blue-200"
+                          : task.status === "Continuous"
+                            ? "bg-blue-900 text-blue-200"
+                            : "bg-slate-700 text-slate-300"
                     }`}
                   >
                     {task.status}
@@ -278,19 +292,6 @@ export default function AssignmentDetailPage() {
                   Estimated: {task.estimatedHours}h
                 </div>
               </div>
-              <svg
-                className="ml-4 h-6 w-6 text-slate-400"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 5l7 7-7 7"
-                />
-              </svg>
             </div>
           </div>
         ) : (
@@ -301,38 +302,22 @@ export default function AssignmentDetailPage() {
 
         {/* Project Card */}
         {project ? (
-          <div
-            className="mb-6 cursor-pointer rounded-lg border border-slate-700 bg-slate-800 p-6 transition-colors hover:bg-slate-700"
-            onClick={() => router.push(`/projects/${project.id}`)}
-          >
-            <div className="mb-3 text-sm font-medium uppercase tracking-wide text-slate-400">
-              Project
+          <div className="mb-6 rounded-lg border border-slate-700 bg-slate-800 p-6">
+            <div className="mb-4 flex items-center justify-between">
+              <div className="text-sm font-medium uppercase tracking-wide text-slate-400">
+                Project
+              </div>
+              <Link
+                href={`/projects/${project.id}`}
+                className="text-sm text-blue-400 hover:text-blue-300 hover:underline"
+              >
+                View Project &rarr;
+              </Link>
             </div>
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <h2 className="text-xl font-bold text-white">{project.name}</h2>
-                {project.description && (
-                  <p className="mt-2 text-slate-400">{project.description}</p>
-                )}
-                <div className="mt-3 text-sm text-slate-500">
-                  {new Date(project.startDate).toLocaleDateString()}
-                  {project.endDate &&
-                    ` - ${new Date(project.endDate).toLocaleDateString()}`}
-                </div>
               </div>
-              <svg
-                className="ml-4 h-6 w-6 text-slate-400"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 5l7 7-7 7"
-                />
-              </svg>
             </div>
           </div>
         ) : task ? (

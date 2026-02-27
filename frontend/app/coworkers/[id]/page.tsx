@@ -2,14 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import { PageLayout } from "../../../components/PageLayout";
 import { Button } from "../../../components/Button";
+import { Table } from "../../../components/Table";
 
 interface Coworker {
   id: number;
   name: string;
-  email: string;
-  role: string;
+  capacity: number;
 }
 
 interface Assignment {
@@ -30,6 +31,11 @@ interface TaskItem {
   estimatedHours: number;
 }
 
+interface Project {
+  id: number;
+  name: string;
+}
+
 export default function CoworkerDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -38,17 +44,23 @@ export default function CoworkerDetailPage() {
   const [coworker, setCoworker] = useState<Coworker | null>(null);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [tasks, setTasks] = useState<TaskItem[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const apiBaseUrl =
+    process.env.NEXT_PUBLIC_API_BASEURL || "http://localhost:5128";
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const [coworkerRes, assignmentsRes, tasksRes] = await Promise.all([
-          fetch(`/api/coworkers/${coworkerId}`),
-          fetch("/api/assignments"),
-          fetch("/api/tasks"),
-        ]);
+        const [coworkerRes, assignmentsRes, tasksRes, projectsRes] =
+          await Promise.all([
+            fetch(`${apiBaseUrl}/api/coworkers/${coworkerId}`),
+            fetch(`${apiBaseUrl}/api/assignments`),
+            fetch(`${apiBaseUrl}/api/tasks`),
+            fetch(`${apiBaseUrl}/api/projects`),
+          ]);
 
         if (!coworkerRes.ok) {
           throw new Error("Failed to fetch coworker");
@@ -57,6 +69,7 @@ export default function CoworkerDetailPage() {
         const coworkerData = await coworkerRes.json();
         const assignmentsData = await assignmentsRes.json();
         const tasksData = await tasksRes.json();
+        const projectsData = await projectsRes.json();
 
         setCoworker(coworkerData);
         setAssignments(
@@ -65,6 +78,7 @@ export default function CoworkerDetailPage() {
           ),
         );
         setTasks(tasksData);
+        setProjects(projectsData);
       } catch (err) {
         setError(err instanceof Error ? err.message : "An error occurred");
       } finally {
@@ -73,13 +87,16 @@ export default function CoworkerDetailPage() {
     }
 
     fetchData();
-  }, [coworkerId]);
+  }, [coworkerId, apiBaseUrl]);
 
   if (loading) {
     return (
       <PageLayout>
-        <div className="flex min-h-screen items-center justify-center">
-          <div className="text-xl text-white">Loading...</div>
+        <div className="flex min-h-[60vh] items-center justify-center">
+          <div className="text-center">
+            <div className="mb-4 h-12 w-12 animate-spin rounded-full border-4 border-slate-700 border-t-blue-500 mx-auto"></div>
+            <p className="text-slate-400">Loading coworker details...</p>
+          </div>
         </div>
       </PageLayout>
     );
@@ -88,34 +105,41 @@ export default function CoworkerDetailPage() {
   if (error || !coworker) {
     return (
       <PageLayout>
-        <div className="flex min-h-screen items-center justify-center">
-          <div className="text-xl text-red-400">
-            {error || "Coworker not found"}
+        <div className="flex min-h-[60vh] items-center justify-center p-8">
+          <div className="rounded-lg border border-red-700 bg-red-900/20 p-6 max-w-2xl">
+            <p className="font-semibold text-red-300">
+              {error || "Coworker not found"}
+            </p>
+            <Button
+              className="mt-4"
+              variant="secondary"
+              onClick={() => router.push("/dashboard")}
+            >
+              Back to Dashboard
+            </Button>
           </div>
         </div>
       </PageLayout>
     );
   }
 
-  // Get coworker's assignments with task details
+  const totalHours = assignments.reduce((sum, a) => sum + a.hoursAssigned, 0);
+  const availableHours = coworker.capacity - totalHours;
+  const usagePercentage = (totalHours / coworker.capacity) * 100;
+
   const coworkerAssignments = assignments.map((assignment) => {
     const task = tasks.find((t) => t.id === assignment.taskItemId);
+    const project = projects.find((p) => p.id === task?.projectId);
     return {
       ...assignment,
-      taskName: task?.name || "Unknown Task",
-      taskPriority: task?.priority || "N/A",
-      taskStatus: task?.status || "N/A",
+      task,
+      project,
     };
   });
 
-  const totalHours = coworkerAssignments.reduce(
-    (sum, a) => sum + a.hoursAssigned,
-    0,
-  );
-
   return (
     <PageLayout>
-      <div className="mx-auto max-w-5xl px-4 py-8">
+      <div className="mx-auto max-w-7xl px-6 py-8">
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">
           <Button onClick={() => router.back()} variant="secondary">
@@ -138,10 +162,10 @@ export default function CoworkerDetailPage() {
 
         {/* Coworker Info Card */}
         <div className="mb-8 rounded-lg border border-slate-700 bg-slate-800 p-6">
-          <div className="mb-4 flex items-start justify-between">
+          <div className="flex items-start justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-white">{coworker.name}</h1>
-              <p className="mt-2 text-lg text-slate-400">{coworker.role}</p>
+              <h1 className="text-4xl font-bold text-white">{coworker.name}</h1>
+              <p className="mt-2 text-slate-400">Team Member</p>
             </div>
             <div className="rounded-full bg-blue-600 p-4">
               <svg
@@ -159,130 +183,138 @@ export default function CoworkerDetailPage() {
               </svg>
             </div>
           </div>
-
-          <div className="space-y-2">
-            <div className="flex items-center text-slate-300">
-              <svg
-                className="mr-3 h-5 w-5 text-slate-400"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                />
-              </svg>
-              {coworker.email}
-            </div>
-            <div className="flex items-center text-slate-300">
-              <svg
-                className="mr-3 h-5 w-5 text-slate-400"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                />
-              </svg>
-              {coworker.role}
-            </div>
-          </div>
         </div>
 
-        {/* Stats */}
-        <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
+        {/* Stats Grid */}
+        <div className="mb-8 grid gap-6 md:grid-cols-4">
           <div className="rounded-lg border border-slate-700 bg-slate-800 p-6">
-            <div className="text-sm font-medium text-slate-400">
-              Total Assignments
-            </div>
-            <div className="mt-2 text-3xl font-bold text-white">
-              {coworkerAssignments.length}
-            </div>
+            <p className="text-sm text-slate-400">Weekly Capacity</p>
+            <p className="mt-2 text-3xl font-bold text-white">
+              {coworker.capacity}h
+            </p>
           </div>
           <div className="rounded-lg border border-slate-700 bg-slate-800 p-6">
-            <div className="text-sm font-medium text-slate-400">
-              Total Hours
-            </div>
-            <div className="mt-2 text-3xl font-bold text-white">
+            <p className="text-sm text-slate-400">Assigned Hours</p>
+            <p className="mt-2 text-3xl font-bold text-blue-400">
               {totalHours}h
-            </div>
+            </p>
           </div>
           <div className="rounded-lg border border-slate-700 bg-slate-800 p-6">
-            <div className="text-sm font-medium text-slate-400">
-              Avg Hours/Task
-            </div>
-            <div className="mt-2 text-3xl font-bold text-white">
-              {coworkerAssignments.length > 0
-                ? (totalHours / coworkerAssignments.length).toFixed(1)
-                : 0}
-              h
-            </div>
+            <p className="text-sm text-slate-400">Available</p>
+            <p
+              className={`mt-2 text-3xl font-bold ${availableHours < 0 ? "text-red-400" : "text-green-400"}`}
+            >
+              {availableHours}h
+            </p>
+          </div>
+          <div className="rounded-lg border border-slate-700 bg-slate-800 p-6">
+            <p className="text-sm text-slate-400">Usage</p>
+            <p
+              className={`mt-2 text-3xl font-bold ${usagePercentage > 100 ? "text-red-400" : usagePercentage > 80 ? "text-yellow-400" : "text-green-400"}`}
+            >
+              {usagePercentage.toFixed(0)}%
+            </p>
           </div>
         </div>
 
-        {/* Assignments List */}
-        <div className="rounded-lg border border-slate-700 bg-slate-800">
-          <div className="border-b border-slate-700 p-6">
-            <h2 className="text-2xl font-bold text-white">Assignments</h2>
+        {/* Capacity Bar */}
+        <div className="mb-8 rounded-lg border border-slate-700 bg-slate-800 p-6">
+          <h3 className="mb-4 text-lg font-semibold text-white">
+            Capacity Overview
+          </h3>
+          <div className="h-8 overflow-hidden rounded-full bg-slate-700">
+            <div
+              className={`h-full transition-all ${usagePercentage > 100 ? "bg-red-500" : usagePercentage > 80 ? "bg-yellow-500" : "bg-green-500"}`}
+              style={{ width: `${Math.min(usagePercentage, 100)}%` }}
+            />
           </div>
+          <div className="mt-2 flex justify-between text-sm text-slate-400">
+            <span>0h</span>
+            <span>{coworker.capacity}h capacity</span>
+          </div>
+        </div>
+
+        {/* Assignments Table */}
+        <div className="rounded-lg border border-slate-700 bg-slate-800 p-6">
+          <h2 className="mb-4 text-2xl font-bold text-white">
+            Task Assignments ({assignments.length})
+          </h2>
           {coworkerAssignments.length === 0 ? (
-            <div className="p-8 text-center text-slate-400">
-              No assignments yet
+            <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-12 text-center">
+              <p className="text-slate-400">No assignments yet</p>
             </div>
           ) : (
-            <div className="divide-y divide-slate-700">
-              {coworkerAssignments.map((assignment) => (
-                <div
-                  key={assignment.id}
-                  className="cursor-pointer p-6 transition-colors hover:bg-slate-700"
-                  onClick={() => router.push(`/tasks/${assignment.taskItemId}`)}
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-white">
-                        {assignment.taskName}
-                      </h3>
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        <span
-                          className={`rounded px-2 py-1 text-xs font-semibold ${
-                            assignment.taskPriority === "High"
-                              ? "bg-red-900 text-red-200"
-                              : assignment.taskPriority === "Medium"
+            <Table
+              data={coworkerAssignments}
+              columns={[
+                {
+                  header: "Task",
+                  accessor: (a) =>
+                    a.task ? (
+                      <Link
+                        href={`/tasks/${a.task.id}`}
+                        className="text-blue-400 hover:text-blue-300 hover:underline"
+                      >
+                        {a.task.name}
+                      </Link>
+                    ) : (
+                      "N/A"
+                    ),
+                },
+                {
+                  header: "Project",
+                  accessor: (a) =>
+                    a.project ? (
+                      <Link
+                        href={`/projects/${a.project.id}`}
+                        className="text-blue-400 hover:text-blue-300 hover:underline"
+                      >
+                        {a.project.name}
+                      </Link>
+                    ) : (
+                      "N/A"
+                    ),
+                },
+                {
+                  header: "Priority",
+                  accessor: (a) =>
+                    a.task ? (
+                      <span
+                        className={`rounded px-2 py-1 text-xs font-semibold ${
+                          a.task.priority === "Critical"
+                            ? "bg-red-950 text-red-200 border border-red-800"
+                            : a.task.priority === "High"
+                              ? "bg-orange-900 text-orange-200"
+                              : a.task.priority === "Normal"
                                 ? "bg-yellow-900 text-yellow-200"
                                 : "bg-green-900 text-green-200"
-                          }`}
-                        >
-                          {assignment.taskPriority}
-                        </span>
-                        <span className="rounded bg-slate-700 px-2 py-1 text-xs font-semibold text-slate-300">
-                          {assignment.taskStatus}
-                        </span>
-                      </div>
-                      {assignment.note && (
-                        <p className="mt-2 text-sm text-slate-400">
-                          {assignment.note}
-                        </p>
-                      )}
-                    </div>
-                    <div className="ml-4 text-right">
-                      <div className="text-2xl font-bold text-white">
-                        {assignment.hoursAssigned}h
-                      </div>
-                      <div className="mt-1 text-sm text-slate-400">
-                        {new Date(assignment.assignedDate).toLocaleDateString()}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+                        }`}
+                      >
+                        {a.task.priority}
+                      </span>
+                    ) : (
+                      "N/A"
+                    ),
+                },
+                {
+                  header: "Status",
+                  accessor: (a) => a.task?.status || "N/A",
+                },
+                {
+                  header: "Hours",
+                  accessor: (a) => `${a.hoursAssigned}h`,
+                },
+                {
+                  header: "Assigned Date",
+                  accessor: (a) =>
+                    new Date(a.assignedDate).toLocaleDateString(),
+                },
+                {
+                  header: "Note",
+                  accessor: (a) => a.note || "-",
+                },
+              ]}
+            />
           )}
         </div>
       </div>

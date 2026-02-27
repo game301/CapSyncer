@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import { PageLayout } from "../../../components/PageLayout";
 import { Button } from "../../../components/Button";
+import { Table } from "../../../components/Table";
 
 interface TaskItem {
   id: number;
@@ -17,9 +19,6 @@ interface TaskItem {
 interface Project {
   id: number;
   name: string;
-  description: string;
-  startDate: string;
-  endDate?: string;
 }
 
 interface Assignment {
@@ -34,8 +33,7 @@ interface Assignment {
 interface Coworker {
   id: number;
   name: string;
-  email: string;
-  role: string;
+  capacity: number;
 }
 
 export default function TaskDetailPage() {
@@ -50,15 +48,18 @@ export default function TaskDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const apiBaseUrl =
+    process.env.NEXT_PUBLIC_API_BASEURL || "http://localhost:5128";
+
   useEffect(() => {
     async function fetchData() {
       try {
         const [taskRes, projectsRes, assignmentsRes, coworkersRes] =
           await Promise.all([
-            fetch(`/api/tasks/${taskId}`),
-            fetch("/api/projects"),
-            fetch("/api/assignments"),
-            fetch("/api/coworkers"),
+            fetch(`${apiBaseUrl}/api/tasks/${taskId}`),
+            fetch(`${apiBaseUrl}/api/projects`),
+            fetch(`${apiBaseUrl}/api/assignments`),
+            fetch(`${apiBaseUrl}/api/coworkers`),
           ]);
 
         if (!taskRes.ok) {
@@ -87,13 +88,16 @@ export default function TaskDetailPage() {
     }
 
     fetchData();
-  }, [taskId]);
+  }, [taskId, apiBaseUrl]);
 
   if (loading) {
     return (
       <PageLayout>
-        <div className="flex min-h-screen items-center justify-center">
-          <div className="text-xl text-white">Loading...</div>
+        <div className="flex min-h-[60vh] items-center justify-center">
+          <div className="text-center">
+            <div className="mb-4 h-12 w-12 animate-spin rounded-full border-4 border-slate-700 border-t-blue-500 mx-auto"></div>
+            <p className="text-slate-400">Loading task details...</p>
+          </div>
         </div>
       </PageLayout>
     );
@@ -102,23 +106,29 @@ export default function TaskDetailPage() {
   if (error || !task) {
     return (
       <PageLayout>
-        <div className="flex min-h-screen items-center justify-center">
-          <div className="text-xl text-red-400">
-            {error || "Task not found"}
+        <div className="flex min-h-[60vh] items-center justify-center p-8">
+          <div className="rounded-lg border border-red-700 bg-red-900/20 p-6 max-w-2xl">
+            <p className="font-semibold text-red-300">
+              {error || "Task not found"}
+            </p>
+            <Button
+              className="mt-4"
+              variant="secondary"
+              onClick={() => router.push("/dashboard")}
+            >
+              Back to Dashboard
+            </Button>
           </div>
         </div>
       </PageLayout>
     );
   }
 
-  // Get assignments with coworker details
   const taskAssignments = assignments.map((assignment) => {
     const coworker = coworkers.find((c) => c.id === assignment.coworkerId);
     return {
       ...assignment,
-      coworkerName: coworker?.name || "Unknown",
-      coworkerEmail: coworker?.email || "",
-      coworkerRole: coworker?.role || "",
+      coworker,
     };
   });
 
@@ -127,10 +137,14 @@ export default function TaskDetailPage() {
     0,
   );
   const hoursRemaining = Math.max(0, task.estimatedHours - totalAssignedHours);
+  const progressPercentage =
+    task.estimatedHours > 0
+      ? (totalAssignedHours / task.estimatedHours) * 100
+      : 0;
 
   return (
     <PageLayout>
-      <div className="mx-auto max-w-5xl px-4 py-8">
+      <div className="mx-auto max-w-7xl px-6 py-8">
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">
           <Button onClick={() => router.back()} variant="secondary">
@@ -153,17 +167,19 @@ export default function TaskDetailPage() {
 
         {/* Task Info Card */}
         <div className="mb-8 rounded-lg border border-slate-700 bg-slate-800 p-6">
-          <div className="mb-4 flex items-start justify-between">
+          <div className="flex items-start justify-between">
             <div className="flex-1">
-              <h1 className="text-3xl font-bold text-white">{task.name}</h1>
-              <div className="mt-3 flex flex-wrap gap-2">
+              <h1 className="text-4xl font-bold text-white">{task.name}</h1>
+              <div className="mt-4 flex flex-wrap gap-3">
                 <span
                   className={`rounded px-3 py-1 text-sm font-semibold ${
-                    task.priority === "High"
-                      ? "bg-red-900 text-red-200"
-                      : task.priority === "Medium"
-                        ? "bg-yellow-900 text-yellow-200"
-                        : "bg-green-900 text-green-200"
+                    task.priority === "Critical"
+                      ? "bg-red-950 text-red-200 border border-red-800"
+                      : task.priority === "High"
+                        ? "bg-orange-900 text-orange-200"
+                        : task.priority === "Normal"
+                          ? "bg-yellow-900 text-yellow-200"
+                          : "bg-green-900 text-green-200"
                   }`}
                 >
                   {task.priority} Priority
@@ -172,9 +188,11 @@ export default function TaskDetailPage() {
                   className={`rounded px-3 py-1 text-sm font-semibold ${
                     task.status === "Completed"
                       ? "bg-green-900 text-green-200"
-                      : task.status === "In Progress"
+                      : task.status === "In progress"
                         ? "bg-yellow-900 text-yellow-200"
-                        : "bg-blue-900 text-blue-200"
+                        : task.status === "Continuous"
+                          ? "bg-blue-900 text-blue-200"
+                          : "bg-slate-700 text-slate-300"
                   }`}
                 >
                   {task.status}
@@ -200,10 +218,7 @@ export default function TaskDetailPage() {
 
           {/* Project Link */}
           {project && (
-            <button
-              onClick={() => router.push(`/projects/${project.id}`)}
-              className="mt-4 flex items-center gap-2 text-blue-400 transition-colors hover:text-blue-300"
-            >
+            <div className="mt-6 flex items-center gap-2 text-slate-400">
               <svg
                 className="h-5 w-5"
                 fill="none"
@@ -217,55 +232,53 @@ export default function TaskDetailPage() {
                   d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                 />
               </svg>
-              <span className="text-sm font-medium">
-                Project: {project.name}
-              </span>
-            </button>
+              <span className="text-sm">Project:</span>
+              <Link
+                href={`/projects/${project.id}`}
+                className="text-sm font-medium text-blue-400 hover:text-blue-300 hover:underline"
+              >
+                {project.name}
+              </Link>
+            </div>
           )}
         </div>
 
         {/* Hours Stats */}
-        <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="mb-8 grid gap-6 md:grid-cols-3">
           <div className="rounded-lg border border-slate-700 bg-slate-800 p-6">
-            <div className="text-sm font-medium text-slate-400">
-              Estimated Hours
-            </div>
-            <div className="mt-2 text-3xl font-bold text-white">
+            <p className="text-sm text-slate-400">Estimated Hours</p>
+            <p className="mt-2 text-3xl font-bold text-white">
               {task.estimatedHours}h
-            </div>
+            </p>
           </div>
           <div className="rounded-lg border border-slate-700 bg-slate-800 p-6">
-            <div className="text-sm font-medium text-slate-400">
-              Assigned Hours
-            </div>
-            <div className="mt-2 text-3xl font-bold text-blue-400">
+            <p className="text-sm text-slate-400">Assigned Hours</p>
+            <p className="mt-2 text-3xl font-bold text-blue-400">
               {totalAssignedHours}h
-            </div>
+            </p>
           </div>
           <div className="rounded-lg border border-slate-700 bg-slate-800 p-6">
-            <div className="text-sm font-medium text-slate-400">
-              Remaining Hours
-            </div>
-            <div
-              className={`mt-2 text-3xl font-bold ${hoursRemaining > 0 ? "text-yellow-400" : "text-green-400"}`}
+            <p className="text-sm text-slate-400">Remaining Hours</p>
+            <p
+              className={`mt-2 text-3xl font-bold ${hoursRemaining === 0 ? "text-green-400" : hoursRemaining < 0 ? "text-red-400" : "text-yellow-400"}`}
             >
               {hoursRemaining}h
-            </div>
+            </p>
           </div>
         </div>
 
         {/* Progress Bar */}
         {task.estimatedHours > 0 && (
           <div className="mb-8 rounded-lg border border-slate-700 bg-slate-800 p-6">
-            <div className="mb-2 flex items-center justify-between text-sm">
-              <span className="font-medium text-slate-300">
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-white">
                 Assignment Progress
-              </span>
-              <span className="font-semibold text-white">
-                {Math.round((totalAssignedHours / task.estimatedHours) * 100)}%
+              </h3>
+              <span className="text-lg font-bold text-white">
+                {Math.round(progressPercentage)}%
               </span>
             </div>
-            <div className="h-3 overflow-hidden rounded-full bg-slate-700">
+            <div className="h-6 overflow-hidden rounded-full bg-slate-700">
               <div
                 className={`h-full transition-all ${
                   totalAssignedHours > task.estimatedHours
@@ -275,86 +288,83 @@ export default function TaskDetailPage() {
                       : "bg-blue-500"
                 }`}
                 style={{
-                  width: `${Math.min(100, (totalAssignedHours / task.estimatedHours) * 100)}%`,
+                  width: `${Math.min(100, progressPercentage)}%`,
                 }}
               />
             </div>
             {totalAssignedHours > task.estimatedHours && (
-              <p className="mt-2 text-sm text-red-400">
-                ⚠️ Over-allocated by {totalAssignedHours - task.estimatedHours}{" "}
+              <p className="mt-3 flex items-center gap-2 text-sm text-red-400">
+                <svg
+                  className="h-5 w-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                  />
+                </svg>
+                Over-allocated by {totalAssignedHours - task.estimatedHours}{" "}
                 hours
               </p>
             )}
           </div>
         )}
 
-        {/* Assignments List */}
-        <div className="rounded-lg border border-slate-700 bg-slate-800">
-          <div className="border-b border-slate-700 p-6">
-            <h2 className="text-2xl font-bold text-white">
-              Assigned Team Members
-            </h2>
-          </div>
+        {/* Assignments Table */}
+        <div className="rounded-lg border border-slate-700 bg-slate-800 p-6">
+          <h2 className="mb-4 text-2xl font-bold text-white">
+            Assigned Team Members ({taskAssignments.length})
+          </h2>
           {taskAssignments.length === 0 ? (
-            <div className="p-8 text-center text-slate-400">
-              No assignments yet
+            <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-12 text-center">
+              <p className="text-slate-400">No team members assigned yet</p>
             </div>
           ) : (
-            <div className="divide-y divide-slate-700">
-              {taskAssignments.map((assignment) => (
-                <div
-                  key={assignment.id}
-                  className="cursor-pointer p-6 transition-colors hover:bg-slate-700"
-                  onClick={() =>
-                    router.push(`/coworkers/${assignment.coworkerId}`)
-                  }
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start gap-4">
-                      <div className="rounded-full bg-blue-600 p-3">
-                        <svg
-                          className="h-6 w-6 text-white"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                          />
-                        </svg>
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-white">
-                          {assignment.coworkerName}
-                        </h3>
-                        <p className="mt-1 text-sm text-slate-400">
-                          {assignment.coworkerRole}
-                        </p>
-                        <p className="text-sm text-slate-500">
-                          {assignment.coworkerEmail}
-                        </p>
-                        {assignment.note && (
-                          <p className="mt-2 text-sm italic text-slate-400">
-                            Note: {assignment.note}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="ml-4 text-right">
-                      <div className="text-2xl font-bold text-white">
-                        {assignment.hoursAssigned}h
-                      </div>
-                      <div className="mt-1 text-sm text-slate-400">
-                        {new Date(assignment.assignedDate).toLocaleDateString()}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <Table
+              data={taskAssignments}
+              columns={[
+                {
+                  header: "Coworker",
+                  accessor: (a) =>
+                    a.coworker ? (
+                      <Link
+                        href={`/coworkers/${a.coworker.id}`}
+                        className="text-blue-400 hover:text-blue-300 hover:underline"
+                      >
+                        {a.coworker.name}
+                      </Link>
+                    ) : (
+                      "N/A"
+                    ),
+                },
+                {
+                  header: "Capacity",
+                  accessor: (a) =>
+                    a.coworker ? `${a.coworker.capacity}h/week` : "N/A",
+                },
+                {
+                  header: "Hours Assigned",
+                  accessor: (a) => (
+                    <span className="font-semibold text-blue-400">
+                      {a.hoursAssigned}h
+                    </span>
+                  ),
+                },
+                {
+                  header: "Assigned Date",
+                  accessor: (a) =>
+                    new Date(a.assignedDate).toLocaleDateString(),
+                },
+                {
+                  header: "Note",
+                  accessor: (a) => a.note || "-",
+                },
+              ]}
+            />
           )}
         </div>
       </div>

@@ -9,14 +9,12 @@ interface Column<T> {
 interface TableProps<T> {
   data: T[];
   columns: Column<T>[];
-  onRowClick?: (item: T) => void;
   emptyMessage?: string;
 }
 
 export function Table<T extends { id: number }>({
   data,
   columns,
-  onRowClick,
   emptyMessage = "No data available",
 }: TableProps<T>) {
   if (data.length === 0) {
@@ -46,12 +44,7 @@ export function Table<T extends { id: number }>({
           {data.map((item) => (
             <tr
               key={item.id}
-              onClick={() => onRowClick?.(item)}
-              className={`transition-colors ${
-                onRowClick
-                  ? "cursor-pointer hover:bg-slate-700/50"
-                  : ""
-              }`}
+              className="transition-colors hover:bg-slate-700/30"
             >
               {columns.map((col, idx) => (
                 <td
