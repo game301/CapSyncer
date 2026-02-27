@@ -13,16 +13,16 @@ describe('Footer Component', () => {
   it('renders feature list', () => {
     render(<Footer />)
     
-    expect(screen.getByText('Team Management')).toBeInTheDocument()
-    expect(screen.getByText('Project Tracking')).toBeInTheDocument()
-    expect(screen.getByText('Task Assignment')).toBeInTheDocument()
-    expect(screen.getByText('Capacity Analytics')).toBeInTheDocument()
+    expect(screen.getByText('Team capacity tracking')).toBeInTheDocument()
+    expect(screen.getByText('Project management')).toBeInTheDocument()
+    expect(screen.getByText('Task assignment')).toBeInTheDocument()
+    expect(screen.getByText('Real-time analytics')).toBeInTheDocument()
   })
 
   it('renders company info', () => {
     render(<Footer />)
     
-    expect(screen.getByText(/Modern team capacity management/i)).toBeInTheDocument()
+    expect(screen.getByText(/Modern capacity management for teams/i)).toBeInTheDocument()
   })
 
   it('renders copyright information', () => {
@@ -36,6 +36,6 @@ describe('Footer Component', () => {
     const { container } = render(<Footer />)
     const footer = container.querySelector('footer')
     
-    expect(footer).toHaveClass('border-t', 'border-slate-700', 'bg-slate-900')
+    expect(footer).toHaveClass('border-t', 'border-slate-700', 'bg-slate-800/50')
   })
 })

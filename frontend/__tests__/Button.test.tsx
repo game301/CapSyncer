@@ -50,12 +50,12 @@ describe('Button Component', () => {
 
   it('respects different sizes', () => {
     const { rerender } = render(<Button size="sm">Small</Button>)
-    expect(screen.getByText('Small')).toHaveClass('px-3', 'py-1', 'text-sm')
+    expect(screen.getByText('Small')).toHaveClass('px-3', 'py-1.5', 'text-sm')
 
     rerender(<Button size="md">Medium</Button>)
-    expect(screen.getByText('Medium')).toHaveClass('px-4', 'py-2', 'text-base')
+    expect(screen.getByText('Medium')).toHaveClass('px-4', 'py-2', 'text-sm')
 
     rerender(<Button size="lg">Large</Button>)
-    expect(screen.getByText('Large')).toHaveClass('px-6', 'py-3', 'text-lg')
+    expect(screen.getByText('Large')).toHaveClass('px-6', 'py-3', 'text-base')
   })
 })

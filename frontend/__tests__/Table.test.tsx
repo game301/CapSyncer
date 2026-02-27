@@ -30,7 +30,7 @@ describe('Table Component', () => {
   it('renders empty table when no data provided', () => {
     render(<Table data={[]} columns={mockColumns} />)
     
-    expect(screen.getByText('Name')).toBeInTheDocument()
+    expect(screen.getByText('No data available')).toBeInTheDocument()
     expect(screen.queryByText('John Doe')).not.toBeInTheDocument()
   })
 

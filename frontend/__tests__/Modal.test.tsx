@@ -5,7 +5,7 @@ import userEvent from '@testing-library/user-event'
 describe('Modal Component', () => {
   it('renders modal when open', () => {
     render(
-      <Modal isOpen={true} onClose={() => {}}>
+      <Modal isOpen={true} onClose={() => {}} title="Test Modal">
         <div>Modal Content</div>
       </Modal>
     )
@@ -15,7 +15,7 @@ describe('Modal Component', () => {
 
   it('does not render when closed', () => {
     render(
-      <Modal isOpen={false} onClose={() => {}}>
+      <Modal isOpen={false} onClose={() => {}} title="Test Modal">
         <div>Modal Content</div>
       </Modal>
     )
@@ -28,7 +28,7 @@ describe('Modal Component', () => {
     const user = userEvent.setup()
     
     render(
-      <Modal isOpen={true} onClose={handleClose}>
+      <Modal isOpen={true} onClose={handleClose} title="Test Modal">
         <div>Modal Content</div>
       </Modal>
     )
@@ -43,13 +43,14 @@ describe('Modal Component', () => {
     const handleClose = jest.fn()
     const user = userEvent.setup()
     
-    render(
-      <Modal isOpen={true} onClose={handleClose}>
+    const { container } = render(
+      <Modal isOpen={true} onClose={handleClose} title="Test Modal">
         <div>Modal Content</div>
       </Modal>
     )
     
-    const backdrop = screen.getByText('Modal Content').parentElement?.parentElement?.parentElement
+    // Find the backdrop element (has backdrop-blur-sm class)
+    const backdrop = container.querySelector('.backdrop-blur-sm')
     if (backdrop) {
       await user.click(backdrop)
       expect(handleClose).toHaveBeenCalled()
@@ -71,7 +72,7 @@ describe('Modal Component', () => {
     const user = userEvent.setup()
     
     render(
-      <Modal isOpen={true} onClose={handleClose}>
+      <Modal isOpen={true} onClose={handleClose} title="Test Modal">
         <div>Modal Content</div>
       </Modal>
     )
