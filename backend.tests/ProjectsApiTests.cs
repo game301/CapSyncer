@@ -23,10 +23,7 @@ public class ProjectsApiTests : IDisposable
         // Arrange
         var project = new Project
         {
-            Name = "Website Redesign",
-            Description = "Modernize company website",
-            StartDate = DateTime.Now,
-            EndDate = DateTime.Now.AddMonths(3)
+            Name = "Website Redesign"
         };
 
         // Act
@@ -36,7 +33,7 @@ public class ProjectsApiTests : IDisposable
         // Assert
         var result = await _context.Projects.FirstOrDefaultAsync(p => p.Name == "Website Redesign");
         Assert.NotNull(result);
-        Assert.Equal("Modernize company website", result.Description);
+        Assert.Equal("Website Redesign", result.Name);
     }
 
     [Fact]
@@ -45,9 +42,7 @@ public class ProjectsApiTests : IDisposable
         // Arrange
         var project = new Project
         {
-            Name = "Mobile App",
-            Description = "iOS and Android app",
-            StartDate = DateTime.Now
+            Name = "Mobile App"
         };
         _context.Projects.Add(project);
         await _context.SaveChangesAsync();
@@ -66,24 +61,20 @@ public class ProjectsApiTests : IDisposable
         // Arrange
         var project = new Project
         {
-            Name = "Backend Migration",
-            Description = "Migrate to new infrastructure",
-            StartDate = DateTime.Now
+            Name = "Backend Migration"
         };
         _context.Projects.Add(project);
         await _context.SaveChangesAsync();
 
         // Act
-        project.Description = "Migrate to cloud infrastructure";
-        project.EndDate = DateTime.Now.AddMonths(2);
+        project.Name = "Cloud Migration";
         _context.Projects.Update(project);
         await _context.SaveChangesAsync();
 
         // Assert
         var updated = await _context.Projects.FindAsync(project.Id);
         Assert.NotNull(updated);
-        Assert.Equal("Migrate to cloud infrastructure", updated.Description);
-        Assert.NotNull(updated.EndDate);
+        Assert.Equal("Cloud Migration", updated.Name);
     }
 
     [Fact]
@@ -92,9 +83,7 @@ public class ProjectsApiTests : IDisposable
         // Arrange
         var project = new Project
         {
-            Name = "Temporary Project",
-            Description = "Short-term project",
-            StartDate = DateTime.Now
+            Name = "Temporary Project"
         };
         _context.Projects.Add(project);
         await _context.SaveChangesAsync();
@@ -115,9 +104,9 @@ public class ProjectsApiTests : IDisposable
         // Arrange
         var projects = new List<Project>
         {
-            new Project { Name = "Project A", Description = "Description A", StartDate = DateTime.Now },
-            new Project { Name = "Project B", Description = "Description B", StartDate = DateTime.Now },
-            new Project { Name = "Project C", Description = "Description C", StartDate = DateTime.Now }
+            new Project { Name = "Project A" },
+            new Project { Name = "Project B" },
+            new Project { Name = "Project C" }
         };
         _context.Projects.AddRange(projects);
         await _context.SaveChangesAsync();
@@ -130,23 +119,17 @@ public class ProjectsApiTests : IDisposable
     }
 
     [Fact]
-    public void Project_HasValidDateRange()
+    public void Project_HasValidName()
     {
-        // Arrange
-        var startDate = DateTime.Now;
-        var endDate = startDate.AddMonths(6);
-
-        // Act
+        // Arrange & Act
         var project = new Project
         {
-            Name = "Test Project",
-            Description = "Test",
-            StartDate = startDate,
-            EndDate = endDate
+            Name = "Test Project"
         };
 
         // Assert
-        Assert.True(project.EndDate > project.StartDate);
+        Assert.NotNull(project.Name);
+        Assert.NotEmpty(project.Name);
     }
 
     public void Dispose()

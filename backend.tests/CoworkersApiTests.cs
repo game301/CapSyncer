@@ -1,5 +1,3 @@
-using System.Net;
-using System.Net.Http.Json;
 using Microsoft.EntityFrameworkCore;
 using CapSyncer.Server.Models;
 using Xunit;
@@ -8,7 +6,6 @@ namespace CapSyncer.Server.Tests;
 
 public class CoworkersApiTests : IDisposable
 {
-    private readonly HttpClient _client;
     private readonly CapSyncerDbContext _context;
 
     public CoworkersApiTests()
@@ -18,7 +15,6 @@ public class CoworkersApiTests : IDisposable
             .Options;
 
         _context = new CapSyncerDbContext(options);
-        _client = new HttpClient { BaseAddress = new Uri("http://localhost:5128") };
     }
 
     [Fact]
@@ -40,8 +36,7 @@ public class CoworkersApiTests : IDisposable
         var newCoworker = new Coworker
         {
             Name = "John Doe",
-            Email = "john.doe@company.com",
-            Role = "Developer"
+            Capacity = 40
         };
 
         // Act
@@ -49,10 +44,10 @@ public class CoworkersApiTests : IDisposable
         await _context.SaveChangesAsync();
 
         // Assert
-        var coworker = await _context.Coworkers.FirstOrDefaultAsync(c => c.Email == "john.doe@company.com");
+        var coworker = await _context.Coworkers.FirstOrDefaultAsync(c => c.Name == "John Doe");
         Assert.NotNull(coworker);
         Assert.Equal("John Doe", coworker.Name);
-        Assert.Equal("Developer", coworker.Role);
+        Assert.Equal(40, coworker.Capacity);
     }
 
     [Fact]
@@ -62,8 +57,7 @@ public class CoworkersApiTests : IDisposable
         var coworker = new Coworker
         {
             Name = "Jane Smith",
-            Email = "jane.smith@company.com",
-            Role = "Designer"
+            Capacity = 35
         };
         _context.Coworkers.Add(coworker);
         await _context.SaveChangesAsync();
@@ -74,7 +68,7 @@ public class CoworkersApiTests : IDisposable
         // Assert
         Assert.NotNull(result);
         Assert.Equal("Jane Smith", result.Name);
-        Assert.Equal("jane.smith@company.com", result.Email);
+        Assert.Equal(35, result.Capacity);
     }
 
     [Fact]
@@ -84,21 +78,20 @@ public class CoworkersApiTests : IDisposable
         var coworker = new Coworker
         {
             Name = "Bob Wilson",
-            Email = "bob@company.com",
-            Role = "Junior Developer"
+            Capacity = 40
         };
         _context.Coworkers.Add(coworker);
         await _context.SaveChangesAsync();
 
         // Act
-        coworker.Role = "Senior Developer";
+        coworker.Capacity = 30;
         _context.Coworkers.Update(coworker);
         await _context.SaveChangesAsync();
 
         // Assert
         var updated = await _context.Coworkers.FindAsync(coworker.Id);
         Assert.NotNull(updated);
-        Assert.Equal("Senior Developer", updated.Role);
+        Assert.Equal(30, updated.Capacity);
     }
 
     [Fact]
@@ -108,8 +101,7 @@ public class CoworkersApiTests : IDisposable
         var coworker = new Coworker
         {
             Name = "Alice Brown",
-            Email = "alice@company.com",
-            Role = "Manager"
+            Capacity = 40
         };
         _context.Coworkers.Add(coworker);
         await _context.SaveChangesAsync();
@@ -125,25 +117,23 @@ public class CoworkersApiTests : IDisposable
     }
 
     [Fact]
-    public void Coworker_ValidatesRequiredFields()
+    public void Coworker_HasValidCapacity()
     {
-        // Arrange & Act & Assert
+        // Arrange & Act
         var coworker = new Coworker
         {
             Name = "Test User",
-            Email = "test@company.com",
-            Role = "Tester"
+            Capacity = 40
         };
 
+        // Assert
         Assert.NotNull(coworker.Name);
-        Assert.NotNull(coworker.Email);
-        Assert.NotNull(coworker.Role);
+        Assert.True(coworker.Capacity > 0);
     }
 
     public void Dispose()
     {
         _context.Database.EnsureDeleted();
         _context.Dispose();
-        _client.Dispose();
     }
 }
