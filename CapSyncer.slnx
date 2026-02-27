@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/backend/">
+    <Project Path="backend/CapSyncer.Server.csproj" />
+  </Folder>
+  <Project Path="CapSyncer.AppHost/CapSyncer.AppHost.csproj" />
+  <Project Path="CapSyncer.ServiceDefaults/CapSyncer.ServiceDefaults.csproj" />
+</Solution>

@@ -1,0 +1,25 @@
+@CapSyncer.Server_HostAddress = http://localhost:5128
+
+# Get all coworkers
+GET {{CapSyncer.Server_HostAddress}}/api/coworkers
+Accept: application/json
+
+###
+
+# Get all projects
+GET {{CapSyncer.Server_HostAddress}}/api/projects
+Accept: application/json
+
+###
+
+# Get all tasks
+GET {{CapSyncer.Server_HostAddress}}/api/tasks
+Accept: application/json
+
+###
+
+# Get all assignments
+GET {{CapSyncer.Server_HostAddress}}/api/assignments
+Accept: application/json
+
+###
