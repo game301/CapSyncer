@@ -1,5 +1,5 @@
 "use client";
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
 
 type UserRole = "admin" | "user";
 
@@ -24,38 +24,37 @@ export function PermissionProvider({
 }: {
   children: React.ReactNode;
 }) {
-  // Initialize role from localStorage directly
-  const [role, setRole] = useState<UserRole>(() => {
-    if (typeof window !== "undefined") {
-      const savedRole = localStorage.getItem("userRole") as UserRole;
-      if (savedRole === "admin" || savedRole === "user") {
-        return savedRole;
-      }
-    }
-    return "user";
-  });
+  // Initialize with default values (same for server and client to avoid hydration errors)
+  const [role, setRole] = useState<UserRole>("user");
+  const [userName, setUserNameState] = useState<string>("");
 
-  // Initialize userName from localStorage
-  const [userName, setUserNameState] = useState<string>(() => {
-    if (typeof window !== "undefined") {
-      const savedName = localStorage.getItem("userName");
-      if (savedName) {
-        return savedName;
-      }
+  // Load from localStorage after mount (client-side only)
+  useEffect(() => {
+    const savedRole = localStorage.getItem("userRole") as UserRole;
+    if (savedRole === "admin" || savedRole === "user") {
+      setRole(savedRole);
     }
-    return "";
-  });
+
+    const savedName = localStorage.getItem("userName");
+    if (savedName) {
+      setUserNameState(savedName);
+    }
+  }, []);
 
   // Save role to localStorage when it changes
   const handleSetRole = (newRole: UserRole) => {
     setRole(newRole);
-    localStorage.setItem("userRole", newRole);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("userRole", newRole);
+    }
   };
 
   // Save userName to localStorage when it changes
   const handleSetUserName = (name: string) => {
     setUserNameState(name);
-    localStorage.setItem("userName", name);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("userName", name);
+    }
   };
 
   const permissions = {

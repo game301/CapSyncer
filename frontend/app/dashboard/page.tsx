@@ -7,7 +7,6 @@ import { Modal } from "../../components/Modal";
 import { Button } from "../../components/Button";
 import { Input, Select, Textarea } from "../../components/FormInputs";
 import { PageLayout } from "../../components/PageLayout";
-import { RoleSwitcher } from "../../components/RoleSwitcher";
 import { usePermissions } from "../../contexts/PermissionContext";
 
 // Priority and Status options
@@ -268,22 +267,19 @@ export default function Dashboard() {
                 Manage your team&apos;s capacity
               </p>
             </div>
-            <div className="flex items-center gap-4">
-              <RoleSwitcher />
-              <div className="flex gap-2">
-                <Button
-                  variant={viewMode === "team" ? "primary" : "secondary"}
-                  onClick={() => updateViewMode("team")}
-                >
-                  Team View
-                </Button>
-                <Button
-                  variant={viewMode === "personal" ? "primary" : "secondary"}
-                  onClick={() => updateViewMode("personal")}
-                >
-                  Personal View
-                </Button>
-              </div>
+            <div className="flex gap-2">
+              <Button
+                variant={viewMode === "team" ? "primary" : "secondary"}
+                onClick={() => updateViewMode("team")}
+              >
+                Team View
+              </Button>
+              <Button
+                variant={viewMode === "personal" ? "primary" : "secondary"}
+                onClick={() => updateViewMode("personal")}
+              >
+                Personal View
+              </Button>
             </div>
           </div>
         </div>
