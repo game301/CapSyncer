@@ -294,8 +294,12 @@ export default function ProjectDetailPage() {
   ).length;
   const continuousTasks = tasks.filter((t) => t.status === "Continuous").length;
 
+  // Calculate completion percentage based on hours, not task count
+  const completedTasksHours = tasks
+    .filter((t) => t.status === "Completed")
+    .reduce((sum, t) => sum + t.estimatedHours, 0);
   const progressPercentage =
-    tasks.length > 0 ? (completedTasks / tasks.length) * 100 : 0;
+    totalEstimatedHours > 0 ? (completedTasksHours / totalEstimatedHours) * 100 : 0;
 
   const tasksWithAssignments = tasks.map((task) => {
     const taskAssignments = assignments.filter((a) => a.taskItemId === task.id);
@@ -885,20 +889,59 @@ export default function ProjectDetailPage() {
                 defaultValue={(editingEntity as Assignment)?.taskItemId || ""}
                 onChange={(e) => setSelectedTaskId(Number(e.target.value))}
               />
-              {selectedTaskId && (
-                <div className="rounded-lg border border-blue-700 bg-blue-900/20 p-3">
-                  <p className="text-sm text-blue-300">
-                    <strong>Task Estimated Hours:</strong>{" "}
-                    {tasks.find((t) => t.id === selectedTaskId)
-                      ?.estimatedHours || 0}
-                    h
-                  </p>
-                  <p className="text-xs text-blue-400 mt-1">
-                    Use this as a reference when assigning hours to team
-                    members.
-                  </p>
-                </div>
-              )}
+              {selectedTaskId && (() => {
+                const selectedTask = tasks.find((t) => t.id === selectedTaskId);
+                const taskAssignments = assignments.filter(
+                  (a) => a.taskItemId === selectedTaskId
+                );
+                const totalAssigned = taskAssignments.reduce(
+                  (sum, a) => sum + a.hoursAssigned,
+                  0
+                );
+                const remainingHours = (selectedTask?.estimatedHours || 0) - totalAssigned;
+
+                return (
+                  <div className="rounded-lg border border-blue-700 bg-blue-900/20 p-3 space-y-2">
+                    <div>
+                      <p className="text-sm text-blue-300">
+                        <strong>Task Estimated Hours:</strong>{" "}
+                        {selectedTask?.estimatedHours || 0}h
+                      </p>
+                    </div>
+                    {taskAssignments.length > 0 && (
+                      <div className="border-t border-blue-800 pt-2">
+                        <p className="text-xs font-semibold text-blue-300 mb-1">
+                          Already Assigned:
+                        </p>
+                        <ul className="text-xs text-blue-400 space-y-1 ml-2">
+                          {taskAssignments.map((a) => {
+                            const coworker = coworkers.find(
+                              (c) => c.id === a.coworkerId
+                            );
+                            return (
+                              <li key={a.id}>
+                                • {coworker?.name || "Unknown"}: {a.hoursAssigned}h
+                              </li>
+                            );
+                          })}
+                        </ul>
+                        <p className="text-xs text-blue-300 mt-2">
+                          <strong>Total Assigned:</strong> {totalAssigned}h
+                        </p>
+                        <p className={`text-xs font-semibold mt-1 ${remainingHours >= 0 ? "text-green-400" : "text-red-400"}`}>
+                          <strong>Remaining:</strong> {remainingHours}h
+                          {remainingHours < 0 && " (Over-assigned!)"}
+                        </p>
+                      </div>
+                    )}
+                    {taskAssignments.length === 0 && (
+                      <p className="text-xs text-blue-400">
+                        No assignments yet. Use the estimated hours as a reference.
+                      </p>
+                    )}
+                  </div>
+                );
+              })()}
               <Input
                 label="Hours Assigned"
                 name="hoursAssigned"
