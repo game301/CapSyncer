@@ -1,5 +1,5 @@
 "use client";
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState } from "react";
 
 type UserRole = "admin" | "user";
 
@@ -22,15 +22,16 @@ export function PermissionProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const [role, setRole] = useState<UserRole>("user");
-
-  // Load role from localStorage on mount
-  useEffect(() => {
-    const savedRole = localStorage.getItem("userRole") as UserRole;
-    if (savedRole === "admin" || savedRole === "user") {
-      setRole(savedRole);
+  // Initialize role from localStorage directly
+  const [role, setRole] = useState<UserRole>(() => {
+    if (typeof window !== "undefined") {
+      const savedRole = localStorage.getItem("userRole") as UserRole;
+      if (savedRole === "admin" || savedRole === "user") {
+        return savedRole;
+      }
     }
-  }, []);
+    return "user";
+  });
 
   // Save role to localStorage when it changes
   const handleSetRole = (newRole: UserRole) => {

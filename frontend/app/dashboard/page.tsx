@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Table } from "../../components/Table";
 import { Modal } from "../../components/Modal";
@@ -50,6 +50,7 @@ type EntityType = "coworkers" | "projects" | "tasks" | "assignments";
 
 export default function Dashboard() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const permissions = usePermissions();
   const [coworkers, setCoworkers] = useState<Coworker[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -57,7 +58,9 @@ export default function Dashboard() {
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<ViewMode>("team");
+  const [viewMode, setViewMode] = useState<ViewMode>(
+    (searchParams.get("view") as ViewMode) || "team",
+  );
   const [activeEntity, setActiveEntity] = useState<EntityType>("coworkers");
 
   const [modalOpen, setModalOpen] = useState(false);
@@ -111,6 +114,14 @@ export default function Dashboard() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // Update URL when viewMode changes
+  const updateViewMode = (mode: ViewMode) => {
+    setViewMode(mode);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("view", mode);
+    router.replace(`/dashboard?${params.toString()}`);
+  };
 
   const handleCreate = (entityType: EntityType) => {
     setModalMode("create");
@@ -190,7 +201,14 @@ export default function Dashboard() {
 
       if (response.ok) {
         setModalOpen(false);
-        await fetchData();
+
+        // If creating a new project, redirect to its detail page
+        if (modalMode === "create" && activeEntity === "projects") {
+          const newProject = await response.json();
+          router.push(`/projects/${newProject.id}?new=true`);
+        } else {
+          await fetchData();
+        }
       } else {
         alert("Failed to save");
       }
@@ -253,13 +271,13 @@ export default function Dashboard() {
               <div className="flex gap-2">
                 <Button
                   variant={viewMode === "team" ? "primary" : "secondary"}
-                  onClick={() => setViewMode("team")}
+                  onClick={() => updateViewMode("team")}
                 >
                   Team View
                 </Button>
                 <Button
                   variant={viewMode === "personal" ? "primary" : "secondary"}
-                  onClick={() => setViewMode("personal")}
+                  onClick={() => updateViewMode("personal")}
                 >
                   Personal View
                 </Button>
@@ -278,6 +296,7 @@ export default function Dashboard() {
               tasks={tasks}
               assignments={assignments}
               router={router}
+              searchParams={searchParams}
               permissions={permissions}
               onCreateCoworker={() => handleCreate("coworkers")}
               onEditCoworker={(c: Coworker) => handleEdit("coworkers", c)}
@@ -470,6 +489,7 @@ interface TeamViewProps {
   tasks: TaskItem[];
   assignments: Assignment[];
   router: ReturnType<typeof useRouter>;
+  searchParams: ReturnType<typeof useSearchParams>;
   permissions: ReturnType<typeof usePermissions>;
   onCreateCoworker: () => void;
   onEditCoworker: (c: Coworker) => void;
@@ -497,6 +517,7 @@ function TeamView({
   tasks,
   assignments,
   router,
+  searchParams,
   permissions,
   onCreateCoworker,
   onEditCoworker,
@@ -512,13 +533,23 @@ function TeamView({
   onDeleteAssignment,
   calculateCoworkerStats,
 }: TeamViewProps) {
-  const [activeTab, setActiveTab] = useState<EntityType>("coworkers");
+  const [activeTab, setActiveTab] = useState<EntityType>(
+    (searchParams.get("tab") as EntityType) || "coworkers",
+  );
+
+  // Update URL when tab changes
+  const updateActiveTab = (tab: EntityType) => {
+    setActiveTab(tab);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("tab", tab);
+    router.replace(`/dashboard?${params.toString()}`);
+  };
 
   return (
     <div className="space-y-6">
       <div className="flex gap-2 border-b border-slate-700">
         <button
-          onClick={() => setActiveTab("coworkers")}
+          onClick={() => updateActiveTab("coworkers")}
           className={`px-6 py-3 font-medium transition ${
             activeTab === "coworkers"
               ? "border-b-2 border-blue-500 text-blue-400"
@@ -528,7 +559,7 @@ function TeamView({
           Team ({coworkers.length})
         </button>
         <button
-          onClick={() => setActiveTab("projects")}
+          onClick={() => updateActiveTab("projects")}
           className={`px-6 py-3 font-medium transition ${
             activeTab === "projects"
               ? "border-b-2 border-blue-500 text-blue-400"
@@ -538,7 +569,7 @@ function TeamView({
           Projects ({projects.length})
         </button>
         <button
-          onClick={() => setActiveTab("tasks")}
+          onClick={() => updateActiveTab("tasks")}
           className={`px-6 py-3 font-medium transition ${
             activeTab === "tasks"
               ? "border-b-2 border-blue-500 text-blue-400"
@@ -548,7 +579,7 @@ function TeamView({
           Tasks ({tasks.length})
         </button>
         <button
-          onClick={() => setActiveTab("assignments")}
+          onClick={() => updateActiveTab("assignments")}
           className={`px-6 py-3 font-medium transition ${
             activeTab === "assignments"
               ? "border-b-2 border-blue-500 text-blue-400"
