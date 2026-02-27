@@ -124,7 +124,8 @@ export function UserSettings() {
             {/* Info Note */}
             <div className="mt-4 rounded-lg bg-blue-900/20 border border-blue-800/30 p-3">
               <p className="text-xs text-slate-400">
-                💡 Your name will be tracked when you assign tasks. This will be replaced with Azure AD authentication in the future.
+                💡 Your name will be tracked when you assign tasks. This will be
+                replaced with Azure AD authentication in the future.
               </p>
             </div>
           </div>

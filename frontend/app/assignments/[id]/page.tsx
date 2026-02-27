@@ -12,7 +12,9 @@ interface Assignment {
   taskItemId: number;
   hoursAssigned: number;
   assignedDate: string;
-  note?: string;  assignedBy: string;}
+  note?: string;
+  assignedBy: string;
+}
 
 interface Coworker {
   id: number;
