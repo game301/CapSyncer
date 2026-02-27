@@ -6,6 +6,8 @@ type UserRole = "admin" | "user";
 interface PermissionContextType {
   role: UserRole;
   setRole: (role: UserRole) => void;
+  userName: string;
+  setUserName: (name: string) => void;
   canManageProjects: boolean;
   canManageCoworkers: boolean;
   canDeleteCoworkers: boolean;
@@ -33,15 +35,34 @@ export function PermissionProvider({
     return "user";
   });
 
+  // Initialize userName from localStorage
+  const [userName, setUserNameState] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      const savedName = localStorage.getItem("userName");
+      if (savedName) {
+        return savedName;
+      }
+    }
+    return "";
+  });
+
   // Save role to localStorage when it changes
   const handleSetRole = (newRole: UserRole) => {
     setRole(newRole);
     localStorage.setItem("userRole", newRole);
   };
 
+  // Save userName to localStorage when it changes
+  const handleSetUserName = (name: string) => {
+    setUserNameState(name);
+    localStorage.setItem("userName", name);
+  };
+
   const permissions = {
     role,
     setRole: handleSetRole,
+    userName,
+    setUserName: handleSetUserName,
     canManageProjects: role === "admin",
     canManageCoworkers: role === "admin",
     canDeleteCoworkers: role === "admin", // Admins can soft-delete coworkers

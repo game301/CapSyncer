@@ -44,6 +44,7 @@ interface Assignment {
   hoursAssigned: number;
   note: string;
   assignedDate: string;
+  assignedBy: string;
 }
 
 type ViewMode = "team" | "personal";

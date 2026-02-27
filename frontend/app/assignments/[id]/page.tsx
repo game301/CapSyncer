@@ -12,8 +12,7 @@ interface Assignment {
   taskItemId: number;
   hoursAssigned: number;
   assignedDate: string;
-  note?: string;
-}
+  note?: string;  assignedBy: string;}
 
 interface Coworker {
   id: number;
@@ -187,12 +186,39 @@ export default function AssignmentDetailPage() {
         </div>
 
         {/* Hours Allocated */}
-        <div className="mb-8 rounded-lg border border-slate-700 bg-gradient-to-br from-blue-900/20 to-purple-900/20 p-8 text-center">
+        <div className="mb-8 rounded-lg border border-slate-700 bg-linear-to-br from-blue-900/20 to-purple-900/20 p-8 text-center">
           <div className="text-sm font-medium uppercase tracking-wide text-slate-400">
             Hours Allocated
           </div>
           <div className="mt-2 text-6xl font-bold text-white">
             {assignment.hoursAssigned}h
+          </div>
+        </div>
+
+        {/* Assigned By */}
+        <div className="mb-6 rounded-lg border border-slate-700 bg-slate-800 p-6">
+          <div className="text-sm font-medium uppercase tracking-wide text-slate-400 mb-2">
+            Assigned By
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="rounded-full bg-indigo-600 p-3">
+              <svg
+                className="h-6 w-6 text-white"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                />
+              </svg>
+            </div>
+            <span className="text-lg font-semibold text-white">
+              {assignment.assignedBy || "Unknown User"}
+            </span>
           </div>
         </div>
 

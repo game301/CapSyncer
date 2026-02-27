@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { UserSettings } from "./UserSettings";
 
 export function Navbar() {
   return (
@@ -17,12 +18,15 @@ export function Navbar() {
               <p className="text-xs text-slate-400">Capacity Management</p>
             </div>
           </Link>
-          <Link
-            href="/dashboard"
-            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
-          >
-            Dashboard
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link
+              href="/dashboard"
+              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
+            >
+              Dashboard
+            </Link>
+            <UserSettings />
+          </div>
         </div>
       </div>
     </nav>

@@ -36,6 +36,7 @@ interface Assignment {
   hoursAssigned: number;
   assignedDate: string;
   note?: string;
+  assignedBy: string;
 }
 
 interface Coworker {
@@ -218,6 +219,11 @@ export default function ProjectDetailPage() {
     // Add projectId for new tasks
     if (modalType === "task" && modalMode === "create") {
       data.projectId = projectId;
+    }
+
+    // Add assignedBy for assignments (use context userName, will be replaced with Azure AD later)
+    if (modalType === "assignment") {
+      data.assignedBy = permissions.userName || "Unknown User";
     }
 
     try {
@@ -767,6 +773,10 @@ export default function ProjectDetailPage() {
                 {
                   header: "Note",
                   accessor: (a) => a.note || "-",
+                },
+                {
+                  header: "Assigned By",
+                  accessor: (a) => a.assignedBy || "Unknown User",
                 },
                 {
                   header: "Actions",

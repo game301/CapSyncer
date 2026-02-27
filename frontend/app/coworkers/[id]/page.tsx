@@ -21,6 +21,7 @@ interface Assignment {
   hoursAssigned: number;
   assignedDate: string;
   note?: string;
+  assignedBy: string;
 }
 
 interface TaskItem {
@@ -309,6 +310,10 @@ export default function CoworkerDetailPage() {
                   header: "Assigned Date",
                   accessor: (a) =>
                     new Date(a.assignedDate).toLocaleDateString(),
+                },
+                {
+                  header: "Assigned By",
+                  accessor: (a) => a.assignedBy || "Unknown User",
                 },
                 {
                   header: "Note",

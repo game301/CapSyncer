@@ -31,6 +31,7 @@ interface Assignment {
   hoursAssigned: number;
   assignedDate: string;
   note?: string;
+  assignedBy: string;
 }
 
 interface Coworker {
@@ -158,6 +159,9 @@ export default function TaskDetailPage() {
 
     // Add taskItemId for new assignments
     data.taskItemId = taskId;
+
+    // Add assignedBy (use context userName, will be replaced with Azure AD later)
+    data.assignedBy = permissions.userName || "Unknown User";
 
     try {
       const url =
@@ -499,6 +503,10 @@ export default function TaskDetailPage() {
                 {
                   header: "Note",
                   accessor: (a) => a.note || "-",
+                },
+                {
+                  header: "Assigned By",
+                  accessor: (a) => a.assignedBy || "Unknown User",
                 },
                 {
                   header: "Actions",

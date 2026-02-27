@@ -54,5 +54,6 @@ namespace CapSyncer.Server.Models
         public double HoursAssigned { get; set; }
         public string Note { get; set; } = string.Empty;
         public DateTime AssignedDate { get; set; } = DateTime.UtcNow;
+        public string AssignedBy { get; set; } = string.Empty; // Who assigned this task
     }
 }
