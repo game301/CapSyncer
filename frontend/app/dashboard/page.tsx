@@ -270,36 +270,40 @@ export default function Dashboard() {
       </div>
 
       <div className="mx-auto max-w-7xl px-6 py-8">
-        {viewMode === "team" ? (
-          <TeamView
-            coworkers={coworkers}
-            projects={projects}
-            tasks={tasks}
-            assignments={assignments}
-            router={router}
-            permissions={permissions}
-            onCreateCoworker={() => handleCreate("coworkers")}
-            onEditCoworker={(c: Coworker) => handleEdit("coworkers", c)}
-            onDeleteCoworker={(id: number) => handleDelete("coworkers", id)}
-            onCreateProject={() => handleCreate("projects")}
-            onEditProject={(p: Project) => handleEdit("projects", p)}
-            onDeleteProject={(id: number) => handleDelete("projects", id)}
-            onCreateTask={() => handleCreate("tasks")}
-            onEditTask={(t: TaskItem) => handleEdit("tasks", t)}
-            onDeleteTask={(id: number) => handleDelete("tasks", id)}
-            onCreateAssignment={() => handleCreate("assignments")}
-            onEditAssignment={(a: Assignment) => handleEdit("assignments", a)}
-            onDeleteAssignment={(id: number) => handleDelete("assignments", id)}
-            calculateCoworkerStats={calculateCoworkerStats}
-          />
-        ) : (
-          <PersonalView
-            coworkers={coworkers}
-            tasks={tasks}
-            assignments={assignments}
-            calculateCoworkerStats={calculateCoworkerStats}
-          />
-        )}
+        <div className="min-h-[calc(100vh-300px)]">
+          {viewMode === "team" ? (
+            <TeamView
+              coworkers={coworkers}
+              projects={projects}
+              tasks={tasks}
+              assignments={assignments}
+              router={router}
+              permissions={permissions}
+              onCreateCoworker={() => handleCreate("coworkers")}
+              onEditCoworker={(c: Coworker) => handleEdit("coworkers", c)}
+              onDeleteCoworker={(id: number) => handleDelete("coworkers", id)}
+              onCreateProject={() => handleCreate("projects")}
+              onEditProject={(p: Project) => handleEdit("projects", p)}
+              onDeleteProject={(id: number) => handleDelete("projects", id)}
+              onCreateTask={() => handleCreate("tasks")}
+              onEditTask={(t: TaskItem) => handleEdit("tasks", t)}
+              onDeleteTask={(id: number) => handleDelete("tasks", id)}
+              onCreateAssignment={() => handleCreate("assignments")}
+              onEditAssignment={(a: Assignment) => handleEdit("assignments", a)}
+              onDeleteAssignment={(id: number) =>
+                handleDelete("assignments", id)
+              }
+              calculateCoworkerStats={calculateCoworkerStats}
+            />
+          ) : (
+            <PersonalView
+              coworkers={coworkers}
+              tasks={tasks}
+              assignments={assignments}
+              calculateCoworkerStats={calculateCoworkerStats}
+            />
+          )}
+        </div>
       </div>
 
       {/* CRUD Modal */}
@@ -618,7 +622,7 @@ function TeamView({
                 },
               },
               {
-                header: "Usage",
+                header: "Time % Busy",
                 accessor: (c) => {
                   const stats = calculateCoworkerStats(c.id);
                   return (
@@ -1115,7 +1119,7 @@ function PersonalView({
             <div className="rounded-lg border border-slate-700 bg-slate-800 p-6">
               <p className="text-sm text-slate-400">Assigned Hours</p>
               <p className="mt-2 text-3xl font-bold text-blue-400">
-                {stats.assignedHours}h
+                {Math.max(0, stats.assignedHours)}h
               </p>
             </div>
             <div className="rounded-lg border border-slate-700 bg-slate-800 p-6">
@@ -1123,16 +1127,14 @@ function PersonalView({
               <p
                 className={`mt-2 text-3xl font-bold ${stats.available < 0 ? "text-red-400" : "text-green-400"}`}
               >
-                {stats.available}h
+                {Math.max(0, stats.available)}h
               </p>
             </div>
           </div>
 
           <div className="rounded-lg border border-slate-700 bg-slate-800 p-6">
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-white">
-                Capacity Usage
-              </h3>
+              <h3 className="text-lg font-semibold text-white">Time % Busy</h3>
               <span
                 className={`text-2xl font-bold ${stats.percentage > 100 ? "text-red-400" : stats.percentage > 80 ? "text-yellow-400" : "text-green-400"}`}
               >
@@ -1157,8 +1159,19 @@ function PersonalView({
                 columns={[
                   {
                     header: "Task",
-                    accessor: (a) =>
-                      tasks.find((t) => t.id === a.taskItemId)?.name || "N/A",
+                    accessor: (a) => {
+                      const task = tasks.find((t) => t.id === a.taskItemId);
+                      return task ? (
+                        <Link
+                          href={`/tasks/${task.id}`}
+                          className="text-blue-400 hover:text-blue-300 hover:underline"
+                        >
+                          {task.name}
+                        </Link>
+                      ) : (
+                        "N/A"
+                      );
+                    },
                   },
                   {
                     header: "Priority",
@@ -1188,7 +1201,7 @@ function PersonalView({
                   },
                   {
                     header: "Assigned Hours",
-                    accessor: (a) => `${a.hoursAssigned}h`,
+                    accessor: (a) => `${Math.max(0, a.hoursAssigned)}h`,
                   },
                   {
                     header: "Date",

@@ -17,20 +17,12 @@ export function Navbar() {
               <p className="text-xs text-slate-400">Capacity Management</p>
             </div>
           </Link>
-          <div className="flex items-center gap-6">
-            <Link
-              href="/dashboard"
-              className="text-sm font-medium text-slate-300 transition hover:text-white"
-            >
-              Dashboard
-            </Link>
-            <Link
-              href="/dashboard"
-              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
-            >
-              Get Started
-            </Link>
-          </div>
+          <Link
+            href="/dashboard"
+            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
+          >
+            Dashboard
+          </Link>
         </div>
       </div>
     </nav>
