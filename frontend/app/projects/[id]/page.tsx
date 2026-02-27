@@ -42,6 +42,7 @@ interface Coworker {
   id: number;
   name: string;
   capacity: number;
+  isActive: boolean;
 }
 
 type ModalType = "task" | "assignment" | null;
@@ -881,7 +882,15 @@ export default function ProjectDetailPage() {
                 required
                 options={[
                   { value: "", label: "Select a coworker" },
-                  ...coworkers.map((c) => ({ value: c.id, label: c.name })),
+                  ...coworkers
+                    .filter((c) => c.isActive)
+                    .map((c) => ({ value: c.id, label: c.name })),
+                  ...coworkers
+                    .filter((c) => !c.isActive)
+                    .map((c) => ({
+                      value: c.id,
+                      label: `${c.name} (Inactive - No longer available)`,
+                    })),
                 ]}
                 defaultValue={(editingEntity as Assignment)?.coworkerId || ""}
                 onChange={(e) => setSelectedCoworkerId(Number(e.target.value))}
@@ -902,11 +911,46 @@ export default function ProjectDetailPage() {
                     (selectedCoworker?.capacity || 0) - totalAssignedToCoworker;
 
                   return (
-                    <div className="rounded-lg border border-purple-700 bg-purple-900/20 p-3 space-y-2">
+                    <div
+                      className={`rounded-lg border p-3 space-y-2 ${
+                        selectedCoworker?.isActive
+                          ? "border-purple-700 bg-purple-900/20"
+                          : "border-red-700 bg-red-900/20"
+                      }`}
+                    >
+                      {!selectedCoworker?.isActive && (
+                        <div className="flex items-center gap-2 text-red-300 mb-2 pb-2 border-b border-red-800">
+                          <svg
+                            className="h-5 w-5"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                            />
+                          </svg>
+                          <p className="text-sm font-semibold">
+                            This coworker is inactive and no longer available
+                            for new assignments.
+                          </p>
+                        </div>
+                      )}
                       <div>
-                        <p className="text-sm text-purple-300">
+                        <p
+                          className={`text-sm ${selectedCoworker?.isActive ? "text-purple-300" : "text-red-300"}`}
+                        >
                           <strong>Coworker Capacity:</strong>{" "}
-                          {selectedCoworker?.capacity || 0}h
+                          <span
+                            className={
+                              !selectedCoworker?.isActive ? "line-through" : ""
+                            }
+                          >
+                            {selectedCoworker?.capacity || 0}h/week
+                          </span>
                         </p>
                       </div>
                       {coworkerAssignments.length > 0 && (

@@ -18,6 +18,7 @@ interface Coworker {
   id: number;
   name: string;
   capacity: number;
+  isActive: boolean;
 }
 
 interface Project {
@@ -619,15 +620,35 @@ function TeamView({
               {
                 header: "Name",
                 accessor: (c) => (
-                  <Link
-                    href={`/coworkers/${c.id}`}
-                    className="text-blue-400 hover:text-blue-300 hover:underline"
-                  >
-                    {c.name}
-                  </Link>
+                  <div className="flex items-center gap-2">
+                    <Link
+                      href={`/coworkers/${c.id}`}
+                      className={`hover:underline ${
+                        c.isActive
+                          ? "text-blue-400 hover:text-blue-300"
+                          : "text-slate-500 hover:text-slate-400"
+                      }`}
+                    >
+                      {c.name}
+                    </Link>
+                    {!c.isActive && (
+                      <span className="rounded bg-slate-700 px-2 py-0.5 text-xs text-slate-400">
+                        Inactive
+                      </span>
+                    )}
+                  </div>
                 ),
               },
-              { header: "Capacity", accessor: (c) => `${c.capacity}h/week` },
+              {
+                header: "Capacity",
+                accessor: (c) => (
+                  <span
+                    className={!c.isActive ? "text-slate-500 line-through" : ""}
+                  >
+                    {c.capacity}h/week
+                  </span>
+                ),
+              },
               {
                 header: "Assigned",
                 accessor: (c) => {
@@ -1165,7 +1186,9 @@ function PersonalView({
 
           <div className="rounded-lg border border-slate-700 bg-slate-800 p-6">
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-white">Capacity Utilization</h3>
+              <h3 className="text-lg font-semibold text-white">
+                Capacity Utilization
+              </h3>
               <span
                 className={`text-2xl font-bold ${stats.percentage > 100 ? "text-red-400" : stats.percentage > 80 ? "text-yellow-400" : "text-green-400"}`}
               >

@@ -11,6 +11,7 @@ interface Coworker {
   id: number;
   name: string;
   capacity: number;
+  isActive: boolean;
 }
 
 interface Assignment {

@@ -44,7 +44,7 @@ export function PermissionProvider({
     setRole: handleSetRole,
     canManageProjects: role === "admin",
     canManageCoworkers: role === "admin",
-    canDeleteCoworkers: false, // No one can delete coworkers
+    canDeleteCoworkers: role === "admin", // Admins can soft-delete coworkers
     canManageTasks: true, // Both roles can manage tasks
     canManageAssignments: true, // Both roles can manage assignments
   };

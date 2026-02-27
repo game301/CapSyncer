@@ -68,6 +68,7 @@ app.MapGet("/api/coworkers/{id}", async (int id, CapSyncerDbContext db) =>
     await db.Coworkers.FindAsync(id) is Coworker c ? Results.Ok(c) : Results.NotFound());
 app.MapPost("/api/coworkers", async (Coworker c, CapSyncerDbContext db) =>
 {
+    c.IsActive = true; // New coworkers are active by default
     db.Coworkers.Add(c);
     await db.SaveChangesAsync();
     return Results.Created($"/api/coworkers/{c.Id}", c);
@@ -78,6 +79,7 @@ app.MapPut("/api/coworkers/{id}", async (int id, Coworker input, CapSyncerDbCont
     if (c is null) return Results.NotFound();
     c.Name = input.Name;
     c.Capacity = input.Capacity;
+    c.IsActive = input.IsActive; // Allow updating IsActive status
     await db.SaveChangesAsync();
     return Results.Ok(c);
 });
@@ -85,7 +87,8 @@ app.MapDelete("/api/coworkers/{id}", async (int id, CapSyncerDbContext db) =>
 {
     var c = await db.Coworkers.FindAsync(id);
     if (c is null) return Results.NotFound();
-    db.Coworkers.Remove(c);
+    // Soft delete: set IsActive to false instead of removing
+    c.IsActive = false;
     await db.SaveChangesAsync();
     return Results.NoContent();
 });
