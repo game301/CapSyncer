@@ -154,8 +154,17 @@ app.MapPut("/api/tasks/{id}", async (int id, TaskItem input, CapSyncerDbContext 
     var t = await db.Tasks.FindAsync(id);
     if (t is null) return Results.NotFound();
     t.Name = input.Name;
+    t.Priority = input.Priority;
+    t.Status = input.Status;
     t.EstimatedHours = input.EstimatedHours;
+    t.WeeklyEffort = input.WeeklyEffort;
+    t.Note = input.Note;
     t.ProjectId = input.ProjectId;
+    // Don't update Added date, but update Completed if provided
+    if (input.Completed.HasValue)
+    {
+        t.Completed = input.Completed;
+    }
     await db.SaveChangesAsync();
     return Results.Ok(t);
 });
@@ -185,6 +194,9 @@ app.MapPut("/api/assignments/{id}", async (int id, Assignment input, CapSyncerDb
     a.CoworkerId = input.CoworkerId;
     a.TaskItemId = input.TaskItemId;
     a.HoursAssigned = input.HoursAssigned;
+    a.Note = input.Note;
+    a.AssignedDate = input.AssignedDate;
+    a.AssignedBy = input.AssignedBy;
     await db.SaveChangesAsync();
     return Results.Ok(a);
 });
