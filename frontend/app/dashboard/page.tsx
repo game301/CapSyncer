@@ -15,6 +15,7 @@ import { ActionButtons } from "../../components/ActionButtons";
 // Priority and Status options
 const PRIORITIES = ["Low", "Normal", "High", "Critical"];
 const STATUSES = ["Not started", "In progress", "Completed", "Continuous"];
+const PROJECT_STATUSES = ["Planning", "In Progress", "On Hold", "Completed", "Cancelled"];
 
 interface Coworker {
   id: number;
@@ -26,6 +27,7 @@ interface Coworker {
 interface Project {
   id: number;
   name: string;
+  status: string;
   createdAt: string;
 }
 
@@ -79,7 +81,8 @@ export default function Dashboard() {
     null,
   );
   const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
-  const [hasInteractedWithCoworker, setHasInteractedWithCoworker] = useState(false);
+  const [hasInteractedWithCoworker, setHasInteractedWithCoworker] =
+    useState(false);
   const { toasts, showToast, removeToast } = useToast();
 
   const apiBaseUrl =
@@ -533,7 +536,9 @@ export default function Dashboard() {
               assignments={assignments}
               calculateCoworkerStats={calculateCoworkerStats}
               onCreateTask={() => handleCreate("tasks")}
-              onCreateAssignment={(coworkerId) => handleCreate("assignments", coworkerId)}
+              onCreateAssignment={(coworkerId) =>
+                handleCreate("assignments", coworkerId)
+              }
             />
           )}
         </div>
@@ -568,12 +573,21 @@ export default function Dashboard() {
           )}
 
           {activeEntity === "projects" && (
-            <Input
-              label="Project Name"
-              name="name"
-              required
-              defaultValue={(editingEntity as Project)?.name || ""}
-            />
+            <>
+              <Input
+                label="Project Name"
+                name="name"
+                required
+                defaultValue={(editingEntity as Project)?.name || ""}
+              />
+              <Select
+                label="Status"
+                name="status"
+                required
+                options={PROJECT_STATUSES.map((s) => ({ value: s, label: s }))}
+                defaultValue={(editingEntity as Project)?.status || "Planning"}
+              />
+            </>
           )}
 
           {activeEntity === "tasks" && (
@@ -656,7 +670,8 @@ export default function Dashboard() {
                   setHasInteractedWithCoworker(true);
                 }}
               />
-              {selectedCoworkerId && hasInteractedWithCoworker &&
+              {selectedCoworkerId &&
+                hasInteractedWithCoworker &&
                 (() => {
                   const selectedCoworker = coworkers.find(
                     (c) => c.id === selectedCoworkerId,
@@ -1231,7 +1246,6 @@ function TeamView({
                         }
                       />
                     )}
-
                   </div>
                 ),
               },
@@ -1307,14 +1321,44 @@ function TeamView({
                     .reduce((sum, t) => sum + t.estimatedHours, 0),
               },
               {
+                header: "Status",
+                accessor: (p) => {
+                  const status = p.status || "Planning";
+                  return (
+                    <span
+                      className={`rounded px-2 py-1 text-xs font-semibold ${
+                        status === "Completed"
+                          ? "bg-green-950 text-green-200 border border-green-800"
+                          : status === "In Progress"
+                            ? "bg-blue-900 text-blue-200 border border-blue-800"
+                            : status === "On Hold"
+                              ? "bg-amber-900 text-amber-200 border border-amber-800"
+                              : status === "Cancelled"
+                                ? "bg-red-900 text-red-200 border border-red-800"
+                                : "bg-slate-800 text-slate-300 border border-slate-700"
+                      }`}
+                    >
+                      {status}
+                    </span>
+                  );
+                },
+                sortKey: (p) => p.status || "Planning",
+              },
+              {
                 header: "Created",
                 accessor: (p) => {
                   if (!p.createdAt) return "-";
                   const createdDate = new Date(p.createdAt);
                   const now = new Date();
                   const diffMs = now.getTime() - createdDate.getTime();
-                  const diffWeeks = Math.floor(diffMs / (1000 * 60 * 60 * 24 * 7));
-                  return diffWeeks === 0 ? "This week" : diffWeeks === 1 ? "1 week ago" : `${diffWeeks} weeks ago`;
+                  const diffWeeks = Math.floor(
+                    diffMs / (1000 * 60 * 60 * 24 * 7),
+                  );
+                  return diffWeeks === 0
+                    ? "This week"
+                    : diffWeeks === 1
+                      ? "1 week ago"
+                      : `${diffWeeks} weeks ago`;
                 },
                 sortKey: (p) => {
                   if (!p.createdAt) return 0;
@@ -1501,7 +1545,10 @@ function TeamView({
               {
                 header: "Note",
                 accessor: (t) => (
-                  <span className="text-slate-300 text-sm max-w-xs truncate block" title={t.note || ""}>
+                  <span
+                    className="text-slate-300 text-sm max-w-xs truncate block"
+                    title={t.note || ""}
+                  >
                     {t.note || "-"}
                   </span>
                 ),
@@ -1833,7 +1880,9 @@ function PersonalView({
               {selectedCoworker && (
                 <ActionButtons
                   onCreateTask={onCreateTask}
-                  onCreateAssignment={() => onCreateAssignment(selectedCoworker)}
+                  onCreateAssignment={() =>
+                    onCreateAssignment(selectedCoworker)
+                  }
                   coworkerId={selectedCoworker}
                 />
               )}

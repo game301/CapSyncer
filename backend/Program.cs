@@ -127,6 +127,7 @@ app.MapPut("/api/projects/{id}", async (int id, Project input, CapSyncerDbContex
     var p = await db.Projects.FindAsync(id);
     if (p is null) return Results.NotFound();
     p.Name = input.Name;
+    p.Status = input.Status;
     await db.SaveChangesAsync();
     return Results.Ok(p);
 });
