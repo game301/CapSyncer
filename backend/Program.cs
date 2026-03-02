@@ -87,10 +87,21 @@ app.MapDelete("/api/coworkers/{id}", async (int id, CapSyncerDbContext db) =>
 {
     var c = await db.Coworkers.FindAsync(id);
     if (c is null) return Results.NotFound();
-    // Soft delete: set IsActive to false instead of removing
-    c.IsActive = false;
-    await db.SaveChangesAsync();
-    return Results.NoContent();
+    
+    if (c.IsActive)
+    {
+        // First delete: soft delete (set IsActive to false)
+        c.IsActive = false;
+        await db.SaveChangesAsync();
+        return Results.Ok(new { message = "soft-delete", coworker = c });
+    }
+    else
+    {
+        // Second delete: permanent delete (remove from database)
+        db.Coworkers.Remove(c);
+        await db.SaveChangesAsync();
+        return Results.Ok(new { message = "permanent-delete" });
+    }
 });
 
 // CRUD endpoints for Project

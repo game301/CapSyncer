@@ -171,7 +171,18 @@ export default function Dashboard() {
       return;
     }
 
-    if (!confirm("Are you sure you want to delete this item?")) return;
+    // Special handling for coworkers - check if it's inactive (second delete)
+    let confirmMessage = "Are you sure you want to delete this item?";
+    if (entityType === "coworkers") {
+      const coworker = coworkers.find(c => c.id === id);
+      if (coworker && !coworker.isActive) {
+        confirmMessage = "This coworker is already inactive. This will PERMANENTLY delete the coworker and all data. Are you sure?";
+      } else {
+        confirmMessage = "This will deactivate the coworker (soft delete). You can permanently delete later. Continue?";
+      }
+    }
+
+    if (!confirm(confirmMessage)) return;
 
     try {
       const response = await fetch(`${apiBaseUrl}/api/${entityType}/${id}`, {
@@ -180,10 +191,29 @@ export default function Dashboard() {
 
       if (response.ok) {
         const entityName = entityType.slice(0, -1);
-        showToast({
-          message: `${entityName.charAt(0).toUpperCase() + entityName.slice(1)} deleted successfully!`,
-          type: "success",
-        });
+        
+        // Check if it's a coworker soft delete or permanent delete
+        if (entityType === "coworkers") {
+          const result = await response.json();
+          if (result.message === "soft-delete") {
+            showToast({
+              message: "Coworker deactivated (soft delete). Delete again to permanently remove.",
+              type: "success",
+              duration: 5000,
+            });
+          } else if (result.message === "permanent-delete") {
+            showToast({
+              message: "Coworker permanently deleted!",
+              type: "success",
+            });
+          }
+        } else {
+          showToast({
+            message: `${entityName.charAt(0).toUpperCase() + entityName.slice(1)} deleted successfully!`,
+            type: "success",
+          });
+        }
+        
         await fetchData();
       } else {
         showToast({
