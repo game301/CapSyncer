@@ -7,6 +7,7 @@ export interface ToastProps {
   type?: "success" | "error" | "info" | "warning";
   duration?: number;
   onClose?: () => void;
+  index?: number;
 }
 
 export function Toast({
@@ -14,6 +15,7 @@ export function Toast({
   type = "success",
   duration = 3000,
   onClose,
+  index = 0,
 }: ToastProps) {
   const [isVisible, setIsVisible] = useState(true);
 
@@ -98,9 +100,12 @@ export function Toast({
     ),
   };
 
+  const bottomPosition = 16 + index * 72; // 16px base (bottom-4) + 72px spacing per toast
+
   return (
     <div
-      className={`fixed bottom-4 right-4 z-50 transition-all duration-300 ${
+      style={{ bottom: `${bottomPosition}px` }}
+      className={`fixed right-4 z-50 transition-all duration-300 ${
         isVisible ? "translate-x-0 opacity-100" : "translate-x-full opacity-0"
       }`}
     >

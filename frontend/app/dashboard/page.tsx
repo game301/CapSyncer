@@ -792,12 +792,13 @@ export default function Dashboard() {
       </Modal>
 
       {/* Toast Notifications */}
-      {toasts.map((toast) => (
+      {toasts.map((toast, index) => (
         <Toast
           key={toast.id}
           message={toast.message}
           type={toast.type}
           duration={toast.duration}
+          index={index}
           onClose={() => removeToast(toast.id)}
         />
       ))}
