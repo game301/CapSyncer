@@ -103,6 +103,14 @@ app.MapDelete("/api/coworkers/{id}", async (int id, CapSyncerDbContext db) =>
         return Results.Ok(new { message = "permanent-delete" });
     }
 });
+app.MapPut("/api/coworkers/{id}/reactivate", async (int id, CapSyncerDbContext db) =>
+{
+    var c = await db.Coworkers.FindAsync(id);
+    if (c is null) return Results.NotFound();
+    c.IsActive = true;
+    await db.SaveChangesAsync();
+    return Results.Ok(c);
+});
 
 // CRUD endpoints for Project
 app.MapGet("/api/projects", async (CapSyncerDbContext db) => await db.Projects.ToListAsync());

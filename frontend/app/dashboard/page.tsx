@@ -160,6 +160,38 @@ export default function Dashboard() {
     setModalOpen(true);
   };
 
+  const handleReactivate = async (id: number) => {
+    if (!permissions.canManageCoworkers) {
+      alert("You don't have permission to reactivate coworkers");
+      return;
+    }
+
+    try {
+      const response = await fetch(`${apiBaseUrl}/api/coworkers/${id}/reactivate`, {
+        method: "PUT",
+      });
+
+      if (response.ok) {
+        showToast({
+          message: "Coworker reactivated successfully!",
+          type: "success",
+        });
+        await fetchData();
+      } else {
+        showToast({
+          message: "Failed to reactivate coworker",
+          type: "error",
+        });
+      }
+    } catch (error) {
+      console.error("Error reactivating coworker:", error);
+      showToast({
+        message: "Error reactivating coworker",
+        type: "error",
+      });
+    }
+  };
+
   const handleDelete = async (entityType: EntityType, id: number) => {
     // Permission checking
     if (entityType === "coworkers" && !permissions.canDeleteCoworkers) {
@@ -409,6 +441,7 @@ export default function Dashboard() {
               onCreateCoworker={() => handleCreate("coworkers")}
               onEditCoworker={(c: Coworker) => handleEdit("coworkers", c)}
               onDeleteCoworker={(id: number) => handleDelete("coworkers", id)}
+              onReactivateCoworker={handleReactivate}
               onCreateProject={() => handleCreate("projects")}
               onEditProject={(p: Project) => handleEdit("projects", p)}
               onDeleteProject={(id: number) => handleDelete("projects", id)}
@@ -783,6 +816,7 @@ interface TeamViewProps {
   onCreateCoworker: () => void;
   onEditCoworker: (c: Coworker) => void;
   onDeleteCoworker: (id: number) => void;
+  onReactivateCoworker: (id: number) => void;
   onCreateProject: () => void;
   onEditProject: (p: Project) => void;
   onDeleteProject: (id: number) => void;
@@ -811,6 +845,7 @@ function TeamView({
   onCreateCoworker,
   onEditCoworker,
   onDeleteCoworker,
+  onReactivateCoworker,
   onCreateProject,
   onEditProject,
   onDeleteProject,
@@ -1016,6 +1051,27 @@ function TeamView({
                             strokeLinejoin="round"
                             strokeWidth={2}
                             d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                          />
+                        </svg>
+                      </button>
+                    )}
+                    {!c.isActive && permissions.canManageCoworkers && (
+                      <button
+                        onClick={() => onReactivateCoworker(c.id)}
+                        className="rounded p-1 text-green-400 hover:bg-slate-700"
+                        title="Reactivate coworker"
+                      >
+                        <svg
+                          className="h-4 w-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
                           />
                         </svg>
                       </button>
