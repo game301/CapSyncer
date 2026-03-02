@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Button } from "./Button";
 
 interface WeekSelectorProps {
   defaultYear?: number;
@@ -67,14 +68,15 @@ export function WeekSelector({
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2">
-        <button
+        <Button
           type="button"
           onClick={goToPreviousWeek}
-          className="rounded bg-slate-700 px-3 py-1 text-white hover:bg-slate-600"
+          variant="secondary"
+          size="sm"
           aria-label="Previous week"
         >
           ←
-        </button>
+        </Button>
 
         <select
           value={year}
@@ -105,22 +107,24 @@ export function WeekSelector({
           ))}
         </select>
 
-        <button
+        <Button
           type="button"
           onClick={goToNextWeek}
-          className="rounded bg-slate-700 px-3 py-1 text-white hover:bg-slate-600"
+          variant="secondary"
+          size="sm"
           aria-label="Next week"
         >
           →
-        </button>
+        </Button>
 
-        <button
+        <Button
           type="button"
           onClick={goToCurrentWeek}
-          className="rounded bg-blue-600 px-3 py-1 text-sm text-white hover:bg-blue-500"
+          variant="primary"
+          size="sm"
         >
           Today
-        </button>
+        </Button>
       </div>
 
       <div className="text-sm text-slate-400">

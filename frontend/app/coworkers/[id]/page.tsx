@@ -6,6 +6,9 @@ import Link from "next/link";
 import { PageLayout } from "../../../components/PageLayout";
 import { Button } from "../../../components/Button";
 import { Table } from "../../../components/Table";
+import { ActionButtons } from "../../../components/ActionButtons";
+import { CreateTaskModal } from "../../../components/CreateTaskModal";
+import { CreateAssignmentModal } from "../../../components/CreateAssignmentModal";
 
 interface Coworker {
   id: number;
@@ -49,45 +52,45 @@ export default function CoworkerDetailPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [taskModalOpen, setTaskModalOpen] = useState(false);
+  const [assignmentModalOpen, setAssignmentModalOpen] = useState(false);
 
   const apiBaseUrl =
     process.env.NEXT_PUBLIC_API_BASEURL || "http://localhost:5128";
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        const [coworkerRes, assignmentsRes, tasksRes, projectsRes] =
-          await Promise.all([
-            fetch(`${apiBaseUrl}/api/coworkers/${coworkerId}`),
-            fetch(`${apiBaseUrl}/api/assignments`),
-            fetch(`${apiBaseUrl}/api/tasks`),
-            fetch(`${apiBaseUrl}/api/projects`),
-          ]);
+  const fetchData = async () => {
+    try {
+      const [coworkerRes, assignmentsRes, tasksRes, projectsRes] =
+        await Promise.all([
+          fetch(`${apiBaseUrl}/api/coworkers/${coworkerId}`),
+          fetch(`${apiBaseUrl}/api/assignments`),
+          fetch(`${apiBaseUrl}/api/tasks`),
+          fetch(`${apiBaseUrl}/api/projects`),
+        ]);
 
-        if (!coworkerRes.ok) {
-          throw new Error("Failed to fetch coworker");
-        }
-
-        const coworkerData = await coworkerRes.json();
-        const assignmentsData = await assignmentsRes.json();
-        const tasksData = await tasksRes.json();
-        const projectsData = await projectsRes.json();
-
-        setCoworker(coworkerData);
-        setAssignments(
-          assignmentsData.filter(
-            (a: Assignment) => a.coworkerId === coworkerId,
-          ),
-        );
-        setTasks(tasksData);
-        setProjects(projectsData);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "An error occurred");
-      } finally {
-        setLoading(false);
+      if (!coworkerRes.ok) {
+        throw new Error("Failed to fetch coworker");
       }
-    }
 
+      const coworkerData = await coworkerRes.json();
+      const assignmentsData = await assignmentsRes.json();
+      const tasksData = await tasksRes.json();
+      const projectsData = await projectsRes.json();
+
+      setCoworker(coworkerData);
+      setAssignments(
+        assignmentsData.filter((a: Assignment) => a.coworkerId === coworkerId),
+      );
+      setTasks(tasksData);
+      setProjects(projectsData);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchData();
   }, [coworkerId, apiBaseUrl]);
 
@@ -242,46 +245,11 @@ export default function CoworkerDetailPage() {
             <h2 className="text-2xl font-bold text-white">
               Task Assignments ({assignments.length})
             </h2>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => router.push(`/tasks?new=true`)}
-                className="flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 transition-colors"
-              >
-                <svg
-                  className="h-4 w-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
-                  />
-                </svg>
-                Add Task
-              </button>
-              <button
-                onClick={() => router.push(`/dashboard?tab=assignments&create=true&coworkerId=${coworkerId}`)}
-                className="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 transition-colors"
-              >
-                <svg
-                  className="h-4 w-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 4v16m8-8H4"
-                  />
-                </svg>
-                Add Assignment
-              </button>
-            </div>
+            <ActionButtons
+              onCreateTask={() => setTaskModalOpen(true)}
+              onCreateAssignment={() => setAssignmentModalOpen(true)}
+              coworkerId={coworkerId}
+            />
           </div>
           {coworkerAssignments.length === 0 ? (
             <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-12 text-center">
@@ -370,6 +338,21 @@ export default function CoworkerDetailPage() {
           )}
         </div>
       </div>
+
+      <CreateTaskModal
+        isOpen={taskModalOpen}
+        onClose={() => setTaskModalOpen(false)}
+        onSuccess={fetchData}
+        apiBaseUrl={apiBaseUrl}
+      />
+
+      <CreateAssignmentModal
+        isOpen={assignmentModalOpen}
+        onClose={() => setAssignmentModalOpen(false)}
+        onSuccess={fetchData}
+        apiBaseUrl={apiBaseUrl}
+        prefilledCoworkerId={coworkerId}
+      />
     </PageLayout>
   );
 }

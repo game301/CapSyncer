@@ -10,6 +10,7 @@ import { PageLayout } from "../../components/PageLayout";
 import { usePermissions } from "../../contexts/PermissionContext";
 import { Toast, useToast } from "../../components/Toast";
 import { WeekSelector } from "../../components/WeekSelector";
+import { ActionButtons } from "../../components/ActionButtons";
 
 // Priority and Status options
 const PRIORITIES = ["Low", "Normal", "High", "Critical"];
@@ -25,6 +26,7 @@ interface Coworker {
 interface Project {
   id: number;
   name: string;
+  createdAt: string;
 }
 
 interface TaskItem {
@@ -77,6 +79,7 @@ export default function Dashboard() {
     null,
   );
   const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
+  const [hasInteractedWithCoworker, setHasInteractedWithCoworker] = useState(false);
   const { toasts, showToast, removeToast } = useToast();
 
   const apiBaseUrl =
@@ -127,8 +130,6 @@ export default function Dashboard() {
     // Handle query params for pre-filling forms
     const createParam = searchParams.get("create");
     const coworkerIdParam = searchParams.get("coworkerId");
-    const yearParam = searchParams.get("year");
-    const weekParam = searchParams.get("week");
 
     if (createParam === "true") {
       const tabParam = searchParams.get("tab");
@@ -179,6 +180,7 @@ export default function Dashboard() {
     setEditingEntity(null);
     setSelectedCoworkerId(prefilledCoworkerId || null);
     setSelectedTaskId(null);
+    setHasInteractedWithCoworker(false);
     setModalOpen(true);
   };
 
@@ -195,9 +197,11 @@ export default function Dashboard() {
       const assignment = entity as Assignment;
       setSelectedCoworkerId(assignment.coworkerId);
       setSelectedTaskId(assignment.taskItemId);
+      setHasInteractedWithCoworker(true); // Show capacity info when editing
     } else {
       setSelectedCoworkerId(null);
       setSelectedTaskId(null);
+      setHasInteractedWithCoworker(false);
     }
 
     setModalOpen(true);
@@ -396,6 +400,7 @@ export default function Dashboard() {
         setModalOpen(false);
         setSelectedCoworkerId(null);
         setSelectedTaskId(null);
+        setHasInteractedWithCoworker(false);
 
         // Show success toast
         const entityName = activeEntity.slice(0, -1); // Remove 's' from end
@@ -515,9 +520,6 @@ export default function Dashboard() {
               onEditTask={(t: TaskItem) => handleEdit("tasks", t)}
               onDeleteTask={(id: number) => handleDelete("tasks", id)}
               onCreateAssignment={() => handleCreate("assignments")}
-              onCreateAssignmentForCoworker={(coworkerId: number) =>
-                handleCreate("assignments", coworkerId)
-              }
               onEditAssignment={(a: Assignment) => handleEdit("assignments", a)}
               onDeleteAssignment={(id: number) =>
                 handleDelete("assignments", id)
@@ -530,6 +532,8 @@ export default function Dashboard() {
               tasks={tasks}
               assignments={assignments}
               calculateCoworkerStats={calculateCoworkerStats}
+              onCreateTask={() => handleCreate("tasks")}
+              onCreateAssignment={(coworkerId) => handleCreate("assignments", coworkerId)}
             />
           )}
         </div>
@@ -538,7 +542,10 @@ export default function Dashboard() {
       {/* CRUD Modal */}
       <Modal
         isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
+        onClose={() => {
+          setModalOpen(false);
+          setHasInteractedWithCoworker(false);
+        }}
         title={`${modalMode === "create" ? "Create" : "Edit"} ${activeEntity.slice(0, -1)}`}
       >
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -644,9 +651,12 @@ export default function Dashboard() {
                     })),
                 ]}
                 defaultValue={(editingEntity as Assignment)?.coworkerId || ""}
-                onChange={(e) => setSelectedCoworkerId(Number(e.target.value))}
+                onChange={(e) => {
+                  setSelectedCoworkerId(Number(e.target.value));
+                  setHasInteractedWithCoworker(true);
+                }}
               />
-              {selectedCoworkerId &&
+              {selectedCoworkerId && hasInteractedWithCoworker &&
                 (() => {
                   const selectedCoworker = coworkers.find(
                     (c) => c.id === selectedCoworkerId,
@@ -857,13 +867,16 @@ export default function Dashboard() {
           )}
 
           <div className="flex gap-3 pt-4">
-            <Button type="submit" className="flex-1">
+            <Button type="submit" variant="primary" className="flex-1">
               {modalMode === "create" ? "Create" : "Update"}
             </Button>
             <Button
               type="button"
               variant="secondary"
-              onClick={() => setModalOpen(false)}
+              onClick={() => {
+                setModalOpen(false);
+                setHasInteractedWithCoworker(false);
+              }}
             >
               Cancel
             </Button>
@@ -905,7 +918,6 @@ interface TeamViewProps {
   onEditTask: (t: TaskItem) => void;
   onDeleteTask: (id: number) => void;
   onCreateAssignment: () => void;
-  onCreateAssignmentForCoworker: (coworkerId: number) => void;
   onEditAssignment: (a: Assignment) => void;
   onDeleteAssignment: (id: number) => void;
   calculateCoworkerStats: (id: number) => {
@@ -935,7 +947,6 @@ function TeamView({
   onEditTask,
   onDeleteTask,
   onCreateAssignment,
-  onCreateAssignmentForCoworker,
   onEditAssignment,
   onDeleteAssignment,
   calculateCoworkerStats,
@@ -967,46 +978,54 @@ function TeamView({
   return (
     <div className="space-y-6">
       <div className="flex gap-2 border-b border-slate-700">
-        <button
+        <Button
           onClick={() => updateActiveTab("coworkers")}
-          className={`px-6 py-3 font-medium transition ${
+          variant="secondary"
+          size="md"
+          className={`rounded-none border-b-2 ${
             activeTab === "coworkers"
-              ? "border-b-2 border-blue-500 text-blue-400"
-              : "text-slate-400 hover:text-white"
+              ? "border-blue-500 bg-transparent text-blue-400"
+              : "border-transparent bg-transparent text-slate-400 hover:bg-transparent hover:text-white"
           }`}
         >
           Team ({coworkers.length})
-        </button>
-        <button
+        </Button>
+        <Button
           onClick={() => updateActiveTab("projects")}
-          className={`px-6 py-3 font-medium transition ${
+          variant="secondary"
+          size="md"
+          className={`rounded-none border-b-2 ${
             activeTab === "projects"
-              ? "border-b-2 border-blue-500 text-blue-400"
-              : "text-slate-400 hover:text-white"
+              ? "border-blue-500 bg-transparent text-blue-400"
+              : "border-transparent bg-transparent text-slate-400 hover:bg-transparent hover:text-white"
           }`}
         >
           Projects ({projects.length})
-        </button>
-        <button
+        </Button>
+        <Button
           onClick={() => updateActiveTab("tasks")}
-          className={`px-6 py-3 font-medium transition ${
+          variant="secondary"
+          size="md"
+          className={`rounded-none border-b-2 ${
             activeTab === "tasks"
-              ? "border-b-2 border-blue-500 text-blue-400"
-              : "text-slate-400 hover:text-white"
+              ? "border-blue-500 bg-transparent text-blue-400"
+              : "border-transparent bg-transparent text-slate-400 hover:bg-transparent hover:text-white"
           }`}
         >
           Tasks ({tasks.length})
-        </button>
-        <button
+        </Button>
+        <Button
           onClick={() => updateActiveTab("assignments")}
-          className={`px-6 py-3 font-medium transition ${
+          variant="secondary"
+          size="md"
+          className={`rounded-none border-b-2 ${
             activeTab === "assignments"
-              ? "border-b-2 border-blue-500 text-blue-400"
-              : "text-slate-400 hover:text-white"
+              ? "border-blue-500 bg-transparent text-blue-400"
+              : "border-transparent bg-transparent text-slate-400 hover:bg-transparent hover:text-white"
           }`}
         >
           Assignments ({assignments.length})
-        </button>
+        </Button>
       </div>
 
       {activeTab === "coworkers" && (
@@ -1146,65 +1165,71 @@ function TeamView({
                 accessor: (c) => (
                   <div className="flex gap-2">
                     {permissions.canManageCoworkers && (
-                      <button
+                      <Button
                         onClick={() => onEditCoworker(c)}
-                        className="rounded p-1 text-blue-400 hover:bg-slate-700"
-                      >
-                        <svg
-                          className="h-4 w-4"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                          />
-                        </svg>
-                      </button>
+                        variant="outline-primary"
+                        size="icon"
+                        icon={
+                          <svg
+                            className="h-4 w-4"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                            />
+                          </svg>
+                        }
+                      />
                     )}
                     {!c.isActive && permissions.canManageCoworkers && (
-                      <button
+                      <Button
                         onClick={() => onReactivateCoworker(c.id)}
-                        className="rounded p-1 text-green-400 hover:bg-slate-700"
+                        variant="outline-success"
+                        size="icon"
                         title="Reactivate coworker"
-                      >
-                        <svg
-                          className="h-4 w-4"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                          />
-                        </svg>
-                      </button>
+                        icon={
+                          <svg
+                            className="h-4 w-4"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                            />
+                          </svg>
+                        }
+                      />
                     )}
                     {permissions.canDeleteCoworkers && (
-                      <button
+                      <Button
                         onClick={() => onDeleteCoworker(c.id)}
-                        className="rounded p-1 text-red-400 hover:bg-slate-700"
-                      >
-                        <svg
-                          className="h-4 w-4"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                          />
-                        </svg>
-                      </button>
+                        variant="outline-danger"
+                        size="icon"
+                        icon={
+                          <svg
+                            className="h-4 w-4"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                            />
+                          </svg>
+                        }
+                      />
                     )}
 
                   </div>
@@ -1282,47 +1307,69 @@ function TeamView({
                     .reduce((sum, t) => sum + t.estimatedHours, 0),
               },
               {
+                header: "Created",
+                accessor: (p) => {
+                  if (!p.createdAt) return "-";
+                  const createdDate = new Date(p.createdAt);
+                  const now = new Date();
+                  const diffMs = now.getTime() - createdDate.getTime();
+                  const diffWeeks = Math.floor(diffMs / (1000 * 60 * 60 * 24 * 7));
+                  return diffWeeks === 0 ? "This week" : diffWeeks === 1 ? "1 week ago" : `${diffWeeks} weeks ago`;
+                },
+                sortKey: (p) => {
+                  if (!p.createdAt) return 0;
+                  const createdDate = new Date(p.createdAt);
+                  const now = new Date();
+                  const diffMs = now.getTime() - createdDate.getTime();
+                  return Math.floor(diffMs / (1000 * 60 * 60 * 24 * 7));
+                },
+              },
+              {
                 header: "Actions",
                 accessor: (p) => (
                   <div className="flex gap-2">
                     {permissions.canManageProjects && (
                       <>
-                        <button
+                        <Button
                           onClick={() => onEditProject(p)}
-                          className="rounded p-1 text-blue-400 hover:bg-slate-700"
-                        >
-                          <svg
-                            className="h-4 w-4"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                            />
-                          </svg>
-                        </button>
-                        <button
+                          variant="outline-primary"
+                          size="icon"
+                          icon={
+                            <svg
+                              className="h-4 w-4"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                              />
+                            </svg>
+                          }
+                        />
+                        <Button
                           onClick={() => onDeleteProject(p.id)}
-                          className="rounded p-1 text-red-400 hover:bg-slate-700"
-                        >
-                          <svg
-                            className="h-4 w-4"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                            />
-                          </svg>
-                        </button>
+                          variant="outline-danger"
+                          size="icon"
+                          icon={
+                            <svg
+                              className="h-4 w-4"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                              />
+                            </svg>
+                          }
+                        />
                       </>
                     )}
                   </div>
@@ -1345,7 +1392,7 @@ function TeamView({
                 className="w-64"
               />
               {permissions.canManageTasks && (
-                <Button onClick={onCreateTask}>
+                <Button onClick={onCreateTask} variant="primary">
                   <svg
                     className="mr-2 h-5 w-5"
                     fill="none"
@@ -1452,47 +1499,60 @@ function TeamView({
                   assignments.filter((a) => a.taskItemId === t.id).length,
               },
               {
+                header: "Note",
+                accessor: (t) => (
+                  <span className="text-slate-300 text-sm max-w-xs truncate block" title={t.note || ""}>
+                    {t.note || "-"}
+                  </span>
+                ),
+                sortKey: "note",
+              },
+              {
                 header: "Actions",
                 accessor: (t) => (
                   <div className="flex gap-2">
                     {permissions.canManageTasks && (
                       <>
-                        <button
+                        <Button
                           onClick={() => onEditTask(t)}
-                          className="rounded p-1 text-blue-400 hover:bg-slate-700"
-                        >
-                          <svg
-                            className="h-4 w-4"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                            />
-                          </svg>
-                        </button>
-                        <button
+                          variant="outline-primary"
+                          size="icon"
+                          icon={
+                            <svg
+                              className="h-4 w-4"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                              />
+                            </svg>
+                          }
+                        />
+                        <Button
                           onClick={() => onDeleteTask(t.id)}
-                          className="rounded p-1 text-red-400 hover:bg-slate-700"
-                        >
-                          <svg
-                            className="h-4 w-4"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                            />
-                          </svg>
-                        </button>
+                          variant="outline-danger"
+                          size="icon"
+                          icon={
+                            <svg
+                              className="h-4 w-4"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                              />
+                            </svg>
+                          }
+                        />
                       </>
                     )}
                   </div>
@@ -1515,7 +1575,7 @@ function TeamView({
                 className="w-64"
               />
               {permissions.canManageAssignments && (
-                <Button onClick={onCreateAssignment}>
+                <Button onClick={onCreateAssignment} variant="primary">
                   <svg
                     className="mr-2 h-5 w-5"
                     fill="none"
@@ -1617,42 +1677,46 @@ function TeamView({
                   <div className="flex gap-2">
                     {permissions.canManageAssignments && (
                       <>
-                        <button
+                        <Button
                           onClick={() => onEditAssignment(a)}
-                          className="rounded p-1 text-blue-400 hover:bg-slate-700"
-                        >
-                          <svg
-                            className="h-4 w-4"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                            />
-                          </svg>
-                        </button>
-                        <button
+                          variant="outline-primary"
+                          size="icon"
+                          icon={
+                            <svg
+                              className="h-4 w-4"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                              />
+                            </svg>
+                          }
+                        />
+                        <Button
                           onClick={() => onDeleteAssignment(a.id)}
-                          className="rounded p-1 text-red-400 hover:bg-slate-700"
-                        >
-                          <svg
-                            className="h-4 w-4"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                            />
-                          </svg>
-                        </button>
+                          variant="outline-danger"
+                          size="icon"
+                          icon={
+                            <svg
+                              className="h-4 w-4"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                              />
+                            </svg>
+                          }
+                        />
                       </>
                     )}
                   </div>
@@ -1676,6 +1740,8 @@ interface PersonalViewProps {
     available: number;
     percentage: number;
   };
+  onCreateTask: () => void;
+  onCreateAssignment: (coworkerId: number) => void;
 }
 
 function PersonalView({
@@ -1683,6 +1749,8 @@ function PersonalView({
   tasks,
   assignments,
   calculateCoworkerStats,
+  onCreateTask,
+  onCreateAssignment,
 }: PersonalViewProps) {
   const [selectedCoworker, setSelectedCoworker] = useState<number | null>(
     coworkers[0]?.id || null,
@@ -1695,8 +1763,6 @@ function PersonalView({
   const stats = selectedCoworker
     ? calculateCoworkerStats(selectedCoworker)
     : null;
-
-  const router = useRouter();
 
   return (
     <div className="space-y-6">
@@ -1764,48 +1830,13 @@ function PersonalView({
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-2xl font-bold text-white">Assignments</h2>
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => router.push(`/tasks?new=true`)}
-                  className="flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 transition-colors"
-                >
-                  <svg
-                    className="h-4 w-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
-                    />
-                  </svg>
-                  Add Task
-                </button>
-                {selectedCoworker && (
-                  <button
-                    onClick={() => router.push(`/dashboard?tab=assignments&create=true&coworkerId=${selectedCoworker}`)}
-                    className="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 transition-colors"
-                  >
-                    <svg
-                      className="h-4 w-4"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 4v16m8-8H4"
-                      />
-                    </svg>
-                    Add Assignment
-                  </button>
-                )}
-              </div>
+              {selectedCoworker && (
+                <ActionButtons
+                  onCreateTask={onCreateTask}
+                  onCreateAssignment={() => onCreateAssignment(selectedCoworker)}
+                  coworkerId={selectedCoworker}
+                />
+              )}
             </div>
             {coworkerAssignments.length === 0 ? (
               <p className="text-slate-400">No assignments found</p>

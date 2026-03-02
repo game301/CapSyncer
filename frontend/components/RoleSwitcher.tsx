@@ -1,5 +1,6 @@
 "use client";
 import { usePermissions } from "../contexts/PermissionContext";
+import { Button } from "./Button";
 
 export function RoleSwitcher() {
   const { role, setRole } = usePermissions();
@@ -8,26 +9,24 @@ export function RoleSwitcher() {
     <div className="flex items-center gap-2">
       <span className="text-sm text-slate-400">Role:</span>
       <div className="flex rounded-lg border border-slate-600 bg-slate-800 p-1">
-        <button
+        <Button
           onClick={() => setRole("user")}
-          className={`rounded px-3 py-1 text-sm font-medium transition ${
-            role === "user"
-              ? "bg-blue-600 text-white"
-              : "text-slate-400 hover:text-white"
-          }`}
+          variant={role === "user" ? "primary" : "secondary"}
+          size="sm"
+          className={role === "user" ? "" : "bg-transparent hover:bg-slate-700"}
         >
           User
-        </button>
-        <button
+        </Button>
+        <Button
           onClick={() => setRole("admin")}
-          className={`rounded px-3 py-1 text-sm font-medium transition ${
-            role === "admin"
-              ? "bg-blue-600 text-white"
-              : "text-slate-400 hover:text-white"
-          }`}
+          variant={role === "admin" ? "primary" : "secondary"}
+          size="sm"
+          className={
+            role === "admin" ? "" : "bg-transparent hover:bg-slate-700"
+          }
         >
           Admin
-        </button>
+        </Button>
       </div>
     </div>
   );

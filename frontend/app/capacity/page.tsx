@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
 import { PageLayout } from "../../components/PageLayout";
 import { WeeklyCapacityView } from "../../components/WeeklyCapacityView";
+import { CreateTaskModal } from "../../components/CreateTaskModal";
+import { CreateAssignmentModal } from "../../components/CreateAssignmentModal";
 
 interface Coworker {
   id: number;
@@ -19,7 +20,13 @@ export default function CapacityPage() {
   );
   const [loading, setLoading] = useState(true);
   const currentYear = new Date().getFullYear();
-  const router = useRouter();
+  const [taskModalOpen, setTaskModalOpen] = useState(false);
+  const [assignmentModalOpen, setAssignmentModalOpen] = useState(false);
+  const [assignmentCoworkerId, setAssignmentCoworkerId] = useState<
+    number | null
+  >(null);
+  const [assignmentYear, setAssignmentYear] = useState<number | null>(null);
+  const [assignmentWeek, setAssignmentWeek] = useState<number | null>(null);
 
   const apiBaseUrl =
     process.env.NEXT_PUBLIC_API_BASEURL || "http://localhost:5128";
@@ -48,7 +55,7 @@ export default function CapacityPage() {
   }, [fetchCoworkers]);
 
   const handleCreateTask = () => {
-    router.push("/dashboard?tab=tasks&create=true");
+    setTaskModalOpen(true);
   };
 
   const handleCreateAssignment = (
@@ -56,9 +63,10 @@ export default function CapacityPage() {
     year: number,
     weekNumber: number,
   ) => {
-    router.push(
-      `/dashboard?tab=assignments&create=true&coworkerId=${coworkerId}&year=${year}&week=${weekNumber}`,
-    );
+    setAssignmentCoworkerId(coworkerId);
+    setAssignmentYear(year);
+    setAssignmentWeek(weekNumber);
+    setAssignmentModalOpen(true);
   };
 
   const selectedCoworker = coworkers.find((c) => c.id === selectedCoworkerId);
@@ -137,6 +145,28 @@ export default function CapacityPage() {
           />
         )}
       </div>
+
+      <CreateTaskModal
+        isOpen={taskModalOpen}
+        onClose={() => setTaskModalOpen(false)}
+        onSuccess={fetchCoworkers}
+        apiBaseUrl={apiBaseUrl}
+      />
+
+      <CreateAssignmentModal
+        isOpen={assignmentModalOpen}
+        onClose={() => {
+          setAssignmentModalOpen(false);
+          setAssignmentCoworkerId(null);
+          setAssignmentYear(null);
+          setAssignmentWeek(null);
+        }}
+        onSuccess={fetchCoworkers}
+        apiBaseUrl={apiBaseUrl}
+        prefilledCoworkerId={assignmentCoworkerId || undefined}
+        prefilledYear={assignmentYear || undefined}
+        prefilledWeek={assignmentWeek || undefined}
+      />
     </PageLayout>
   );
 }

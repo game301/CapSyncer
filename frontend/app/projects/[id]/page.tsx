@@ -564,7 +564,7 @@ export default function ProjectDetailPage() {
               Project Tasks ({tasks.length})
             </h2>
             {permissions.canManageTasks && (
-              <Button onClick={handleCreateTask}>
+              <Button onClick={handleCreateTask} variant="primary">
                 <svg
                   className="mr-2 h-5 w-5"
                   fill="none"
@@ -679,47 +679,62 @@ export default function ProjectDetailPage() {
                   accessor: (t) => t.assignmentCount,
                 },
                 {
+                  header: "Note",
+                  accessor: (t) => (
+                    <span
+                      className="text-slate-300 text-sm max-w-xs truncate block"
+                      title={t.note || ""}
+                    >
+                      {t.note || "-"}
+                    </span>
+                  ),
+                },
+                {
                   header: "Actions",
                   accessor: (t) => (
                     <div className="flex gap-2">
                       {permissions.canManageTasks && (
                         <>
-                          <button
+                          <Button
                             onClick={() => handleEditTask(t)}
-                            className="rounded p-1 text-blue-400 hover:bg-slate-700"
-                          >
-                            <svg
-                              className="h-4 w-4"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                              />
-                            </svg>
-                          </button>
-                          <button
+                            variant="outline-primary"
+                            size="icon"
+                            icon={
+                              <svg
+                                className="h-4 w-4"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                />
+                              </svg>
+                            }
+                          />
+                          <Button
                             onClick={() => handleDeleteTask(t.id)}
-                            className="rounded p-1 text-red-400 hover:bg-slate-700"
-                          >
-                            <svg
-                              className="h-4 w-4"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                              />
-                            </svg>
-                          </button>
+                            variant="outline-danger"
+                            size="icon"
+                            icon={
+                              <svg
+                                className="h-4 w-4"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                />
+                              </svg>
+                            }
+                          />
                         </>
                       )}
                     </div>
@@ -737,7 +752,7 @@ export default function ProjectDetailPage() {
               Project Assignments ({projectAssignments.length})
             </h2>
             {permissions.canManageTasks && (
-              <Button onClick={handleCreateAssignment}>
+              <Button onClick={handleCreateAssignment} variant="primary">
                 <svg
                   className="mr-2 h-5 w-5"
                   fill="none"
@@ -845,42 +860,46 @@ export default function ProjectDetailPage() {
                     <div className="flex gap-2">
                       {permissions.canManageTasks && (
                         <>
-                          <button
+                          <Button
                             onClick={() => handleEditAssignment(a)}
-                            className="rounded p-1 text-blue-400 hover:bg-slate-700"
-                          >
-                            <svg
-                              className="h-4 w-4"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                              />
-                            </svg>
-                          </button>
-                          <button
+                            variant="outline-primary"
+                            size="icon"
+                            icon={
+                              <svg
+                                className="h-4 w-4"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                />
+                              </svg>
+                            }
+                          />
+                          <Button
                             onClick={() => handleDeleteAssignment(a.id)}
-                            className="rounded p-1 text-red-400 hover:bg-slate-700"
-                          >
-                            <svg
-                              className="h-4 w-4"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                              />
-                            </svg>
-                          </button>
+                            variant="outline-danger"
+                            size="icon"
+                            icon={
+                              <svg
+                                className="h-4 w-4"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                />
+                              </svg>
+                            }
+                          />
                         </>
                       )}
                     </div>
@@ -1166,7 +1185,7 @@ export default function ProjectDetailPage() {
           )}
 
           <div className="flex gap-3 pt-4">
-            <Button type="submit" className="flex-1">
+            <Button type="submit" variant="primary" className="flex-1">
               {modalMode === "create" ? "Create" : "Update"}
             </Button>
             <Button

@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { usePermissions } from "../contexts/PermissionContext";
 import { RoleSwitcher } from "./RoleSwitcher";
+import { Button } from "./Button";
 
 export function UserSettings() {
   const { userName, setUserName } = usePermissions();
@@ -23,23 +24,28 @@ export function UserSettings() {
 
   return (
     <div className="relative">
-      <button
+      <Button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 rounded-lg bg-slate-700 px-3 py-2 text-sm font-medium text-white transition hover:bg-slate-600"
+        variant="secondary"
+        size="md"
+        className="gap-2"
+        icon={
+          <svg
+            className="h-5 w-5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+            />
+          </svg>
+        }
+        iconPosition="left"
       >
-        <svg
-          className="h-5 w-5"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-          />
-        </svg>
         <span>{userName || "Set Name"}</span>
         <svg
           className={`h-4 w-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
@@ -54,7 +60,7 @@ export function UserSettings() {
             d="M19 9l-7 7-7-7"
           />
         </svg>
-      </button>
+      </Button>
 
       {isOpen && (
         <>
@@ -82,18 +88,22 @@ export function UserSettings() {
                     autoFocus
                   />
                   <div className="flex gap-2">
-                    <button
+                    <Button
                       onClick={handleSave}
-                      className="flex-1 rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
+                      variant="primary"
+                      size="sm"
+                      className="flex-1"
                     >
                       Save
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       onClick={handleCancel}
-                      className="flex-1 rounded-lg bg-slate-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-600"
+                      variant="secondary"
+                      size="sm"
+                      className="flex-1"
                     >
                       Cancel
-                    </button>
+                    </Button>
                   </div>
                 </div>
               ) : (
@@ -103,12 +113,14 @@ export function UserSettings() {
                       <span className="italic text-slate-500">Not set</span>
                     )}
                   </span>
-                  <button
+                  <Button
                     onClick={() => setIsEditing(true)}
-                    className="rounded px-2 py-1 text-xs text-blue-400 hover:bg-slate-700"
+                    variant="primary"
+                    size="sm"
+                    className="px-2 py-1 text-xs"
                   >
                     Edit
-                  </button>
+                  </Button>
                 </div>
               )}
             </div>
