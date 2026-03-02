@@ -4,7 +4,7 @@ import { UserSettings } from "./UserSettings";
 export function Navbar() {
   return (
     <nav className="border-b border-slate-700 bg-slate-800/95 backdrop-blur sticky top-0 z-50">
-      <div className="mx-auto max-w-7xl px-6 py-4">
+      <div className="mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
           <Link
             href="/"
