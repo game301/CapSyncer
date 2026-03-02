@@ -15,7 +15,7 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 // Add services to the container.
 builder.Services.AddDbContext<CapSyncerDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("capsyncerdb") ?? 
-                      "Host=localhost;Port=5432;Database=capsyncerdb;Username=postgres;Password=postgres"));
+                      "Host=127.0.0.1;Port=5432;Database=capsyncerdb;Username=postgres;Password=postgres"));
 
 // CORS configuration
 builder.Services.AddCors(options =>
