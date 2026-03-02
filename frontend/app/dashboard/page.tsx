@@ -962,6 +962,7 @@ function TeamView({
                     )}
                   </div>
                 ),
+                sortKey: "name",
               },
               {
                 header: "Capacity",
@@ -972,6 +973,7 @@ function TeamView({
                     {c.capacity}h/week
                   </span>
                 ),
+                sortKey: "capacity",
               },
               {
                 header: "Assigned",
@@ -979,6 +981,7 @@ function TeamView({
                   const stats = calculateCoworkerStats(c.id);
                   return `${stats.assignedHours}h`;
                 },
+                sortKey: (c) => calculateCoworkerStats(c.id).assignedHours,
               },
               {
                 header: "Available",
@@ -996,6 +999,7 @@ function TeamView({
                     </span>
                   );
                 },
+                sortKey: (c) => calculateCoworkerStats(c.id).available,
               },
               {
                 header: "Capacity Utilization",
@@ -1031,6 +1035,7 @@ function TeamView({
                     </div>
                   );
                 },
+                sortKey: (c) => calculateCoworkerStats(c.id).percentage,
               },
               {
                 header: "Actions",
@@ -1141,11 +1146,13 @@ function TeamView({
                     {p.name}
                   </Link>
                 ),
+                sortKey: "name",
               },
               {
                 header: "Tasks",
                 accessor: (p) =>
                   tasks.filter((t) => t.projectId === p.id).length,
+                sortKey: (p) => tasks.filter((t) => t.projectId === p.id).length,
               },
               {
                 header: "Total Hours",
@@ -1153,6 +1160,9 @@ function TeamView({
                   `${tasks
                     .filter((t) => t.projectId === p.id)
                     .reduce((sum, t) => sum + t.estimatedHours, 0)}h`,
+                sortKey: (p) => tasks
+                  .filter((t) => t.projectId === p.id)
+                  .reduce((sum, t) => sum + t.estimatedHours, 0),
               },
               {
                 header: "Actions",
@@ -1242,6 +1252,7 @@ function TeamView({
                     {t.name}
                   </Link>
                 ),
+                sortKey: "name",
               },
               {
                 header: "Project",
@@ -1257,6 +1268,10 @@ function TeamView({
                   ) : (
                     "N/A"
                   );
+                },
+                sortKey: (t) => {
+                  const project = projects.find((p) => p.id === t.projectId);
+                  return project ? project.name : "N/A";
                 },
               },
               {
@@ -1276,6 +1291,7 @@ function TeamView({
                     {t.priority}
                   </span>
                 ),
+                sortKey: "priority",
               },
               {
                 header: "Status",
@@ -1294,12 +1310,18 @@ function TeamView({
                     {t.status}
                   </span>
                 ),
+                sortKey: "status",
               },
-              { header: "Est. Hours", accessor: (t) => `${t.estimatedHours}h` },
+              { 
+                header: "Est. Hours", 
+                accessor: (t) => `${t.estimatedHours}h`,
+                sortKey: "estimatedHours",
+              },
               {
                 header: "Assigned",
                 accessor: (t) =>
                   assignments.filter((a) => a.taskItemId === t.id).length,
+                sortKey: (t) => assignments.filter((a) => a.taskItemId === t.id).length,
               },
               {
                 header: "Actions",
@@ -1394,6 +1416,10 @@ function TeamView({
                     "N/A"
                   );
                 },
+                sortKey: (a) => {
+                  const coworker = coworkers.find((c) => c.id === a.coworkerId);
+                  return coworker ? coworker.name : "N/A";
+                },
               },
               {
                 header: "Task",
@@ -1410,8 +1436,16 @@ function TeamView({
                     "N/A"
                   );
                 },
+                sortKey: (a) => {
+                  const task = tasks.find((t) => t.id === a.taskItemId);
+                  return task ? task.name : "N/A";
+                },
               },
-              { header: "Hours", accessor: (a) => `${a.hoursAssigned}h` },
+              { 
+                header: "Hours", 
+                accessor: (a) => `${a.hoursAssigned}h`,
+                sortKey: "hoursAssigned",
+              },
               {
                 header: "Date",
                 accessor: (a) =>
@@ -1420,11 +1454,17 @@ function TeamView({
                     month: "short",
                     day: "numeric",
                   }),
+                sortKey: "assignedDate",
               },
-              { header: "Note", accessor: (a) => a.note || "-" },
+              { 
+                header: "Note", 
+                accessor: (a) => a.note || "-",
+                sortKey: "note",
+              },
               {
                 header: "Assigned By",
                 accessor: (a) => a.assignedBy || "Unknown User",
+                sortKey: "assignedBy",
               },
               {
                 header: "Actions",
