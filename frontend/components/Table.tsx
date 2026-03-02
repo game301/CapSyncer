@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import { Button } from "./Button";
 
 type SortDirection = "asc" | "desc" | null;
 
@@ -47,24 +48,27 @@ export function SearchInput({
         />
       </svg>
       {value && (
-        <button
+        <Button
           onClick={() => onChange("")}
-          className="absolute right-3 top-2.5 text-slate-500 hover:text-slate-300"
-        >
-          <svg
-            className="h-5 w-5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M6 18L18 6M6 6l12 12"
-            />
-          </svg>
-        </button>
+          variant="secondary"
+          size="icon"
+          className="absolute right-3 top-2.5 bg-transparent hover:bg-slate-700"
+          icon={
+            <svg
+              className="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          }
+        />
       )}
     </div>
   );
@@ -83,15 +87,16 @@ export function Table<T extends { id: number }>({
   columns,
   emptyMessage = "No data available",
   searchQuery: externalSearchQuery,
-  onSearchChange,
 }: TableProps<T>) {
   const [sortColumn, setSortColumn] = useState<number | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
-  const [internalSearchQuery, setInternalSearchQuery] = useState("");
-  
+  const [internalSearchQuery] = useState("");
+
   // Use external search state if provided, otherwise use internal state
-  const searchQuery = externalSearchQuery !== undefined ? externalSearchQuery : internalSearchQuery;
-  const setSearchQuery = onSearchChange || setInternalSearchQuery;
+  const searchQuery =
+    externalSearchQuery !== undefined
+      ? externalSearchQuery
+      : internalSearchQuery;
 
   const handleSort = (columnIndex: number) => {
     const column = columns[columnIndex];
@@ -116,24 +121,24 @@ export function Table<T extends { id: number }>({
   const filteredAndSortedData = useMemo(() => {
     // First, filter the data based on search query
     let filtered = data;
-    
+
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       filtered = data.filter((item) => {
-        return columns.some((col, idx) => {
+        return columns.some((col) => {
           if (col.searchable === false) return false;
-          
+
           const sortKey = col.sortKey || col.accessor;
-          let value: any;
-          
+          let value: unknown;
+
           if (typeof sortKey === "function") {
             value = sortKey(item);
           } else {
             value = item[sortKey];
           }
-          
+
           if (value == null) return false;
-          
+
           return String(value).toLowerCase().includes(query);
         });
       });
@@ -148,8 +153,8 @@ export function Table<T extends { id: number }>({
     const sortKey = column.sortKey || column.accessor;
 
     return [...filtered].sort((a, b) => {
-      let aVal: any;
-      let bVal: any;
+      let aVal: unknown;
+      let bVal: unknown;
 
       if (typeof sortKey === "function") {
         aVal = sortKey(a);
@@ -167,8 +172,14 @@ export function Table<T extends { id: number }>({
       if (typeof aVal === "string") aVal = aVal.toLowerCase();
       if (typeof bVal === "string") bVal = bVal.toLowerCase();
 
-      if (aVal < bVal) return sortDirection === "asc" ? -1 : 1;
-      if (aVal > bVal) return sortDirection === "asc" ? 1 : -1;
+      // Compare values with proper type checking
+      if (typeof aVal === "number" && typeof bVal === "number") {
+        if (aVal < bVal) return sortDirection === "asc" ? -1 : 1;
+        if (aVal > bVal) return sortDirection === "asc" ? 1 : -1;
+      } else if (typeof aVal === "string" && typeof bVal === "string") {
+        if (aVal < bVal) return sortDirection === "asc" ? -1 : 1;
+        if (aVal > bVal) return sortDirection === "asc" ? 1 : -1;
+      }
       return 0;
     });
   }, [data, sortColumn, sortDirection, columns, searchQuery]);
@@ -199,14 +210,20 @@ export function Table<T extends { id: number }>({
                     key={idx}
                     onClick={() => handleSort(idx)}
                     className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-400 ${
-                      col.sortable !== false ? "cursor-pointer hover:text-slate-200 select-none" : ""
+                      col.sortable !== false
+                        ? "cursor-pointer hover:text-slate-200 select-none"
+                        : ""
                     }`}
                   >
                     <div className="flex items-center gap-2">
                       <span>{col.header}</span>
                       {col.sortable !== false && sortColumn === idx && (
                         <span className="text-blue-400">
-                          {sortDirection === "asc" ? "↑" : sortDirection === "desc" ? "↓" : ""}
+                          {sortDirection === "asc"
+                            ? "↑"
+                            : sortDirection === "desc"
+                              ? "↓"
+                              : ""}
                         </span>
                       )}
                     </div>
