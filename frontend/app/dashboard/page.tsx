@@ -1448,26 +1448,6 @@ function TeamView({
             onSearchChange={setAssignmentsSearch}
             columns={[
               {
-                header: "Coworker",
-                accessor: (a) => {
-                  const coworker = coworkers.find((c) => c.id === a.coworkerId);
-                  return coworker ? (
-                    <Link
-                      href={`/coworkers/${coworker.id}`}
-                      className="text-blue-400 hover:text-blue-300 hover:underline"
-                    >
-                      {coworker.name}
-                    </Link>
-                  ) : (
-                    "N/A"
-                  );
-                },
-                sortKey: (a) => {
-                  const coworker = coworkers.find((c) => c.id === a.coworkerId);
-                  return coworker ? coworker.name : "N/A";
-                },
-              },
-              {
                 header: "Task",
                 accessor: (a) => {
                   const task = tasks.find((t) => t.id === a.taskItemId);
@@ -1485,6 +1465,26 @@ function TeamView({
                 sortKey: (a) => {
                   const task = tasks.find((t) => t.id === a.taskItemId);
                   return task ? task.name : "N/A";
+                },
+              },
+              {
+                header: "Coworker",
+                accessor: (a) => {
+                  const coworker = coworkers.find((c) => c.id === a.coworkerId);
+                  return coworker ? (
+                    <Link
+                      href={`/coworkers/${coworker.id}`}
+                      className="text-blue-400 hover:text-blue-300 hover:underline"
+                    >
+                      {coworker.name}
+                    </Link>
+                  ) : (
+                    "N/A"
+                  );
+                },
+                sortKey: (a) => {
+                  const coworker = coworkers.find((c) => c.id === a.coworkerId);
+                  return coworker ? coworker.name : "N/A";
                 },
               },
               { 
