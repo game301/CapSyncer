@@ -29,7 +29,7 @@ export function Navbar() {
               href="/capacity"
               className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-purple-700"
             >
-              Capacity Calendar
+              Calendar
             </Link>
             <UserSettings />
           </div>

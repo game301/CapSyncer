@@ -19,6 +19,12 @@ export default function Home() {
             >
               Go to Dashboard
             </Link>
+            <Link
+              className="flex h-12 items-center justify-center rounded-full bg-purple-600 px-8 font-medium text-white transition hover:bg-purple-700"
+              href="/capacity"
+            >
+              Go to Calendar
+            </Link>
           </div>
         </main>
       </div>
