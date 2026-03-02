@@ -2,7 +2,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Table } from "../../components/Table";
+import { Table, SearchInput, useTableSearch } from "../../components/Table";
 import { Modal } from "../../components/Modal";
 import { Button } from "../../components/Button";
 import { Input, Select, Textarea } from "../../components/FormInputs";
@@ -862,6 +862,12 @@ function TeamView({
     (searchParams.get("tab") as EntityType) || "coworkers",
   );
 
+  // Search states for each tab
+  const { searchQuery: coworkersSearch, setSearchQuery: setCoworkersSearch } = useTableSearch();
+  const { searchQuery: projectsSearch, setSearchQuery: setProjectsSearch } = useTableSearch();
+  const { searchQuery: tasksSearch, setSearchQuery: setTasksSearch } = useTableSearch();
+  const { searchQuery: assignmentsSearch, setSearchQuery: setAssignmentsSearch } = useTableSearch();
+
   // Update URL when tab changes
   const updateActiveTab = (tab: EntityType) => {
     setActiveTab(tab);
@@ -919,27 +925,37 @@ function TeamView({
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold text-white">Team Members</h2>
-            {permissions.canManageCoworkers && (
-              <Button onClick={onCreateCoworker}>
-                <svg
-                  className="mr-2 h-5 w-5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 4v16m8-8H4"
-                  />
-                </svg>
-                Add Coworker
-              </Button>
-            )}
+            <div className="flex items-center gap-3">
+              <SearchInput
+                value={coworkersSearch}
+                onChange={setCoworkersSearch}
+                placeholder="Search team members..."
+                className="w-64"
+              />
+              {permissions.canManageCoworkers && (
+                <Button onClick={onCreateCoworker}>
+                  <svg
+                    className="mr-2 h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 4v16m8-8H4"
+                    />
+                  </svg>
+                  Add Coworker
+                </Button>
+              )}
+            </div>
           </div>
           <Table
             data={coworkers}
+            searchQuery={coworkersSearch}
+            onSearchChange={setCoworkersSearch}
             columns={[
               {
                 header: "Name",
@@ -1114,27 +1130,37 @@ function TeamView({
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold text-white">Projects</h2>
-            {permissions.canManageProjects && (
-              <Button onClick={onCreateProject}>
-                <svg
-                  className="mr-2 h-5 w-5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 4v16m8-8H4"
-                  />
-                </svg>
-                Add Project
-              </Button>
-            )}
+            <div className="flex items-center gap-3">
+              <SearchInput
+                value={projectsSearch}
+                onChange={setProjectsSearch}
+                placeholder="Search projects..."
+                className="w-64"
+              />
+              {permissions.canManageProjects && (
+                <Button onClick={onCreateProject}>
+                  <svg
+                    className="mr-2 h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 4v16m8-8H4"
+                    />
+                  </svg>
+                  Add Project
+                </Button>
+              )}
+            </div>
           </div>
           <Table
             data={projects}
+            searchQuery={projectsSearch}
+            onSearchChange={setProjectsSearch}
             columns={[
               {
                 header: "Project Name",
@@ -1220,27 +1246,37 @@ function TeamView({
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold text-white">Tasks</h2>
-            {permissions.canManageTasks && (
-              <Button onClick={onCreateTask}>
-                <svg
-                  className="mr-2 h-5 w-5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 4v16m8-8H4"
-                  />
-                </svg>
-                Add Task
-              </Button>
-            )}
+            <div className="flex items-center gap-3">
+              <SearchInput
+                value={tasksSearch}
+                onChange={setTasksSearch}
+                placeholder="Search tasks..."
+                className="w-64"
+              />
+              {permissions.canManageTasks && (
+                <Button onClick={onCreateTask}>
+                  <svg
+                    className="mr-2 h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 4v16m8-8H4"
+                    />
+                  </svg>
+                  Add Task
+                </Button>
+              )}
+            </div>
           </div>
           <Table
             data={tasks}
+            searchQuery={tasksSearch}
+            onSearchChange={setTasksSearch}
             columns={[
               {
                 header: "Task Name",
@@ -1379,27 +1415,37 @@ function TeamView({
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold text-white">Assignments</h2>
-            {permissions.canManageAssignments && (
-              <Button onClick={onCreateAssignment}>
-                <svg
-                  className="mr-2 h-5 w-5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 4v16m8-8H4"
-                  />
-                </svg>
-                Add Assignment
-              </Button>
-            )}
+            <div className="flex items-center gap-3">
+              <SearchInput
+                value={assignmentsSearch}
+                onChange={setAssignmentsSearch}
+                placeholder="Search assignments..."
+                className="w-64"
+              />
+              {permissions.canManageAssignments && (
+                <Button onClick={onCreateAssignment}>
+                  <svg
+                    className="mr-2 h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 4v16m8-8H4"
+                    />
+                  </svg>
+                  Add Assignment
+                </Button>
+              )}
+            </div>
           </div>
           <Table
             data={assignments}
+            searchQuery={assignmentsSearch}
+            onSearchChange={setAssignmentsSearch}
             columns={[
               {
                 header: "Coworker",
