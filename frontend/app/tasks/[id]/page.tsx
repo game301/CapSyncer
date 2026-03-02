@@ -500,7 +500,7 @@ export default function TaskDetailPage() {
               </p>
               {permissions.canManageAssignments && (
                 <p className="text-sm text-slate-500">
-                  Click "Add Assignment" to assign this task to a team member
+                  Click &quot;Add Assignment&quot; to assign this task to a team member
                 </p>
               )}
             </div>
