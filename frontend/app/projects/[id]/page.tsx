@@ -9,6 +9,7 @@ import { Table } from "../../../components/Table";
 import { Modal } from "../../../components/Modal";
 import { Input, Select, Textarea } from "../../../components/FormInputs";
 import { usePermissions } from "../../../contexts/PermissionContext";
+import { Toast, useToast } from "../../../components/Toast";
 
 const PRIORITIES = ["Low", "Normal", "High", "Critical"];
 const STATUSES = ["Not started", "In progress", "Completed", "Continuous"];
@@ -73,6 +74,7 @@ export default function ProjectDetailPage() {
   const [selectedCoworkerId, setSelectedCoworkerId] = useState<number | null>(
     null,
   );
+  const { toasts, showToast, removeToast } = useToast();
 
   const apiBaseUrl =
     process.env.NEXT_PUBLIC_API_BASEURL || "http://localhost:5128";
@@ -163,12 +165,22 @@ export default function ProjectDetailPage() {
       });
 
       if (response.ok) {
+        showToast({
+          message: "Task deleted successfully!",
+          type: "success",
+        });
         await fetchData();
       } else {
-        alert("Failed to delete task");
+        showToast({
+          message: "Failed to delete task",
+          type: "error",
+        });
       }
     } catch {
-      alert("Error deleting task");
+      showToast({
+        message: "Error deleting task",
+        type: "error",
+      });
     }
   };
 
@@ -185,12 +197,22 @@ export default function ProjectDetailPage() {
       });
 
       if (response.ok) {
+        showToast({
+          message: "Assignment deleted successfully!",
+          type: "success",
+        });
         await fetchData();
       } else {
-        alert("Failed to delete assignment");
+        showToast({
+          message: "Failed to delete assignment",
+          type: "error",
+        });
       }
     } catch {
-      alert("Error deleting assignment");
+      showToast({
+        message: "Error deleting assignment",
+        type: "error",
+      });
     }
   };
 
@@ -224,7 +246,31 @@ export default function ProjectDetailPage() {
     // Add assignedBy for assignments (use context userName, will be replaced with Azure AD later)
     if (modalType === "assignment") {
       data.assignedBy = permissions.userName || "Unknown User";
+
+      // Validate required fields for assignments
+      if (!data.coworkerId || data.coworkerId === 0) {
+        alert("Please select a coworker");
+        return;
+      }
+      if (!data.taskItemId || data.taskItemId === 0) {
+        alert("Please select a task");
+        return;
+      }
+      if (!data.hoursAssigned || data.hoursAssigned === 0) {
+        alert("Please enter hours assigned (must be greater than 0)");
+        return;
+      }
     }
+
+    // Validate required fields for tasks
+    if (modalType === "task") {
+      if (!data.estimatedHours || data.estimatedHours === 0) {
+        alert("Please enter estimated hours (must be greater than 0)");
+        return;
+      }
+    }
+
+    console.log("Submitting data:", data);
 
     try {
       const entityType = modalType === "task" ? "tasks" : "assignments";
@@ -240,18 +286,29 @@ export default function ProjectDetailPage() {
       });
 
       if (response.ok) {
+        const entityName = modalType === "task" ? "Task" : "Assignment";
+        showToast({
+          message: `${entityName} ${modalMode === "create" ? "created" : "updated"} successfully!`,
+          type: "success",
+        });
         setModalOpen(false);
         await fetchData();
       } else {
         const errorText = await response.text();
         console.error("Save failed:", errorText);
-        alert(`Failed to save: ${errorText || "Unknown error"}`);
+        console.error("Data sent:", data);
+        showToast({
+          message: `Failed to save: ${errorText || "Unknown error"}`,
+          type: "error",
+        });
       }
     } catch (err) {
       console.error("Error saving item:", err);
-      alert(
-        `Error saving item: ${err instanceof Error ? err.message : "Unknown error"}`,
-      );
+      console.error("Data attempted:", data);
+      showToast({
+        message: `Error saving item: ${err instanceof Error ? err.message : "Unknown error"}`,
+        type: "error",
+      });
     }
   };
 
@@ -587,12 +644,12 @@ export default function ProjectDetailPage() {
                     <span
                       className={`rounded px-2 py-1 text-xs font-semibold ${
                         t.status === "Completed"
-                          ? "bg-green-900 text-green-200"
+                          ? "bg-green-950 text-green-200 border border-green-800"
                           : t.status === "In progress"
-                            ? "bg-yellow-900 text-yellow-200"
+                            ? "bg-blue-900 text-blue-200 border border-blue-800"
                             : t.status === "Continuous"
-                              ? "bg-blue-900 text-blue-200"
-                              : "bg-slate-700 text-slate-300"
+                              ? "bg-purple-900 text-purple-200 border border-purple-800"
+                              : "bg-slate-800 text-slate-300 border border-slate-700"
                       }`}
                     >
                       {t.status}
@@ -768,7 +825,11 @@ export default function ProjectDetailPage() {
                 {
                   header: "Date",
                   accessor: (a) =>
-                    new Date(a.assignedDate).toLocaleDateString(),
+                    new Date(a.assignedDate).toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                    }),
                 },
                 {
                   header: "Note",
@@ -1118,6 +1179,17 @@ export default function ProjectDetailPage() {
           </div>
         </form>
       </Modal>
+
+      {/* Toast Notifications */}
+      {toasts.map((toast) => (
+        <Toast
+          key={toast.id}
+          message={toast.message}
+          type={toast.type}
+          duration={toast.duration}
+          onClose={() => removeToast(toast.id)}
+        />
+      ))}
     </PageLayout>
   );
 }

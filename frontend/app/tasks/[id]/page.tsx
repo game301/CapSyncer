@@ -9,6 +9,7 @@ import { Table } from "../../../components/Table";
 import { Modal } from "../../../components/Modal";
 import { Input, Select, Textarea } from "../../../components/FormInputs";
 import { usePermissions } from "../../../contexts/PermissionContext";
+import { Toast, useToast } from "../../../components/Toast";
 
 interface TaskItem {
   id: number;
@@ -50,6 +51,8 @@ export default function TaskDetailPage() {
   const [task, setTask] = useState<TaskItem | null>(null);
   const [project, setProject] = useState<Project | null>(null);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [allAssignments, setAllAssignments] = useState<Assignment[]>([]);
+  const [tasks, setTasks] = useState<TaskItem[]>([]);
   const [coworkers, setCoworkers] = useState<Coworker[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -62,17 +65,19 @@ export default function TaskDetailPage() {
   const [selectedCoworkerId, setSelectedCoworkerId] = useState<number | null>(
     null,
   );
+  const { toasts, showToast, removeToast } = useToast();
 
   const apiBaseUrl =
     process.env.NEXT_PUBLIC_API_BASEURL || "http://localhost:5128";
 
   const fetchData = async () => {
     try {
-      const [taskRes, projectsRes, assignmentsRes, coworkersRes] =
+      const [taskRes, projectsRes, assignmentsRes, tasksRes, coworkersRes] =
         await Promise.all([
           fetch(`${apiBaseUrl}/api/tasks/${taskId}`),
           fetch(`${apiBaseUrl}/api/projects`),
           fetch(`${apiBaseUrl}/api/assignments`),
+          fetch(`${apiBaseUrl}/api/tasks`),
           fetch(`${apiBaseUrl}/api/coworkers`),
         ]);
 
@@ -83,6 +88,7 @@ export default function TaskDetailPage() {
       const taskData = await taskRes.json();
       const projectsData = await projectsRes.json();
       const assignmentsData = await assignmentsRes.json();
+      const tasksData = await tasksRes.json();
       const coworkersData = await coworkersRes.json();
 
       setTask(taskData);
@@ -92,6 +98,8 @@ export default function TaskDetailPage() {
       setAssignments(
         assignmentsData.filter((a: Assignment) => a.taskItemId === taskId),
       );
+      setAllAssignments(assignmentsData);
+      setTasks(tasksData);
       setCoworkers(coworkersData);
       setLoading(false);
     } catch (err) {
@@ -131,12 +139,22 @@ export default function TaskDetailPage() {
       });
 
       if (response.ok) {
+        showToast({
+          message: "Assignment deleted successfully!",
+          type: "success",
+        });
         await fetchData();
       } else {
-        alert("Failed to delete assignment");
+        showToast({
+          message: "Failed to delete assignment",
+          type: "error",
+        });
       }
     } catch {
-      alert("Error deleting assignment");
+      showToast({
+        message: "Error deleting assignment",
+        type: "error",
+      });
     }
   };
 
@@ -163,6 +181,18 @@ export default function TaskDetailPage() {
     // Add assignedBy (use context userName, will be replaced with Azure AD later)
     data.assignedBy = permissions.userName || "Unknown User";
 
+    // Validate required fields
+    if (!data.coworkerId || data.coworkerId === 0) {
+      alert("Please select a coworker");
+      return;
+    }
+    if (!data.hoursAssigned || data.hoursAssigned === 0) {
+      alert("Please enter hours assigned (must be greater than 0)");
+      return;
+    }
+
+    console.log("Submitting assignment data:", data);
+
     try {
       const url =
         modalMode === "create"
@@ -176,18 +206,28 @@ export default function TaskDetailPage() {
       });
 
       if (response.ok) {
+        showToast({
+          message: `Assignment ${modalMode === "create" ? "created" : "updated"} successfully!`,
+          type: "success",
+        });
         setModalOpen(false);
         await fetchData();
       } else {
         const errorText = await response.text();
         console.error("Save failed:", errorText);
-        alert(`Failed to save: ${errorText || "Unknown error"}`);
+        console.error("Data sent:", data);
+        showToast({
+          message: `Failed to save: ${errorText || "Unknown error"}`,
+          type: "error",
+        });
       }
     } catch (err) {
       console.error("Error saving assignment:", err);
-      alert(
-        `Error saving assignment: ${err instanceof Error ? err.message : "Unknown error"}`,
-      );
+      console.error("Data attempted:", data);
+      showToast({
+        message: `Error saving assignment: ${err instanceof Error ? err.message : "Unknown error"}`,
+        type: "error",
+      });
     }
   };
 
@@ -498,7 +538,11 @@ export default function TaskDetailPage() {
                 {
                   header: "Assigned Date",
                   accessor: (a) =>
-                    new Date(a.assignedDate).toLocaleDateString(),
+                    new Date(a.assignedDate).toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                    }),
                 },
                 {
                   header: "Note",
@@ -592,7 +636,7 @@ export default function TaskDetailPage() {
               const selectedCoworker = coworkers.find(
                 (c) => c.id === selectedCoworkerId,
               );
-              const coworkerAssignments = assignments.filter(
+              const coworkerAssignments = allAssignments.filter(
                 (a) => a.coworkerId === selectedCoworkerId,
               );
               const totalAssignedToCoworker = coworkerAssignments.reduce(
@@ -650,6 +694,19 @@ export default function TaskDetailPage() {
                       <p className="text-xs font-semibold text-purple-300 mb-1">
                         Current Assignments:
                       </p>
+                      <ul className="text-xs text-purple-400 space-y-1 ml-2">
+                        {coworkerAssignments.map((a) => {
+                          const assignedTask = tasks.find(
+                            (t) => t.id === a.taskItemId,
+                          );
+                          return (
+                            <li key={a.id}>
+                              • {assignedTask?.name || "Unknown Task"}:{" "}
+                              {a.hoursAssigned}h
+                            </li>
+                          );
+                        })}
+                      </ul>
                       <p className="text-xs text-purple-300 mt-2">
                         <strong>Total Assigned:</strong>{" "}
                         {totalAssignedToCoworker}h
@@ -670,6 +727,62 @@ export default function TaskDetailPage() {
                 </div>
               );
             })()}
+
+          {/* Task Information Box */}
+          {(() => {
+            const taskAssignments = assignments;
+            const totalAssigned = taskAssignments.reduce(
+              (sum, a) => sum + a.hoursAssigned,
+              0,
+            );
+            const remainingHours = (task?.estimatedHours || 0) - totalAssigned;
+
+            return (
+              <div className="rounded-lg border border-blue-700 bg-blue-900/20 p-3 space-y-2">
+                <div>
+                  <p className="text-sm text-blue-300">
+                    <strong>Task Estimated Hours:</strong>{" "}
+                    {task?.estimatedHours || 0}h
+                  </p>
+                </div>
+                {taskAssignments.length > 0 && (
+                  <div className="border-t border-blue-800 pt-2">
+                    <p className="text-xs font-semibold text-blue-300 mb-1">
+                      Already Assigned:
+                    </p>
+                    <ul className="text-xs text-blue-400 space-y-1 ml-2">
+                      {taskAssignments.map((a) => {
+                        const assignedCoworker = coworkers.find(
+                          (c) => c.id === a.coworkerId,
+                        );
+                        return (
+                          <li key={a.id}>
+                            • {assignedCoworker?.name || "Unknown"}:{" "}
+                            {a.hoursAssigned}h
+                          </li>
+                        );
+                      })}
+                    </ul>
+                    <p className="text-xs text-blue-300 mt-2">
+                      <strong>Total Assigned:</strong> {totalAssigned}h
+                    </p>
+                    <p
+                      className={`text-xs font-semibold mt-1 ${remainingHours >= 0 ? "text-green-400" : "text-red-400"}`}
+                    >
+                      <strong>Remaining:</strong> {remainingHours}h
+                      {remainingHours < 0 && " (Over-assigned!)"}
+                    </p>
+                  </div>
+                )}
+                {taskAssignments.length === 0 && (
+                  <p className="text-xs text-blue-400">
+                    No assignments yet. Use the estimated hours as a reference.
+                  </p>
+                )}
+              </div>
+            );
+          })()}
+
           <Input
             label="Hours Assigned"
             name="hoursAssigned"
@@ -712,6 +825,17 @@ export default function TaskDetailPage() {
           </div>
         </form>
       </Modal>
+
+      {/* Toast Notifications */}
+      {toasts.map((toast) => (
+        <Toast
+          key={toast.id}
+          message={toast.message}
+          type={toast.type}
+          duration={toast.duration}
+          onClose={() => removeToast(toast.id)}
+        />
+      ))}
     </PageLayout>
   );
 }

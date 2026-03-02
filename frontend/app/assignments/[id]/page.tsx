@@ -166,7 +166,11 @@ export default function AssignmentDetailPage() {
               </h1>
               <p className="mt-2 text-slate-400">
                 Created on{" "}
-                {new Date(assignment.assignedDate).toLocaleDateString()}
+                {new Date(assignment.assignedDate).toLocaleDateString("en-US", {
+                  year: "numeric",
+                  month: "short",
+                  day: "numeric",
+                })}
               </p>
             </div>
             <div className="rounded-full bg-cyan-600 p-4">

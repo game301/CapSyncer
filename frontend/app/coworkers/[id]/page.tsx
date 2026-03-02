@@ -309,7 +309,11 @@ export default function CoworkerDetailPage() {
                 {
                   header: "Assigned Date",
                   accessor: (a) =>
-                    new Date(a.assignedDate).toLocaleDateString(),
+                    new Date(a.assignedDate).toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                    }),
                 },
                 {
                   header: "Assigned By",

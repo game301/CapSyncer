@@ -8,6 +8,7 @@ import { Button } from "../../components/Button";
 import { Input, Select, Textarea } from "../../components/FormInputs";
 import { PageLayout } from "../../components/PageLayout";
 import { usePermissions } from "../../contexts/PermissionContext";
+import { Toast, useToast } from "../../components/Toast";
 
 // Priority and Status options
 const PRIORITIES = ["Low", "Normal", "High", "Critical"];
@@ -69,6 +70,11 @@ export default function Dashboard() {
   const [editingEntity, setEditingEntity] = useState<
     Coworker | Project | TaskItem | Assignment | null
   >(null);
+  const [selectedCoworkerId, setSelectedCoworkerId] = useState<number | null>(
+    null,
+  );
+  const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
+  const { toasts, showToast, removeToast } = useToast();
 
   const apiBaseUrl =
     process.env.NEXT_PUBLIC_API_BASEURL || "http://localhost:5128";
@@ -128,6 +134,8 @@ export default function Dashboard() {
     setModalMode("create");
     setActiveEntity(entityType);
     setEditingEntity(null);
+    setSelectedCoworkerId(null);
+    setSelectedTaskId(null);
     setModalOpen(true);
   };
 
@@ -138,6 +146,17 @@ export default function Dashboard() {
     setModalMode("edit");
     setActiveEntity(entityType);
     setEditingEntity(entity);
+
+    // Initialize selected IDs for assignment editing
+    if (entityType === "assignments") {
+      const assignment = entity as Assignment;
+      setSelectedCoworkerId(assignment.coworkerId);
+      setSelectedTaskId(assignment.taskItemId);
+    } else {
+      setSelectedCoworkerId(null);
+      setSelectedTaskId(null);
+    }
+
     setModalOpen(true);
   };
 
@@ -160,9 +179,17 @@ export default function Dashboard() {
       });
 
       if (response.ok) {
+        const entityName = entityType.slice(0, -1);
+        showToast({
+          message: `${entityName.charAt(0).toUpperCase() + entityName.slice(1)} deleted successfully!`,
+          type: "success",
+        });
         await fetchData();
       } else {
-        alert("Failed to delete");
+        showToast({
+          message: "Failed to delete",
+          type: "error",
+        });
       }
     } catch {
       alert("Error deleting item");
@@ -183,10 +210,47 @@ export default function Dashboard() {
         key === "hoursAssigned"
       ) {
         data[key] = Number(value);
+      } else if (key === "assignedDate") {
+        // Convert datetime-local to UTC ISO string
+        const localDate = new Date(String(value));
+        data[key] = localDate.toISOString();
       } else {
         data[key] = String(value);
       }
     });
+
+    // Add assignedBy for assignments (use context userName, will be replaced with Azure AD later)
+    if (activeEntity === "assignments") {
+      data.assignedBy = permissions.userName || "Unknown User";
+
+      // Validate required fields for assignments
+      if (!data.coworkerId || data.coworkerId === 0) {
+        alert("Please select a coworker");
+        return;
+      }
+      if (!data.taskItemId || data.taskItemId === 0) {
+        alert("Please select a task");
+        return;
+      }
+      if (!data.hoursAssigned || data.hoursAssigned === 0) {
+        alert("Please enter hours assigned (must be greater than 0)");
+        return;
+      }
+    }
+
+    // Validate required fields for tasks
+    if (activeEntity === "tasks") {
+      if (!data.projectId || data.projectId === 0) {
+        alert("Please select a project");
+        return;
+      }
+      if (!data.estimatedHours || data.estimatedHours === 0) {
+        alert("Please enter estimated hours (must be greater than 0)");
+        return;
+      }
+    }
+
+    console.log("Submitting data:", data);
 
     try {
       const url =
@@ -202,6 +266,15 @@ export default function Dashboard() {
 
       if (response.ok) {
         setModalOpen(false);
+        setSelectedCoworkerId(null);
+        setSelectedTaskId(null);
+
+        // Show success toast
+        const entityName = activeEntity.slice(0, -1); // Remove 's' from end
+        showToast({
+          message: `${entityName.charAt(0).toUpperCase() + entityName.slice(1)} ${modalMode === "create" ? "created" : "updated"} successfully!`,
+          type: "success",
+        });
 
         // If creating a new project, redirect to its detail page
         if (modalMode === "create" && activeEntity === "projects") {
@@ -211,10 +284,17 @@ export default function Dashboard() {
           await fetchData();
         }
       } else {
-        alert("Failed to save");
+        const errorText = await response.text();
+        console.error("Save failed:", errorText);
+        console.error("Data sent:", data);
+        alert(`Failed to save: ${errorText || "Unknown error"}`);
       }
-    } catch {
-      alert("Error saving item");
+    } catch (err) {
+      console.error("Error saving item:", err);
+      console.error("Data attempted:", data);
+      alert(
+        `Error saving item: ${err instanceof Error ? err.message : "Unknown error"}`,
+      );
     }
   };
 
@@ -421,10 +501,116 @@ export default function Dashboard() {
                 required
                 options={[
                   { value: "", label: "Select a coworker" },
-                  ...coworkers.map((c) => ({ value: c.id, label: c.name })),
+                  ...coworkers
+                    .filter((c) => c.isActive)
+                    .map((c) => ({ value: c.id, label: c.name })),
+                  ...coworkers
+                    .filter((c) => !c.isActive)
+                    .map((c) => ({
+                      value: c.id,
+                      label: `${c.name} (Inactive - No longer available)`,
+                    })),
                 ]}
                 defaultValue={(editingEntity as Assignment)?.coworkerId || ""}
+                onChange={(e) => setSelectedCoworkerId(Number(e.target.value))}
               />
+              {selectedCoworkerId &&
+                (() => {
+                  const selectedCoworker = coworkers.find(
+                    (c) => c.id === selectedCoworkerId,
+                  );
+                  const coworkerAssignments = assignments.filter(
+                    (a) => a.coworkerId === selectedCoworkerId,
+                  );
+                  const totalAssignedToCoworker = coworkerAssignments.reduce(
+                    (sum, a) => sum + a.hoursAssigned,
+                    0,
+                  );
+                  const remainingCapacity =
+                    (selectedCoworker?.capacity || 0) - totalAssignedToCoworker;
+
+                  return (
+                    <div
+                      className={`rounded-lg border p-3 space-y-2 ${
+                        selectedCoworker?.isActive
+                          ? "border-purple-700 bg-purple-900/20"
+                          : "border-red-700 bg-red-900/20"
+                      }`}
+                    >
+                      {!selectedCoworker?.isActive && (
+                        <div className="flex items-center gap-2 text-red-300 mb-2 pb-2 border-b border-red-800">
+                          <svg
+                            className="h-5 w-5"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                            />
+                          </svg>
+                          <p className="text-sm font-semibold">
+                            This coworker is inactive and no longer available
+                            for new assignments.
+                          </p>
+                        </div>
+                      )}
+                      <div>
+                        <p
+                          className={`text-sm ${selectedCoworker?.isActive ? "text-purple-300" : "text-red-300"}`}
+                        >
+                          <strong>Coworker Capacity:</strong>{" "}
+                          <span
+                            className={
+                              !selectedCoworker?.isActive ? "line-through" : ""
+                            }
+                          >
+                            {selectedCoworker?.capacity || 0}h/week
+                          </span>
+                        </p>
+                      </div>
+                      {coworkerAssignments.length > 0 && (
+                        <div className="border-t border-purple-800 pt-2">
+                          <p className="text-xs font-semibold text-purple-300 mb-1">
+                            Current Assignments:
+                          </p>
+                          <ul className="text-xs text-purple-400 space-y-1 ml-2">
+                            {coworkerAssignments.map((a) => {
+                              const task = tasks.find(
+                                (t) => t.id === a.taskItemId,
+                              );
+                              return (
+                                <li key={a.id}>
+                                  • {task?.name || "Unknown"}: {a.hoursAssigned}
+                                  h
+                                </li>
+                              );
+                            })}
+                          </ul>
+                          <p className="text-xs text-purple-300 mt-2">
+                            <strong>Total Assigned:</strong>{" "}
+                            {totalAssignedToCoworker}h
+                          </p>
+                          <p
+                            className={`text-xs font-semibold mt-1 ${remainingCapacity >= 0 ? "text-green-400" : "text-red-400"}`}
+                          >
+                            <strong>Remaining Capacity:</strong>{" "}
+                            {remainingCapacity}h
+                            {remainingCapacity < 0 && " (Over-capacity!)"}
+                          </p>
+                        </div>
+                      )}
+                      {coworkerAssignments.length === 0 && (
+                        <p className="text-xs text-purple-400">
+                          No assignments yet. Full capacity available.
+                        </p>
+                      )}
+                    </div>
+                  );
+                })()}
               <Select
                 label="Task"
                 name="taskItemId"
@@ -434,11 +620,75 @@ export default function Dashboard() {
                   ...tasks.map((t) => ({ value: t.id, label: t.name })),
                 ]}
                 defaultValue={(editingEntity as Assignment)?.taskItemId || ""}
+                onChange={(e) => setSelectedTaskId(Number(e.target.value))}
               />
+              {selectedTaskId &&
+                (() => {
+                  const selectedTask = tasks.find(
+                    (t) => t.id === selectedTaskId,
+                  );
+                  const taskAssignments = assignments.filter(
+                    (a) => a.taskItemId === selectedTaskId,
+                  );
+                  const totalAssigned = taskAssignments.reduce(
+                    (sum, a) => sum + a.hoursAssigned,
+                    0,
+                  );
+                  const remainingHours =
+                    (selectedTask?.estimatedHours || 0) - totalAssigned;
+
+                  return (
+                    <div className="rounded-lg border border-blue-700 bg-blue-900/20 p-3 space-y-2">
+                      <div>
+                        <p className="text-sm text-blue-300">
+                          <strong>Task Estimated Hours:</strong>{" "}
+                          {selectedTask?.estimatedHours || 0}h
+                        </p>
+                      </div>
+                      {taskAssignments.length > 0 && (
+                        <div className="border-t border-blue-800 pt-2">
+                          <p className="text-xs font-semibold text-blue-300 mb-1">
+                            Already Assigned:
+                          </p>
+                          <ul className="text-xs text-blue-400 space-y-1 ml-2">
+                            {taskAssignments.map((a) => {
+                              const coworker = coworkers.find(
+                                (c) => c.id === a.coworkerId,
+                              );
+                              return (
+                                <li key={a.id}>
+                                  • {coworker?.name || "Unknown"}:{" "}
+                                  {a.hoursAssigned}h
+                                </li>
+                              );
+                            })}
+                          </ul>
+                          <p className="text-xs text-blue-300 mt-2">
+                            <strong>Total Assigned:</strong> {totalAssigned}h
+                          </p>
+                          <p
+                            className={`text-xs font-semibold mt-1 ${remainingHours >= 0 ? "text-green-400" : "text-red-400"}`}
+                          >
+                            <strong>Remaining:</strong> {remainingHours}h
+                            {remainingHours < 0 && " (Over-assigned!)"}
+                          </p>
+                        </div>
+                      )}
+                      {taskAssignments.length === 0 && (
+                        <p className="text-xs text-blue-400">
+                          No assignments yet. Use the estimated hours as a
+                          reference.
+                        </p>
+                      )}
+                    </div>
+                  );
+                })()}
               <Input
                 label="Hours Assigned"
                 name="hoursAssigned"
                 type="number"
+                step="0.5"
+                min="0"
                 required
                 defaultValue={(editingEntity as Assignment)?.hoursAssigned || 0}
               />
@@ -450,14 +700,14 @@ export default function Dashboard() {
               <Input
                 label="Assigned Date"
                 name="assignedDate"
-                type="date"
+                type="datetime-local"
                 required
                 defaultValue={
                   (editingEntity as Assignment)?.assignedDate
                     ? new Date((editingEntity as Assignment).assignedDate)
                         .toISOString()
-                        .split("T")[0]
-                    : new Date().toISOString().split("T")[0]
+                        .slice(0, 16)
+                    : new Date().toISOString().slice(0, 16)
                 }
               />
             </>
@@ -477,6 +727,17 @@ export default function Dashboard() {
           </div>
         </form>
       </Modal>
+
+      {/* Toast Notifications */}
+      {toasts.map((toast) => (
+        <Toast
+          key={toast.id}
+          message={toast.message}
+          type={toast.type}
+          duration={toast.duration}
+          onClose={() => removeToast(toast.id)}
+        />
+      ))}
     </PageLayout>
   );
 }
@@ -929,7 +1190,24 @@ function TeamView({
                   </span>
                 ),
               },
-              { header: "Status", accessor: "status" },
+              {
+                header: "Status",
+                accessor: (t) => (
+                  <span
+                    className={`rounded px-2 py-1 text-xs font-semibold ${
+                      t.status === "Completed"
+                        ? "bg-green-950 text-green-200 border border-green-800"
+                        : t.status === "In progress"
+                          ? "bg-blue-900 text-blue-200 border border-blue-800"
+                          : t.status === "Continuous"
+                            ? "bg-purple-900 text-purple-200 border border-purple-800"
+                            : "bg-slate-800 text-slate-300 border border-slate-700"
+                    }`}
+                  >
+                    {t.status}
+                  </span>
+                ),
+              },
               { header: "Est. Hours", accessor: (t) => `${t.estimatedHours}h` },
               {
                 header: "Assigned",
@@ -1049,9 +1327,18 @@ function TeamView({
               { header: "Hours", accessor: (a) => `${a.hoursAssigned}h` },
               {
                 header: "Date",
-                accessor: (a) => new Date(a.assignedDate).toLocaleDateString(),
+                accessor: (a) =>
+                  new Date(a.assignedDate).toLocaleDateString("en-US", {
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                  }),
               },
               { header: "Note", accessor: (a) => a.note || "-" },
+              {
+                header: "Assigned By",
+                accessor: (a) => a.assignedBy || "Unknown User",
+              },
               {
                 header: "Actions",
                 accessor: (a) => (
@@ -1247,8 +1534,26 @@ function PersonalView({
                   },
                   {
                     header: "Status",
-                    accessor: (a) =>
-                      tasks.find((t) => t.id === a.taskItemId)?.status || "N/A",
+                    accessor: (a) => {
+                      const task = tasks.find((t) => t.id === a.taskItemId);
+                      return task ? (
+                        <span
+                          className={`rounded px-2 py-1 text-xs font-semibold ${
+                            task.status === "Completed"
+                              ? "bg-green-950 text-green-200 border border-green-800"
+                              : task.status === "In progress"
+                                ? "bg-blue-900 text-blue-200 border border-blue-800"
+                                : task.status === "Continuous"
+                                  ? "bg-purple-900 text-purple-200 border border-purple-800"
+                                  : "bg-slate-800 text-slate-300 border border-slate-700"
+                          }`}
+                        >
+                          {task.status}
+                        </span>
+                      ) : (
+                        "N/A"
+                      );
+                    },
                   },
                   {
                     header: "Assigned Hours",
@@ -1257,7 +1562,11 @@ function PersonalView({
                   {
                     header: "Date",
                     accessor: (a) =>
-                      new Date(a.assignedDate).toLocaleDateString(),
+                      new Date(a.assignedDate).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                      }),
                   },
                   { header: "Note", accessor: (a) => a.note || "-" },
                 ]}
