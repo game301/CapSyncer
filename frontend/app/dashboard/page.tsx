@@ -9,6 +9,7 @@ import { Input, Select, Textarea } from "../../components/FormInputs";
 import { PageLayout } from "../../components/PageLayout";
 import { usePermissions } from "../../contexts/PermissionContext";
 import { Toast, useToast } from "../../components/Toast";
+import { WeekSelector } from "../../components/WeekSelector";
 
 // Priority and Status options
 const PRIORITIES = ["Low", "Normal", "High", "Critical"];
@@ -45,6 +46,8 @@ interface Assignment {
   note: string;
   assignedDate: string;
   assignedBy: string;
+  year: number;
+  weekNumber: number;
 }
 
 type ViewMode = "team" | "personal";
@@ -167,9 +170,12 @@ export default function Dashboard() {
     }
 
     try {
-      const response = await fetch(`${apiBaseUrl}/api/coworkers/${id}/reactivate`, {
-        method: "PUT",
-      });
+      const response = await fetch(
+        `${apiBaseUrl}/api/coworkers/${id}/reactivate`,
+        {
+          method: "PUT",
+        },
+      );
 
       if (response.ok) {
         showToast({
@@ -206,11 +212,13 @@ export default function Dashboard() {
     // Special handling for coworkers - check if it's inactive (second delete)
     let confirmMessage = "Are you sure you want to delete this item?";
     if (entityType === "coworkers") {
-      const coworker = coworkers.find(c => c.id === id);
+      const coworker = coworkers.find((c) => c.id === id);
       if (coworker && !coworker.isActive) {
-        confirmMessage = "This coworker is already inactive. This will PERMANENTLY delete the coworker and all data. Are you sure?";
+        confirmMessage =
+          "This coworker is already inactive. This will PERMANENTLY delete the coworker and all data. Are you sure?";
       } else {
-        confirmMessage = "This will deactivate the coworker (soft delete). You can permanently delete later. Continue?";
+        confirmMessage =
+          "This will deactivate the coworker (soft delete). You can permanently delete later. Continue?";
       }
     }
 
@@ -223,13 +231,14 @@ export default function Dashboard() {
 
       if (response.ok) {
         const entityName = entityType.slice(0, -1);
-        
+
         // Check if it's a coworker soft delete or permanent delete
         if (entityType === "coworkers") {
           const result = await response.json();
           if (result.message === "soft-delete") {
             showToast({
-              message: "Coworker deactivated (soft delete). Delete again to permanently remove.",
+              message:
+                "Coworker deactivated (soft delete). Delete again to permanently remove.",
               type: "success",
               duration: 5000,
             });
@@ -245,7 +254,7 @@ export default function Dashboard() {
             type: "success",
           });
         }
-        
+
         await fetchData();
       } else {
         showToast({
@@ -269,7 +278,9 @@ export default function Dashboard() {
         key === "capacity" ||
         key === "estimatedHours" ||
         key === "weeklyEffort" ||
-        key === "hoursAssigned"
+        key === "hoursAssigned" ||
+        key === "weekYear" ||
+        key === "weekNumber"
       ) {
         data[key] = Number(value);
       } else if (key === "assignedDate") {
@@ -285,6 +296,13 @@ export default function Dashboard() {
     if (activeEntity === "assignments") {
       data.assignedBy = permissions.userName || "Unknown User";
 
+      // Rename weekYear and weekNumber to match backend model (year, weekNumber)
+      if (data.weekYear !== undefined) {
+        data.year = data.weekYear;
+        delete data.weekYear;
+      }
+      // weekNumber already has the correct name, no need to rename
+
       // Validate required fields for assignments
       if (!data.coworkerId || data.coworkerId === 0) {
         alert("Please select a coworker");
@@ -296,6 +314,14 @@ export default function Dashboard() {
       }
       if (!data.hoursAssigned || data.hoursAssigned === 0) {
         alert("Please enter hours assigned (must be greater than 0)");
+        return;
+      }
+      if (!data.year) {
+        alert("Please select a year");
+        return;
+      }
+      if (!data.weekNumber) {
+        alert("Please select a week number");
         return;
       }
     }
@@ -746,6 +772,17 @@ export default function Dashboard() {
                     </div>
                   );
                 })()}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-slate-300">
+                  Week <span className="text-red-400">*</span>
+                </label>
+                <WeekSelector
+                  name="week"
+                  required
+                  defaultYear={(editingEntity as Assignment)?.year}
+                  defaultWeek={(editingEntity as Assignment)?.weekNumber}
+                />
+              </div>
               <Input
                 label="Hours Assigned"
                 name="hoursAssigned"
@@ -863,10 +900,16 @@ function TeamView({
   );
 
   // Search states for each tab
-  const { searchQuery: coworkersSearch, setSearchQuery: setCoworkersSearch } = useTableSearch();
-  const { searchQuery: projectsSearch, setSearchQuery: setProjectsSearch } = useTableSearch();
-  const { searchQuery: tasksSearch, setSearchQuery: setTasksSearch } = useTableSearch();
-  const { searchQuery: assignmentsSearch, setSearchQuery: setAssignmentsSearch } = useTableSearch();
+  const { searchQuery: coworkersSearch, setSearchQuery: setCoworkersSearch } =
+    useTableSearch();
+  const { searchQuery: projectsSearch, setSearchQuery: setProjectsSearch } =
+    useTableSearch();
+  const { searchQuery: tasksSearch, setSearchQuery: setTasksSearch } =
+    useTableSearch();
+  const {
+    searchQuery: assignmentsSearch,
+    setSearchQuery: setAssignmentsSearch,
+  } = useTableSearch();
 
   // Update URL when tab changes
   const updateActiveTab = (tab: EntityType) => {
@@ -1178,7 +1221,8 @@ function TeamView({
                 header: "Tasks",
                 accessor: (p) =>
                   tasks.filter((t) => t.projectId === p.id).length,
-                sortKey: (p) => tasks.filter((t) => t.projectId === p.id).length,
+                sortKey: (p) =>
+                  tasks.filter((t) => t.projectId === p.id).length,
               },
               {
                 header: "Total Hours",
@@ -1186,9 +1230,10 @@ function TeamView({
                   `${tasks
                     .filter((t) => t.projectId === p.id)
                     .reduce((sum, t) => sum + t.estimatedHours, 0)}h`,
-                sortKey: (p) => tasks
-                  .filter((t) => t.projectId === p.id)
-                  .reduce((sum, t) => sum + t.estimatedHours, 0),
+                sortKey: (p) =>
+                  tasks
+                    .filter((t) => t.projectId === p.id)
+                    .reduce((sum, t) => sum + t.estimatedHours, 0),
               },
               {
                 header: "Actions",
@@ -1348,8 +1393,8 @@ function TeamView({
                 ),
                 sortKey: "status",
               },
-              { 
-                header: "Est. Hours", 
+              {
+                header: "Est. Hours",
                 accessor: (t) => `${t.estimatedHours}h`,
                 sortKey: "estimatedHours",
               },
@@ -1357,7 +1402,8 @@ function TeamView({
                 header: "Assigned",
                 accessor: (t) =>
                   assignments.filter((a) => a.taskItemId === t.id).length,
-                sortKey: (t) => assignments.filter((a) => a.taskItemId === t.id).length,
+                sortKey: (t) =>
+                  assignments.filter((a) => a.taskItemId === t.id).length,
               },
               {
                 header: "Actions",
@@ -1487,8 +1533,15 @@ function TeamView({
                   return coworker ? coworker.name : "N/A";
                 },
               },
-              { 
-                header: "Hours", 
+              {
+                header: "Week",
+                accessor: (a) =>
+                  a.year && a.weekNumber ? `${a.year} W${a.weekNumber}` : "-",
+                sortKey: (a) =>
+                  a.year && a.weekNumber ? a.year * 100 + a.weekNumber : 0,
+              },
+              {
+                header: "Hours",
                 accessor: (a) => `${a.hoursAssigned}h`,
                 sortKey: "hoursAssigned",
               },
@@ -1502,8 +1555,8 @@ function TeamView({
                   }),
                 sortKey: "assignedDate",
               },
-              { 
-                header: "Note", 
+              {
+                header: "Note",
                 accessor: (a) => a.note || "-",
                 sortKey: "note",
               },

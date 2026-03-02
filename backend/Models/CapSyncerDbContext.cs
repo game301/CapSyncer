@@ -55,5 +55,7 @@ namespace CapSyncer.Server.Models
         public string Note { get; set; } = string.Empty;
         public DateTime AssignedDate { get; set; } = DateTime.UtcNow;
         public string AssignedBy { get; set; } = string.Empty; // Who assigned this task
+        public int Year { get; set; } // Year for the week (e.g., 2026)
+        public int WeekNumber { get; set; } // ISO week number (1-53)
     }
 }

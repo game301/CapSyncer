@@ -197,6 +197,8 @@ app.MapPut("/api/assignments/{id}", async (int id, Assignment input, CapSyncerDb
     a.Note = input.Note;
     a.AssignedDate = input.AssignedDate;
     a.AssignedBy = input.AssignedBy;
+    a.Year = input.Year;
+    a.WeekNumber = input.WeekNumber;
     await db.SaveChangesAsync();
     return Results.Ok(a);
 });
@@ -209,6 +211,63 @@ app.MapDelete("/api/assignments/{id}", async (int id, CapSyncerDbContext db) =>
     return Results.NoContent();
 });
 
+// Get weekly capacity for a coworker in a specific year
+app.MapGet("/api/capacity/weekly/{coworkerId}/{year}", async (int coworkerId, int year, CapSyncerDbContext db) =>
+{
+    var coworker = await db.Coworkers.FindAsync(coworkerId);
+    if (coworker is null) return Results.NotFound();
+
+    var assignments = await db.Assignments
+        .Where(a => a.CoworkerId == coworkerId && a.Year == year)
+        .ToListAsync();
+
+    var weeklyData = new List<object>();
+    for (int week = 1; week <= 53; week++)
+    {
+        var weekAssignments = assignments.Where(a => a.WeekNumber == week).ToList();
+        var usedHours = weekAssignments.Sum(a => a.HoursAssigned);
+        var availableHours = coworker.Capacity - usedHours;
+        
+        weeklyData.Add(new
+        {
+            WeekNumber = week,
+            Year = year,
+            Capacity = coworker.Capacity,
+            UsedHours = usedHours,
+            AvailableHours = availableHours,
+            UtilizationPercentage = coworker.Capacity > 0 ? (usedHours / coworker.Capacity * 100) : 0,
+            AssignmentCount = weekAssignments.Count
+        });
+    }
+
+    return Results.Ok(weeklyData);
+});
+
+// Get current week number and year
+app.MapGet("/api/capacity/current-week", () =>
+{
+    var now = DateTime.UtcNow;
+    var weekInfo = GetIsoWeekNumber(now);
+    return Results.Ok(new
+    {
+        Year = weekInfo.Year,
+        WeekNumber = weekInfo.WeekNumber,
+        Date = now
+    });
+});
+
+// Get ISO week number from a date
+app.MapGet("/api/capacity/week-from-date", (DateTime date) =>
+{
+    var weekInfo = GetIsoWeekNumber(date);
+    return Results.Ok(new
+    {
+        Year = weekInfo.Year,
+        WeekNumber = weekInfo.WeekNumber,
+        Date = date
+    });
+});
+
 // Basic health endpoint required by the AppHost health check
 app.MapGet("/health", () => Results.Ok());
 
@@ -216,3 +275,14 @@ app.MapGet("/health", () => Results.Ok());
 app.MapGet("/api/status", () => Results.Json(new { status = "ok", now = DateTime.UtcNow }));
 
 app.Run();
+
+// Helper method to calculate ISO week number
+static (int Year, int WeekNumber) GetIsoWeekNumber(DateTime date)
+{
+    // ISO 8601 week date system:
+    // Week 1 is the first week with a Thursday in it
+    var thursday = date.AddDays(3 - ((int)date.DayOfWeek + 6) % 7);
+    int year = thursday.Year;
+    int weekNumber = (thursday.DayOfYear - 1) / 7 + 1;
+    return (year, weekNumber);
+}
