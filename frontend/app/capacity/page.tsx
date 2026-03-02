@@ -25,8 +25,6 @@ export default function CapacityPage() {
   const [assignmentCoworkerId, setAssignmentCoworkerId] = useState<
     number | null
   >(null);
-  const [assignmentYear, setAssignmentYear] = useState<number | null>(null);
-  const [assignmentWeek, setAssignmentWeek] = useState<number | null>(null);
 
   const apiBaseUrl =
     process.env.NEXT_PUBLIC_API_BASEURL || "http://localhost:5128";
@@ -58,14 +56,8 @@ export default function CapacityPage() {
     setTaskModalOpen(true);
   };
 
-  const handleCreateAssignment = (
-    coworkerId: number,
-    year: number,
-    weekNumber: number,
-  ) => {
+  const handleCreateAssignment = (coworkerId: number) => {
     setAssignmentCoworkerId(coworkerId);
-    setAssignmentYear(year);
-    setAssignmentWeek(weekNumber);
     setAssignmentModalOpen(true);
   };
 
@@ -158,14 +150,10 @@ export default function CapacityPage() {
         onClose={() => {
           setAssignmentModalOpen(false);
           setAssignmentCoworkerId(null);
-          setAssignmentYear(null);
-          setAssignmentWeek(null);
         }}
         onSuccess={fetchCoworkers}
         apiBaseUrl={apiBaseUrl}
         prefilledCoworkerId={assignmentCoworkerId || undefined}
-        prefilledYear={assignmentYear || undefined}
-        prefilledWeek={assignmentWeek || undefined}
       />
     </PageLayout>
   );

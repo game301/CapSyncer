@@ -10,11 +10,7 @@ interface WeeklyCapacityProps {
   coworkerName: string;
   year: number;
   onCreateTask?: () => void;
-  onCreateAssignment?: (
-    coworkerId: number,
-    year: number,
-    weekNumber: number,
-  ) => void;
+  onCreateAssignment?: (coworkerId: number) => void;
 }
 
 interface WeekData {
@@ -424,7 +420,7 @@ export function WeeklyCapacityView({
                       <ActionButtons
                         onCreateTask={onCreateTask || (() => {})}
                         onCreateAssignment={() =>
-                          onCreateAssignment?.(coworkerId, year, selectedWeek!)
+                          onCreateAssignment?.(coworkerId)
                         }
                         coworkerId={coworkerId}
                       />

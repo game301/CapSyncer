@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Modal } from "./Modal";
 import { Button } from "./Button";
+import { usePermissions } from "../contexts/PermissionContext";
 
 interface Coworker {
   id: number;
@@ -24,8 +25,6 @@ interface CreateAssignmentModalProps {
   onSuccess: () => void;
   apiBaseUrl: string;
   prefilledCoworkerId?: number;
-  prefilledYear?: number;
-  prefilledWeek?: number;
 }
 
 export function CreateAssignmentModal({
@@ -34,20 +33,39 @@ export function CreateAssignmentModal({
   onSuccess,
   apiBaseUrl,
   prefilledCoworkerId,
-  prefilledYear,
-  prefilledWeek,
 }: CreateAssignmentModalProps) {
+  const permissions = usePermissions();
   const [coworkers, setCoworkers] = useState<Coworker[]>([]);
   const [tasks, setTasks] = useState<TaskItem[]>([]);
+  
+  // Calculate ISO week number and year from a date (ISO 8601)
+  const getWeekInfo = (dateString: string) => {
+    // Parse date as local to avoid timezone issues
+    const [year, month, day] = dateString.split('-').map(Number);
+    const date = new Date(year, month - 1, day);
+    
+    // Copy date so we don't mutate the original
+    const tempDate = new Date(date.getTime());
+    // Set to nearest Thursday: current date + 4 - current day number (make Sunday's day number 7)
+    tempDate.setDate(tempDate.getDate() + 4 - (tempDate.getDay() || 7));
+    
+    // Get first day of year
+    const yearStart = new Date(tempDate.getFullYear(), 0, 1);
+    
+    // Calculate full weeks to nearest Thursday
+    const weekNumber = Math.ceil((((tempDate.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+    
+    return {
+      year: tempDate.getFullYear(),
+      weekNumber: weekNumber
+    };
+  };
+
   const [formData, setFormData] = useState({
     coworkerId: prefilledCoworkerId ? String(prefilledCoworkerId) : "",
     taskItemId: "",
     hoursAssigned: "",
     assignedDate: new Date().toISOString().split("T")[0],
-    year: prefilledYear
-      ? String(prefilledYear)
-      : String(new Date().getFullYear()),
-    weekNumber: prefilledWeek ? String(prefilledWeek) : "",
     note: "",
   });
   const [loading, setLoading] = useState(false);
@@ -67,18 +85,6 @@ export function CreateAssignmentModal({
       }));
     }
   }, [prefilledCoworkerId]);
-
-  useEffect(() => {
-    if (prefilledYear) {
-      setFormData((prev) => ({ ...prev, year: String(prefilledYear) }));
-    }
-  }, [prefilledYear]);
-
-  useEffect(() => {
-    if (prefilledWeek) {
-      setFormData((prev) => ({ ...prev, weekNumber: String(prefilledWeek) }));
-    }
-  }, [prefilledWeek]);
 
   const fetchData = async () => {
     try {
@@ -122,6 +128,11 @@ export function CreateAssignmentModal({
     setLoading(true);
 
     try {
+      const weekInfo = getWeekInfo(formData.assignedDate);
+      
+      // Convert date string to ISO DateTime format for the backend
+      const assignedDateTime = new Date(formData.assignedDate + 'T00:00:00').toISOString();
+      
       const response = await fetch(`${apiBaseUrl}/api/assignments`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -129,10 +140,11 @@ export function CreateAssignmentModal({
           coworkerId: Number(formData.coworkerId),
           taskItemId: Number(formData.taskItemId),
           hoursAssigned: Number(formData.hoursAssigned),
-          assignedDate: formData.assignedDate,
-          year: Number(formData.year),
-          weekNumber: Number(formData.weekNumber),
-          note: formData.note || undefined,
+          assignedDate: assignedDateTime,
+          year: weekInfo.year,
+          weekNumber: weekInfo.weekNumber,
+          assignedBy: permissions.userName || "Unknown User",
+          note: formData.note || "",
         }),
       });
 
@@ -142,18 +154,18 @@ export function CreateAssignmentModal({
           taskItemId: tasks[0]?.id ? String(tasks[0].id) : "",
           hoursAssigned: "",
           assignedDate: new Date().toISOString().split("T")[0],
-          year: String(new Date().getFullYear()),
-          weekNumber: "",
           note: "",
         });
         onSuccess();
         onClose();
       } else {
-        alert("Failed to create assignment");
+        const errorText = await response.text();
+        console.error("Failed to create assignment:", response.status, errorText);
+        alert(`Failed to create assignment: ${response.status} ${errorText}`);
       }
     } catch (error) {
       console.error("Error creating assignment:", error);
-      alert("Error creating assignment");
+      alert("Error creating assignment: " + (error instanceof Error ? error.message : String(error)));
     } finally {
       setLoading(false);
     }
@@ -165,8 +177,6 @@ export function CreateAssignmentModal({
       taskItemId: tasks[0]?.id ? String(tasks[0].id) : "",
       hoursAssigned: "",
       assignedDate: new Date().toISOString().split("T")[0],
-      year: String(new Date().getFullYear()),
-      weekNumber: "",
       note: "",
     });
     onClose();
@@ -249,42 +259,6 @@ export function CreateAssignmentModal({
               value={formData.assignedDate}
               onChange={(e) =>
                 setFormData({ ...formData, assignedDate: e.target.value })
-              }
-              className="w-full rounded border border-slate-600 bg-slate-700 px-3 py-2 text-white"
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="mb-1 block text-sm font-medium text-slate-300">
-              Year *
-            </label>
-            <input
-              type="number"
-              required
-              min="2020"
-              max="2099"
-              value={formData.year}
-              onChange={(e) =>
-                setFormData({ ...formData, year: e.target.value })
-              }
-              className="w-full rounded border border-slate-600 bg-slate-700 px-3 py-2 text-white"
-            />
-          </div>
-
-          <div>
-            <label className="mb-1 block text-sm font-medium text-slate-300">
-              Week Number *
-            </label>
-            <input
-              type="number"
-              required
-              min="1"
-              max="53"
-              value={formData.weekNumber}
-              onChange={(e) =>
-                setFormData({ ...formData, weekNumber: e.target.value })
               }
               className="w-full rounded border border-slate-600 bg-slate-700 px-3 py-2 text-white"
             />

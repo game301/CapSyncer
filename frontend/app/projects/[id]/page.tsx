@@ -114,6 +114,7 @@ export default function ProjectDetailPage() {
 
   useEffect(() => {
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId, apiBaseUrl]);
 
   const handleCreateTask = () => {
@@ -428,8 +429,8 @@ export default function ProjectDetailPage() {
                   </p>
                   <ol className="text-xs text-green-400 ml-4 mt-1 space-y-1">
                     <li>
-                      1. Add tasks to your project using the "Add Task" button
-                      below
+                      1. Add tasks to your project using the &quot;Add
+                      Task&quot; button below
                     </li>
                     <li>
                       2. Once tasks are created, assign team members to them

@@ -27,6 +27,7 @@ export function CreateTaskModal({
     priority: "Medium",
     status: "Not started",
     estimatedHours: "",
+    weeklyEffort: "",
     note: "",
   });
   const [loading, setLoading] = useState(false);
@@ -67,6 +68,7 @@ export function CreateTaskModal({
           priority: formData.priority,
           status: formData.status,
           estimatedHours: Number(formData.estimatedHours),
+          weeklyEffort: Number(formData.weeklyEffort),
           note: formData.note || undefined,
         }),
       });
@@ -78,6 +80,7 @@ export function CreateTaskModal({
           priority: "Medium",
           status: "Not started",
           estimatedHours: "",
+          weeklyEffort: "",
           note: "",
         });
         onSuccess();
@@ -100,6 +103,7 @@ export function CreateTaskModal({
       priority: "Medium",
       status: "Not started",
       estimatedHours: "",
+      weeklyEffort: "",
       note: "",
     });
     onClose();
@@ -192,6 +196,23 @@ export function CreateTaskModal({
             value={formData.estimatedHours}
             onChange={(e) =>
               setFormData({ ...formData, estimatedHours: e.target.value })
+            }
+            className="w-full rounded border border-slate-600 bg-slate-700 px-3 py-2 text-white"
+          />
+        </div>
+
+        <div>
+          <label className="mb-1 block text-sm font-medium text-slate-300">
+            Weekly Effort *
+          </label>
+          <input
+            type="number"
+            required
+            min="0"
+            step="0.5"
+            value={formData.weeklyEffort}
+            onChange={(e) =>
+              setFormData({ ...formData, weeklyEffort: e.target.value })
             }
             className="w-full rounded border border-slate-600 bg-slate-700 px-3 py-2 text-white"
           />
