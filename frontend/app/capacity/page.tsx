@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { PageLayout } from "../../components/PageLayout";
 import { WeeklyCapacityView } from "../../components/WeeklyCapacityView";
 
@@ -13,11 +14,15 @@ interface Coworker {
 
 export default function CapacityPage() {
   const [coworkers, setCoworkers] = useState<Coworker[]>([]);
-  const [selectedCoworkerId, setSelectedCoworkerId] = useState<number | null>(null);
+  const [selectedCoworkerId, setSelectedCoworkerId] = useState<number | null>(
+    null,
+  );
   const [loading, setLoading] = useState(true);
   const currentYear = new Date().getFullYear();
+  const router = useRouter();
 
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASEURL || "http://localhost:5128";
+  const apiBaseUrl =
+    process.env.NEXT_PUBLIC_API_BASEURL || "http://localhost:5128";
 
   const fetchCoworkers = useCallback(async () => {
     setLoading(true);
@@ -41,6 +46,20 @@ export default function CapacityPage() {
   useEffect(() => {
     fetchCoworkers();
   }, [fetchCoworkers]);
+
+  const handleCreateTask = () => {
+    router.push("/dashboard?tab=tasks&create=true");
+  };
+
+  const handleCreateAssignment = (
+    coworkerId: number,
+    year: number,
+    weekNumber: number,
+  ) => {
+    router.push(
+      `/dashboard?tab=assignments&create=true&coworkerId=${coworkerId}&year=${year}&week=${weekNumber}`,
+    );
+  };
 
   const selectedCoworker = coworkers.find((c) => c.id === selectedCoworkerId);
 
@@ -80,7 +99,9 @@ export default function CapacityPage() {
         <div className="mx-auto max-w-7xl px-6 py-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-white">Capacity Calendar</h1>
+              <h1 className="text-3xl font-bold text-white">
+                Capacity Calendar
+              </h1>
               <p className="mt-1 text-sm text-slate-400">
                 Visualize team capacity across the year
               </p>
@@ -106,12 +127,13 @@ export default function CapacityPage() {
       </div>
 
       <div className="mx-auto max-w-7xl px-6 py-8">
-
         {selectedCoworker && (
           <WeeklyCapacityView
             coworkerId={selectedCoworker.id}
             coworkerName={selectedCoworker.name}
             year={currentYear}
+            onCreateTask={handleCreateTask}
+            onCreateAssignment={handleCreateAssignment}
           />
         )}
       </div>

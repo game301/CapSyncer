@@ -123,7 +123,44 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchData();
-  }, [fetchData]);
+
+    // Handle query params for pre-filling forms
+    const createParam = searchParams.get("create");
+    const coworkerIdParam = searchParams.get("coworkerId");
+    const yearParam = searchParams.get("year");
+    const weekParam = searchParams.get("week");
+
+    if (createParam === "true") {
+      const tabParam = searchParams.get("tab");
+      if (tabParam === "assignments" && coworkerIdParam) {
+        // Pre-fill assignment creation with coworker
+        setActiveEntity("assignments");
+        setSelectedCoworkerId(Number(coworkerIdParam));
+        setModalMode("create");
+        setEditingEntity(null);
+        setModalOpen(true);
+
+        // Clean up URL params
+        const params = new URLSearchParams(searchParams.toString());
+        params.delete("create");
+        params.delete("coworkerId");
+        params.delete("year");
+        params.delete("week");
+        router.replace(`/dashboard?${params.toString()}`);
+      } else if (tabParam === "tasks") {
+        // Open task creation modal
+        setActiveEntity("tasks");
+        setModalMode("create");
+        setEditingEntity(null);
+        setModalOpen(true);
+
+        // Clean up URL params
+        const params = new URLSearchParams(searchParams.toString());
+        params.delete("create");
+        router.replace(`/dashboard?${params.toString()}`);
+      }
+    }
+  }, [fetchData, searchParams, router]);
 
   // Update URL when viewMode changes
   const updateViewMode = (mode: ViewMode) => {
@@ -133,11 +170,14 @@ export default function Dashboard() {
     router.replace(`/dashboard?${params.toString()}`);
   };
 
-  const handleCreate = (entityType: EntityType) => {
+  const handleCreate = (
+    entityType: EntityType,
+    prefilledCoworkerId?: number,
+  ) => {
     setModalMode("create");
     setActiveEntity(entityType);
     setEditingEntity(null);
-    setSelectedCoworkerId(null);
+    setSelectedCoworkerId(prefilledCoworkerId || null);
     setSelectedTaskId(null);
     setModalOpen(true);
   };
@@ -475,6 +515,9 @@ export default function Dashboard() {
               onEditTask={(t: TaskItem) => handleEdit("tasks", t)}
               onDeleteTask={(id: number) => handleDelete("tasks", id)}
               onCreateAssignment={() => handleCreate("assignments")}
+              onCreateAssignmentForCoworker={(coworkerId: number) =>
+                handleCreate("assignments", coworkerId)
+              }
               onEditAssignment={(a: Assignment) => handleEdit("assignments", a)}
               onDeleteAssignment={(id: number) =>
                 handleDelete("assignments", id)
@@ -862,6 +905,7 @@ interface TeamViewProps {
   onEditTask: (t: TaskItem) => void;
   onDeleteTask: (id: number) => void;
   onCreateAssignment: () => void;
+  onCreateAssignmentForCoworker: (coworkerId: number) => void;
   onEditAssignment: (a: Assignment) => void;
   onDeleteAssignment: (id: number) => void;
   calculateCoworkerStats: (id: number) => {
@@ -891,6 +935,7 @@ function TeamView({
   onEditTask,
   onDeleteTask,
   onCreateAssignment,
+  onCreateAssignmentForCoworker,
   onEditAssignment,
   onDeleteAssignment,
   calculateCoworkerStats,
@@ -1161,6 +1206,7 @@ function TeamView({
                         </svg>
                       </button>
                     )}
+
                   </div>
                 ),
               },
@@ -1650,6 +1696,8 @@ function PersonalView({
     ? calculateCoworkerStats(selectedCoworker)
     : null;
 
+  const router = useRouter();
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
@@ -1714,7 +1762,51 @@ function PersonalView({
           </div>
 
           <div className="space-y-4">
-            <h2 className="text-2xl font-bold text-white">Assignments</h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-white">Assignments</h2>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => router.push(`/tasks?new=true`)}
+                  className="flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 transition-colors"
+                >
+                  <svg
+                    className="h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
+                    />
+                  </svg>
+                  Add Task
+                </button>
+                {selectedCoworker && (
+                  <button
+                    onClick={() => router.push(`/dashboard?tab=assignments&create=true&coworkerId=${selectedCoworker}`)}
+                    className="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 transition-colors"
+                  >
+                    <svg
+                      className="h-4 w-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 4v16m8-8H4"
+                      />
+                    </svg>
+                    Add Assignment
+                  </button>
+                )}
+              </div>
+            </div>
             {coworkerAssignments.length === 0 ? (
               <p className="text-slate-400">No assignments found</p>
             ) : (

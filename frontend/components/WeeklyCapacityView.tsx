@@ -8,6 +8,8 @@ interface WeeklyCapacityProps {
   coworkerId: number;
   coworkerName: string;
   year: number;
+  onCreateTask?: () => void;
+  onCreateAssignment?: (coworkerId: number, year: number, weekNumber: number) => void;
 }
 
 interface WeekData {
@@ -48,7 +50,7 @@ interface Project {
   name: string;
 }
 
-export function WeeklyCapacityView({ coworkerId, coworkerName, year: initialYear }: WeeklyCapacityProps) {
+export function WeeklyCapacityView({ coworkerId, coworkerName, year: initialYear, onCreateTask, onCreateAssignment }: WeeklyCapacityProps) {
   const [year, setYear] = useState(initialYear);
   const [weekData, setWeekData] = useState<WeekData[]>([]);
   const [loading, setLoading] = useState(false);
@@ -140,14 +142,26 @@ export function WeeklyCapacityView({ coworkerId, coworkerName, year: initialYear
   }
 
   // Group weeks by month for better visualization
-  const weeksByMonth: { [key: string]: WeekData[] } = {};
+  // Use Thursday of the week (ISO standard) to determine which month the week belongs to
+  const weeksByMonth: { [key: string]: { weeks: WeekData[], monthNumber: number } } = {};
   weekData.forEach((week) => {
     const weekStartDate = getWeekStartDate(week.year, week.weekNumber);
-    const monthKey = weekStartDate.toLocaleDateString("en-US", { month: "long" });
+    // Get Thursday of the week (day 3, since Monday is day 0)
+    const thursday = new Date(weekStartDate);
+    thursday.setDate(weekStartDate.getDate() + 3);
+    
+    const monthKey = thursday.toLocaleDateString("en-US", { month: "long" });
+    const monthNumber = thursday.getMonth(); // 0-11
+    
     if (!weeksByMonth[monthKey]) {
-      weeksByMonth[monthKey] = [];
+      weeksByMonth[monthKey] = { weeks: [], monthNumber };
     }
-    weeksByMonth[monthKey].push(week);
+    weeksByMonth[monthKey].weeks.push(week);
+  });
+
+  // Sort months by month number (January=0 to December=11)
+  const sortedMonths = Object.entries(weeksByMonth).sort((a, b) => {
+    return a[1].monthNumber - b[1].monthNumber;
   });
 
   return (
@@ -226,13 +240,17 @@ export function WeeklyCapacityView({ coworkerId, coworkerName, year: initialYear
 
       {/* Calendar Grid - Show weeks grouped by month */}
       <div className="space-y-6">
-        {Object.entries(weeksByMonth).map(([month, weeks]) => (
-          <div key={month} className="space-y-4">
-            <h4 className="text-xl font-bold text-white">{month}</h4>
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-6">
-              {weeks.map((week) => {
-                const isCurrentWeek = year === currentYear && week.weekNumber === currentWeek;
-                const weekStartDate = getWeekStartDate(week.year, week.weekNumber);
+        {sortedMonths.map(([month, { weeks }]) => {
+          // Sort weeks within each month by week number
+          const sortedWeeks = [...weeks].sort((a, b) => a.weekNumber - b.weekNumber);
+          
+          return (
+            <div key={month} className="space-y-4">
+              <h4 className="text-xl font-bold text-white">{month}</h4>
+              <div className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-6">
+                {sortedWeeks.map((week) => {
+                  const isCurrentWeek = year === currentYear && week.weekNumber === currentWeek;
+                  const weekStartDate = getWeekStartDate(week.year, week.weekNumber);
                 
                 return (
                   <div
@@ -275,7 +293,8 @@ export function WeeklyCapacityView({ coworkerId, coworkerName, year: initialYear
               })}
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Week Details Modal */}
@@ -348,9 +367,57 @@ export function WeeklyCapacityView({ coworkerId, coworkerName, year: initialYear
 
               {/* Assignments and Tasks */}
               <div>
-                <h4 className="mb-3 text-lg font-semibold text-white">
-                  Assignments ({weekAssignments.length})
-                </h4>
+                <div className="mb-3 flex items-center justify-between">
+                  <h4 className="text-lg font-semibold text-white">
+                    Assignments ({weekAssignments.length})
+                  </h4>
+                  <div className="flex items-center gap-2">
+                    {onCreateTask && (
+                      <button
+                        onClick={onCreateTask}
+                        className="rounded bg-purple-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-purple-700"
+                        title="Add Task"
+                      >
+                        <svg
+                          className="mr-1.5 inline-block h-4 w-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
+                          />
+                        </svg>
+                        Add Task
+                      </button>
+                    )}
+                    {onCreateAssignment && (
+                      <button
+                        onClick={() => onCreateAssignment(coworkerId, year, selectedWeek!)}
+                        className="rounded bg-green-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-green-700"
+                        title="Add Assignment"
+                      >
+                        <svg
+                          className="mr-1.5 inline-block h-4 w-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 4v16m8-8H4"
+                          />
+                        </svg>
+                        Add Assignment
+                      </button>
+                    )}
+                  </div>
+                </div>
                 {weekAssignments.length === 0 ? (
                   <div className="rounded-lg bg-slate-800 p-4 text-center text-slate-400">
                     No assignments for this week
