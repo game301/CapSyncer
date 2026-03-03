@@ -226,7 +226,7 @@ export function Table<T extends { id: number }>({
           </p>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-lg border border-slate-700 bg-slate-800">
+        <div className="overflow-x-auto rounded-lg border border-slate-700 bg-slate-800 scrollbar-thin">
           <table className="w-full">
             <thead>
               <tr className="border-b border-slate-700 bg-slate-900/50">
@@ -234,7 +234,7 @@ export function Table<T extends { id: number }>({
                   <th
                     key={idx}
                     onClick={() => handleSort(idx)}
-                    className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-400 whitespace-nowrap ${
+                    className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-400 ${
                       col.sortable !== false
                         ? "cursor-pointer hover:text-slate-200 select-none"
                         : ""

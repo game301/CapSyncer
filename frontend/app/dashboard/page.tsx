@@ -1543,12 +1543,35 @@ function TeamView({
                 ],
               },
               {
-                header: "Est Hours",
+                header: "Estimated",
                 accessor: (t) => `${t.estimatedHours}h`,
                 sortKey: "estimatedHours",
               },
               {
-                header: "Assigned",
+                header: "Assigned Total",
+                accessor: (t) => {
+                  const totalAssigned = assignments
+                    .filter((a) => a.taskItemId === t.id)
+                    .reduce((sum, a) => sum + a.hoursAssigned, 0);
+                  return (
+                    <span
+                      className={
+                        totalAssigned > t.estimatedHours
+                          ? "text-red-400 font-semibold"
+                          : "text-slate-300"
+                      }
+                    >
+                      {totalAssigned}h
+                    </span>
+                  );
+                },
+                sortKey: (t) =>
+                  assignments
+                    .filter((a) => a.taskItemId === t.id)
+                    .reduce((sum, a) => sum + a.hoursAssigned, 0),
+              },
+              {
+                header: "Assignments",
                 accessor: (t) =>
                   assignments.filter((a) => a.taskItemId === t.id).length,
                 sortKey: (t) =>
@@ -1699,16 +1722,16 @@ function TeamView({
                 },
               },
               {
+                header: "Assigned This Week",
+                accessor: (a) => `${a.hoursAssigned}h`,
+                sortKey: "hoursAssigned",
+              },
+              {
                 header: "Week",
                 accessor: (a) =>
                   a.year && a.weekNumber ? `${a.year} W${a.weekNumber}` : "-",
                 sortKey: (a) =>
                   a.year && a.weekNumber ? a.year * 100 + a.weekNumber : 0,
-              },
-              {
-                header: "Hours",
-                accessor: (a) => `${a.hoursAssigned}h`,
-                sortKey: "hoursAssigned",
               },
               {
                 header: "Date",

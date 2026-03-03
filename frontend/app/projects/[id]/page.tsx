@@ -979,6 +979,22 @@ export default function ProjectDetailPage() {
               data={projectAssignments}
               columns={[
                 {
+                  header: "Task",
+                  accessor: (a) => {
+                    const task = tasks.find((t) => t.id === a.taskItemId);
+                    return task ? (
+                      <Link
+                        href={`/tasks/${task.id}`}
+                        className="text-blue-400 hover:text-blue-300 hover:underline"
+                      >
+                        {task.name}
+                      </Link>
+                    ) : (
+                      "N/A"
+                    );
+                  },
+                },
+                {
                   header: "Coworker",
                   accessor: (a) => {
                     const coworker = coworkers.find(
@@ -990,22 +1006,6 @@ export default function ProjectDetailPage() {
                         className="text-blue-400 hover:text-blue-300 hover:underline"
                       >
                         {coworker.name}
-                      </Link>
-                    ) : (
-                      "N/A"
-                    );
-                  },
-                },
-                {
-                  header: "Task",
-                  accessor: (a) => {
-                    const task = tasks.find((t) => t.id === a.taskItemId);
-                    return task ? (
-                      <Link
-                        href={`/tasks/${task.id}`}
-                        className="text-blue-400 hover:text-blue-300 hover:underline"
-                      >
-                        {task.name}
                       </Link>
                     ) : (
                       "N/A"
