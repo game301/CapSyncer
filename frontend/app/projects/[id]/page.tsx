@@ -429,6 +429,7 @@ export default function ProjectDetailPage() {
     (sum, t) => sum + t.estimatedHours,
     0,
   );
+  const totalWeeklyEffort = tasks.reduce((sum, t) => sum + t.weeklyEffort, 0);
   const totalAssignedHours = assignments
     .filter((a) => tasks.some((t) => t.id === a.taskItemId))
     .reduce((sum, a) => sum + a.hoursAssigned, 0);
@@ -449,6 +450,34 @@ export default function ProjectDetailPage() {
   const progressPercentage =
     totalEstimatedHours > 0
       ? (completedTasksHours / totalEstimatedHours) * 100
+      : 0;
+
+  // Calculate estimated project duration in weeks
+  const estimatedDurationWeeks =
+    totalWeeklyEffort > 0
+      ? Math.ceil(totalEstimatedHours / totalWeeklyEffort)
+      : 0;
+
+  // Calculate project velocity (actual vs expected completion)
+  // Get project creation date to calculate weeks elapsed
+  const projectCreatedDate = project.createdAt
+    ? new Date(project.createdAt)
+    : new Date();
+  const now = new Date();
+  const weeksElapsed = Math.max(
+    1,
+    Math.floor(
+      (now.getTime() - projectCreatedDate.getTime()) /
+        (7 * 24 * 60 * 60 * 1000),
+    ),
+  );
+  const expectedCompletionHours = Math.min(
+    totalWeeklyEffort * weeksElapsed,
+    totalEstimatedHours,
+  );
+  const velocityPercentage =
+    expectedCompletionHours > 0
+      ? (completedTasksHours / expectedCompletionHours) * 100
       : 0;
 
   const tasksWithAssignments = tasks.map((task) => {
@@ -577,27 +606,59 @@ export default function ProjectDetailPage() {
         </div>
 
         {/* Stats Grid */}
-        <div className="mb-8 grid gap-6 md:grid-cols-4">
+        <div className="mb-8 grid gap-6 grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
           <div className="rounded-lg border border-slate-700 bg-slate-800 p-6">
             <p className="text-sm text-slate-400">Total Tasks</p>
             <p className="mt-2 text-3xl font-bold text-white">{tasks.length}</p>
           </div>
           <div className="rounded-lg border border-slate-700 bg-slate-800 p-6">
-            <p className="text-sm text-slate-400">Completed</p>
+            <p className="text-sm text-slate-400">Completed Tasks</p>
             <p className="mt-2 text-3xl font-bold text-green-400">
               {completedTasks}
             </p>
           </div>
           <div className="rounded-lg border border-slate-700 bg-slate-800 p-6">
-            <p className="text-sm text-slate-400">In Progress</p>
-            <p className="mt-2 text-3xl font-bold text-yellow-400">
+            <p className="text-sm text-slate-400">In Progress Tasks</p>
+            <p className="mt-2 text-3xl font-bold text-blue-400">
               {inProgressTasks}
             </p>
           </div>
           <div className="rounded-lg border border-slate-700 bg-slate-800 p-6">
             <p className="text-sm text-slate-400">Task Completion</p>
-            <p className="mt-2 text-3xl font-bold text-blue-400">
+            <p className="mt-2 text-3xl font-bold text-yellow-400">
               {Math.round(progressPercentage)}%
+            </p>
+          </div>
+          <div className="rounded-lg border border-slate-700 bg-slate-800 p-6">
+            <p className="text-sm text-slate-400">Est. Duration</p>
+            <p className="mt-2 text-3xl font-bold text-purple-400">
+              {estimatedDurationWeeks}w
+            </p>
+            <p className="mt-1 text-xs text-slate-500">
+              {totalWeeklyEffort > 0
+                ? `${totalWeeklyEffort}h/week`
+                : "No target"}
+            </p>
+          </div>
+          <div className="rounded-lg border border-slate-700 bg-slate-800 p-6">
+            <p className="text-sm text-slate-400">Velocity</p>
+            <p
+              className={`mt-2 text-3xl font-bold ${
+                velocityPercentage >= 100
+                  ? "text-green-400"
+                  : velocityPercentage >= 75
+                    ? "text-yellow-400"
+                    : "text-red-400"
+              }`}
+            >
+              {Math.round(velocityPercentage)}%
+            </p>
+            <p className="mt-1 text-xs text-slate-500">
+              {velocityPercentage >= 100
+                ? "On track"
+                : velocityPercentage >= 75
+                  ? "Attention"
+                  : "Behind"}
             </p>
           </div>
         </div>
