@@ -48,6 +48,8 @@ interface Assignment {
   assignedDate: string;
   note?: string;
   assignedBy: string;
+  year: number;
+  weekNumber: number;
 }
 
 interface Coworker {
@@ -838,7 +840,7 @@ export default function ProjectDetailPage() {
                   accessor: (t) => `${t.estimatedHours}h`,
                 },
                 {
-                  header: "Assigned",
+                  header: "Assigned Total",
                   accessor: (t) => (
                     <span
                       className={
@@ -1011,8 +1013,13 @@ export default function ProjectDetailPage() {
                   },
                 },
                 {
-                  header: "Hours",
+                  header: "Assigned This Week",
                   accessor: (a) => `${Math.max(0, a.hoursAssigned)}h`,
+                },
+                {
+                  header: "Week",
+                  accessor: (a) =>
+                    a.year && a.weekNumber ? `${a.year} W${a.weekNumber}` : "-",
                 },
                 {
                   header: "Date",
