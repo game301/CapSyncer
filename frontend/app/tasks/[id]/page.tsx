@@ -432,7 +432,7 @@ export default function TaskDetailPage() {
                   {task.priority} Priority
                 </span>
                 <span
-                  className={`rounded px-3 py-1 text-sm font-semibold ${
+                  className={`rounded px-3 py-1 text-sm font-semibold whitespace-nowrap ${
                     task.status === "Completed"
                       ? "bg-green-900 text-green-200"
                       : task.status === "In progress"

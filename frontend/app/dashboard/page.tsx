@@ -1325,7 +1325,7 @@ function TeamView({
                   const status = p.status || "Planning";
                   return (
                     <span
-                      className={`rounded px-2 py-1 text-xs font-semibold ${
+                      className={`rounded px-2 py-1 text-xs font-semibold whitespace-nowrap ${
                         status === "Completed"
                           ? "bg-green-950 text-green-200 border border-green-800"
                           : status === "In Progress"
@@ -1342,6 +1342,13 @@ function TeamView({
                   );
                 },
                 sortKey: (p) => p.status || "Planning",
+                customSortOrder: [
+                  "Planning",
+                  "In Progress",
+                  "On Hold",
+                  "Cancelled",
+                  "Completed",
+                ],
               },
               {
                 header: "Created",
@@ -1495,7 +1502,7 @@ function TeamView({
                 header: "Priority",
                 accessor: (t) => (
                   <span
-                    className={`rounded px-2 py-1 text-xs font-semibold ${
+                    className={`rounded px-2 py-1 text-xs font-semibold whitespace-nowrap ${
                       t.priority === "Critical"
                         ? "bg-red-950 text-red-200 border border-red-800"
                         : t.priority === "High"
@@ -1509,12 +1516,13 @@ function TeamView({
                   </span>
                 ),
                 sortKey: "priority",
+                customSortOrder: ["Critical", "High", "Normal", "Low"],
               },
               {
                 header: "Status",
                 accessor: (t) => (
                   <span
-                    className={`rounded px-2 py-1 text-xs font-semibold ${
+                    className={`rounded px-2 py-1 text-xs font-semibold whitespace-nowrap ${
                       t.status === "Completed"
                         ? "bg-green-950 text-green-200 border border-green-800"
                         : t.status === "In progress"
@@ -1528,9 +1536,15 @@ function TeamView({
                   </span>
                 ),
                 sortKey: "status",
+                customSortOrder: [
+                  "Not started",
+                  "In progress",
+                  "Continuous",
+                  "Completed",
+                ],
               },
               {
-                header: "Est. Hours",
+                header: "Est Hours",
                 accessor: (t) => `${t.estimatedHours}h`,
                 sortKey: "estimatedHours",
               },

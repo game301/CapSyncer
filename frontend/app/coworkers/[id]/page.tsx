@@ -329,12 +329,14 @@ export default function CoworkerDetailPage() {
                       {t.priority}
                     </span>
                   ),
+                  sortKey: "priority",
+                  customSortOrder: ["Critical", "High", "Normal", "Low"],
                 },
                 {
                   header: "Status",
                   accessor: (t) => (
                     <span
-                      className={`rounded px-2 py-1 text-xs font-semibold ${
+                      className={`rounded px-2 py-1 text-xs font-semibold whitespace-nowrap ${
                         t.status === "Completed"
                           ? "bg-green-950 text-green-200 border border-green-800"
                           : t.status === "In progress"

@@ -308,7 +308,7 @@ export default function AssignmentDetailPage() {
                     {task.priority} Priority
                   </span>
                   <span
-                    className={`rounded px-2 py-1 text-xs font-semibold ${
+                    className={`rounded px-2 py-1 text-xs font-semibold whitespace-nowrap ${
                       task.status === "Completed"
                         ? "bg-green-900 text-green-200"
                         : task.status === "In progress"

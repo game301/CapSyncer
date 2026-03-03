@@ -10,6 +10,7 @@ interface Column<T> {
   sortKey?: keyof T | ((item: T) => string | number); // Key to use for sorting
   sortable?: boolean; // Whether this column is sortable (default true)
   searchable?: boolean; // Whether this column is searchable (default true)
+  customSortOrder?: string[]; // Custom sort order for specific values (e.g., status progression)
 }
 
 interface SearchInputProps {
@@ -168,6 +169,30 @@ export function Table<T extends { id: number }>({
       if (aVal == null) return 1;
       if (bVal == null) return -1;
 
+      // Use custom sort order if provided
+      if (
+        column.customSortOrder &&
+        typeof aVal === "string" &&
+        typeof bVal === "string"
+      ) {
+        const aValLower = aVal.toLowerCase();
+        const bValLower = bVal.toLowerCase();
+        const orderLower = column.customSortOrder.map((s) => s.toLowerCase());
+
+        const aIndex = orderLower.indexOf(aValLower);
+        const bIndex = orderLower.indexOf(bValLower);
+
+        // If both values are in the custom order
+        if (aIndex !== -1 && bIndex !== -1) {
+          return sortDirection === "asc" ? aIndex - bIndex : bIndex - aIndex;
+        }
+        // If only aVal is in the custom order, it comes first
+        if (aIndex !== -1) return -1;
+        // If only bVal is in the custom order, it comes first
+        if (bIndex !== -1) return 1;
+        // If neither is in the custom order, fall through to regular sorting
+      }
+
       // Convert to lowercase for string comparison
       if (typeof aVal === "string") aVal = aVal.toLowerCase();
       if (typeof bVal === "string") bVal = bVal.toLowerCase();
@@ -209,7 +234,7 @@ export function Table<T extends { id: number }>({
                   <th
                     key={idx}
                     onClick={() => handleSort(idx)}
-                    className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-400 ${
+                    className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-400 whitespace-nowrap ${
                       col.sortable !== false
                         ? "cursor-pointer hover:text-slate-200 select-none"
                         : ""
@@ -217,13 +242,19 @@ export function Table<T extends { id: number }>({
                   >
                     <div className="flex items-center gap-2">
                       <span>{col.header}</span>
-                      {col.sortable !== false && sortColumn === idx && (
-                        <span className="text-blue-400">
-                          {sortDirection === "asc"
-                            ? "↑"
-                            : sortDirection === "desc"
-                              ? "↓"
-                              : ""}
+                      {col.sortable !== false && (
+                        <span
+                          className={`text-blue-400 transition-opacity ${
+                            sortColumn === idx ? "opacity-100" : "opacity-0"
+                          }`}
+                        >
+                          {sortColumn === idx
+                            ? sortDirection === "asc"
+                              ? "↑"
+                              : sortDirection === "desc"
+                                ? "↓"
+                                : "↑"
+                            : "↑"}
                         </span>
                       )}
                     </div>
