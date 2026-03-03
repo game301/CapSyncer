@@ -8,6 +8,7 @@ import { Button } from "../../../components/Button";
 import { Table } from "../../../components/Table";
 import { CreateTaskModal } from "../../../components/CreateTaskModal";
 import { CreateAssignmentModal } from "../../../components/CreateAssignmentModal";
+import { ProgressBar } from "../../../components/ProgressBar";
 
 interface Coworker {
   id: number;
@@ -231,12 +232,7 @@ export default function CoworkerDetailPage() {
           <h3 className="mb-4 text-lg font-semibold text-white">
             Capacity Overview
           </h3>
-          <div className="h-8 overflow-hidden rounded-full bg-slate-700">
-            <div
-              className={`h-full transition-all ${usagePercentage > 100 ? "bg-red-500" : usagePercentage > 80 ? "bg-yellow-500" : "bg-green-500"}`}
-              style={{ width: `${Math.min(usagePercentage, 100)}%` }}
-            />
-          </div>
+          <ProgressBar percentage={usagePercentage} variant="auto" />
           <div className="mt-2 flex justify-between text-sm text-slate-400">
             <span>0h</span>
             <span>{coworker.capacity}h capacity</span>

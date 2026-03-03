@@ -10,6 +10,7 @@ import { Modal } from "../../../components/Modal";
 import { Input, Select, Textarea } from "../../../components/FormInputs";
 import { usePermissions } from "../../../contexts/PermissionContext";
 import { Toast, useToast } from "../../../components/Toast";
+import { ProgressBar } from "../../../components/ProgressBar";
 
 interface TaskItem {
   id: number;
@@ -277,7 +278,7 @@ export default function TaskDetailPage() {
     (sum, a) => sum + a.hoursAssigned,
     0,
   );
-  const hoursRemaining = Math.max(0, task.estimatedHours - totalAssignedHours);
+  const hoursRemaining = task.estimatedHours - totalAssignedHours;
   const progressPercentage =
     task.estimatedHours > 0
       ? (totalAssignedHours / task.estimatedHours) * 100
@@ -419,20 +420,16 @@ export default function TaskDetailPage() {
                 {Math.round(progressPercentage)}%
               </span>
             </div>
-            <div className="h-6 overflow-hidden rounded-full bg-slate-700">
-              <div
-                className={`h-full transition-all ${
-                  totalAssignedHours > task.estimatedHours
-                    ? "bg-red-500"
-                    : totalAssignedHours === task.estimatedHours
-                      ? "bg-green-500"
-                      : "bg-blue-500"
-                }`}
-                style={{
-                  width: `${Math.min(100, progressPercentage)}%`,
-                }}
-              />
-            </div>
+            <ProgressBar
+              percentage={progressPercentage}
+              variant={
+                totalAssignedHours > task.estimatedHours
+                  ? "red"
+                  : totalAssignedHours === task.estimatedHours
+                    ? "green"
+                    : "blue"
+              }
+            />
             {totalAssignedHours > task.estimatedHours && (
               <p className="mt-3 flex items-center gap-2 text-sm text-red-400">
                 <svg

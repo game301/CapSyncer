@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { Modal } from "./Modal";
 import { ActionButtons } from "./ActionButtons";
 import Link from "next/link";
+import { ProgressBar } from "./ProgressBar";
 
 interface WeeklyCapacityProps {
   coworkerId: number;
@@ -400,13 +401,11 @@ export function WeeklyCapacityView({
                   </div>
 
                   {/* Visual bar */}
-                  <div className="mt-4 h-4 w-full overflow-hidden rounded-full bg-slate-700">
-                    <div
-                      className={`h-full transition-all ${getUtilizationColor(week.utilizationPercentage)}`}
-                      style={{
-                        width: `${Math.min(week.utilizationPercentage, 100)}%`,
-                      }}
-                    ></div>
+                  <div className="mt-4">
+                    <ProgressBar
+                      percentage={week.utilizationPercentage}
+                      variant="auto"
+                    />
                   </div>
                 </div>
 

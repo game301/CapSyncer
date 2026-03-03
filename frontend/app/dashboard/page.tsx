@@ -11,11 +11,18 @@ import { usePermissions } from "../../contexts/PermissionContext";
 import { Toast, useToast } from "../../components/Toast";
 import { WeekSelector } from "../../components/WeekSelector";
 import { ActionButtons } from "../../components/ActionButtons";
+import { ProgressBar } from "../../components/ProgressBar";
 
 // Priority and Status options
 const PRIORITIES = ["Low", "Normal", "High", "Critical"];
 const STATUSES = ["Not started", "In progress", "Completed", "Continuous"];
-const PROJECT_STATUSES = ["Planning", "In Progress", "On Hold", "Completed", "Cancelled"];
+const PROJECT_STATUSES = [
+  "Planning",
+  "In Progress",
+  "On Hold",
+  "Completed",
+  "Cancelled",
+];
 
 interface Coworker {
   id: number;
@@ -532,6 +539,7 @@ export default function Dashboard() {
           ) : (
             <PersonalView
               coworkers={coworkers}
+              projects={projects}
               tasks={tasks}
               assignments={assignments}
               calculateCoworkerStats={calculateCoworkerStats}
@@ -1145,20 +1153,11 @@ function TeamView({
                   const stats = calculateCoworkerStats(c.id);
                   return (
                     <div className="flex items-center gap-3">
-                      <div className="h-2 w-32 overflow-hidden rounded-full bg-slate-700">
-                        <div
-                          className={`h-full transition-all ${
-                            stats.percentage > 100
-                              ? "bg-red-500"
-                              : stats.percentage > 80
-                                ? "bg-yellow-500"
-                                : "bg-green-500"
-                          }`}
-                          style={{
-                            width: `${Math.min(stats.percentage, 100)}%`,
-                          }}
-                        />
-                      </div>
+                      <ProgressBar
+                        percentage={stats.percentage}
+                        variant="auto"
+                        width="w-32"
+                      />
                       <span
                         className={`text-sm font-semibold ${
                           stats.percentage > 100
@@ -1779,6 +1778,7 @@ function TeamView({
 
 interface PersonalViewProps {
   coworkers: Coworker[];
+  projects: Project[];
   tasks: TaskItem[];
   assignments: Assignment[];
   calculateCoworkerStats: (id: number) => {
@@ -1793,6 +1793,7 @@ interface PersonalViewProps {
 
 function PersonalView({
   coworkers,
+  projects,
   tasks,
   assignments,
   calculateCoworkerStats,
@@ -1811,164 +1812,301 @@ function PersonalView({
     ? calculateCoworkerStats(selectedCoworker)
     : null;
 
+  // Get unique task IDs from assignments
+  const assignedTaskIds = new Set(coworkerAssignments.map((a) => a.taskItemId));
+  const assignedTasks = tasks.filter((t) => assignedTaskIds.has(t.id));
+
+  // Group tasks by project
+  const tasksByProject = assignedTasks.reduce(
+    (acc, task) => {
+      const projectId = task.projectId;
+      if (!acc[projectId]) {
+        acc[projectId] = [];
+      }
+      acc[projectId].push(task);
+      return acc;
+    },
+    {} as Record<number, TaskItem[]>,
+  );
+
+  // Calculate total assigned hours per task
+  const getTaskHours = (taskId: number) => {
+    return coworkerAssignments
+      .filter((a) => a.taskItemId === taskId)
+      .reduce((sum, a) => sum + a.hoursAssigned, 0);
+  };
+
+  // Get priority badge color
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case "Critical":
+        return "bg-red-900 text-red-200 border border-red-700";
+      case "High":
+        return "bg-orange-900 text-orange-200 border border-orange-700";
+      case "Normal":
+        return "bg-blue-900 text-blue-200 border border-blue-700";
+      case "Low":
+        return "bg-slate-800 text-slate-300 border border-slate-700";
+      default:
+        return "bg-slate-800 text-slate-300 border border-slate-700";
+    }
+  };
+
+  // Get status badge color
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "Completed":
+        return "bg-green-950 text-green-200 border border-green-800";
+      case "In progress":
+        return "bg-blue-900 text-blue-200 border border-blue-800";
+      case "Continuous":
+        return "bg-purple-900 text-purple-200 border border-purple-800";
+      case "Not started":
+        return "bg-slate-800 text-slate-300 border border-slate-700";
+      default:
+        return "bg-slate-800 text-slate-300 border border-slate-700";
+    }
+  };
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <label className="text-lg font-semibold text-white">
-          Select Team Member:
-        </label>
-        <select
-          value={selectedCoworker || ""}
-          onChange={(e) => setSelectedCoworker(Number(e.target.value))}
-          className="rounded-lg border border-slate-600 bg-slate-700 px-4 py-2 text-white"
-        >
-          {coworkers.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </select>
+      {/* Header with Coworker Selector */}
+      <div className="rounded-lg border border-slate-700 bg-slate-800 p-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="rounded-full bg-blue-600 p-3">
+              <svg
+                className="h-6 w-6 text-white"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                />
+              </svg>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-400 mb-1">
+                Viewing workload for
+              </label>
+              <select
+                value={selectedCoworker || ""}
+                onChange={(e) => setSelectedCoworker(Number(e.target.value))}
+                className="rounded-lg border border-slate-600 bg-slate-700 px-4 py-2 text-lg font-semibold text-white focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {coworkers.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+          {selectedCoworker && (
+            <ActionButtons
+              onCreateTask={onCreateTask}
+              onCreateAssignment={() => onCreateAssignment(selectedCoworker)}
+              coworkerId={selectedCoworker}
+            />
+          )}
+        </div>
       </div>
 
       {selectedCoworkerData && stats && (
         <>
-          <div className="grid gap-6 md:grid-cols-3">
+          {/* Compact Stats Overview */}
+          <div className="grid gap-4 md:grid-cols-2">
+            {/* Capacity Card */}
             <div className="rounded-lg border border-slate-700 bg-slate-800 p-6">
-              <p className="text-sm text-slate-400">Weekly Capacity</p>
-              <p className="mt-2 text-3xl font-bold text-white">
-                {stats.capacity}h
-              </p>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-white">
+                  Weekly Capacity
+                </h3>
+                <span
+                  className={`text-3xl font-bold ${stats.percentage > 100 ? "text-red-400" : stats.percentage > 80 ? "text-yellow-400" : "text-green-400"}`}
+                >
+                  {stats.percentage.toFixed(0)}%
+                </span>
+              </div>
+              <ProgressBar
+                percentage={stats.percentage}
+                variant="auto"
+                className="mb-3"
+              />
+              <div className="flex justify-between text-sm">
+                <span className="text-slate-400">
+                  <span className="font-semibold text-blue-400">
+                    {Math.max(0, stats.assignedHours)}h
+                  </span>{" "}
+                  assigned
+                </span>
+                <span className="text-slate-400">
+                  of{" "}
+                  <span className="font-semibold text-white">
+                    {stats.capacity}h
+                  </span>
+                </span>
+              </div>
             </div>
-            <div className="rounded-lg border border-slate-700 bg-slate-800 p-6">
-              <p className="text-sm text-slate-400">Assigned Hours</p>
-              <p className="mt-2 text-3xl font-bold text-blue-400">
-                {Math.max(0, stats.assignedHours)}h
-              </p>
-            </div>
-            <div className="rounded-lg border border-slate-700 bg-slate-800 p-6">
-              <p className="text-sm text-slate-400">Available</p>
-              <p
-                className={`mt-2 text-3xl font-bold ${stats.available < 0 ? "text-red-400" : "text-green-400"}`}
-              >
-                {Math.max(0, stats.available)}h
-              </p>
-            </div>
-          </div>
 
-          <div className="rounded-lg border border-slate-700 bg-slate-800 p-6">
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-white">
-                Capacity Utilization
+            {/* Task Summary Card */}
+            <div className="rounded-lg border border-slate-700 bg-slate-800 p-6">
+              <h3 className="text-lg font-semibold text-white mb-4">
+                Task Summary
               </h3>
-              <span
-                className={`text-2xl font-bold ${stats.percentage > 100 ? "text-red-400" : stats.percentage > 80 ? "text-yellow-400" : "text-green-400"}`}
-              >
-                {stats.percentage.toFixed(0)}%
-              </span>
-            </div>
-            <div className="h-4 overflow-hidden rounded-full bg-slate-700">
-              <div
-                className={`h-full transition-all ${stats.percentage > 100 ? "bg-red-500" : stats.percentage > 80 ? "bg-yellow-500" : "bg-green-500"}`}
-                style={{ width: `${Math.min(stats.percentage, 100)}%` }}
-              />
+              <div className="grid grid-cols-3 gap-4">
+                <div className="text-center">
+                  <p className="text-3xl font-bold text-blue-400">
+                    {assignedTasks.length}
+                  </p>
+                  <p className="text-xs text-slate-400 mt-1">Total Tasks</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-3xl font-bold text-yellow-400">
+                    {
+                      assignedTasks.filter((t) => t.status === "In progress")
+                        .length
+                    }
+                  </p>
+                  <p className="text-xs text-slate-400 mt-1">In Progress</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-3xl font-bold text-green-400">
+                    {
+                      assignedTasks.filter((t) => t.status === "Completed")
+                        .length
+                    }
+                  </p>
+                  <p className="text-xs text-slate-400 mt-1">Completed</p>
+                </div>
+              </div>
             </div>
           </div>
 
+          {/* Tasks Grouped by Project */}
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-white">Assignments</h2>
-              {selectedCoworker && (
-                <ActionButtons
-                  onCreateTask={onCreateTask}
-                  onCreateAssignment={() =>
-                    onCreateAssignment(selectedCoworker)
-                  }
-                  coworkerId={selectedCoworker}
-                />
-              )}
-            </div>
-            {coworkerAssignments.length === 0 ? (
-              <p className="text-slate-400">No assignments found</p>
+            <h2 className="text-2xl font-bold text-white">
+              My Tasks by Project
+            </h2>
+
+            {Object.keys(tasksByProject).length === 0 ? (
+              <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-12 text-center">
+                <svg
+                  className="mx-auto h-16 w-16 text-slate-600 mb-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.5}
+                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
+                  />
+                </svg>
+                <p className="text-slate-400 text-lg font-medium mb-2">
+                  No tasks assigned yet
+                </p>
+                <p className="text-slate-500 text-sm">
+                  Tasks assigned to {selectedCoworkerData.name} will appear here
+                </p>
+              </div>
             ) : (
-              <Table
-                data={coworkerAssignments}
-                columns={[
-                  {
-                    header: "Task",
-                    accessor: (a) => {
-                      const task = tasks.find((t) => t.id === a.taskItemId);
-                      return task ? (
-                        <Link
-                          href={`/tasks/${task.id}`}
-                          className="text-blue-400 hover:text-blue-300 hover:underline"
-                        >
-                          {task.name}
-                        </Link>
-                      ) : (
-                        "N/A"
-                      );
-                    },
-                  },
-                  {
-                    header: "Priority",
-                    accessor: (a) => {
-                      const task = tasks.find((t) => t.id === a.taskItemId);
-                      return task ? (
-                        <span
-                          className={`rounded px-2 py-1 text-xs font-semibold ${
-                            task.priority === "High"
-                              ? "bg-red-900 text-red-200"
-                              : task.priority === "Medium"
-                                ? "bg-yellow-900 text-yellow-200"
-                                : "bg-green-900 text-green-200"
-                          }`}
-                        >
-                          {task.priority}
-                        </span>
-                      ) : (
-                        "N/A"
-                      );
-                    },
-                  },
-                  {
-                    header: "Status",
-                    accessor: (a) => {
-                      const task = tasks.find((t) => t.id === a.taskItemId);
-                      return task ? (
-                        <span
-                          className={`rounded px-2 py-1 text-xs font-semibold ${
-                            task.status === "Completed"
-                              ? "bg-green-950 text-green-200 border border-green-800"
-                              : task.status === "In progress"
-                                ? "bg-blue-900 text-blue-200 border border-blue-800"
-                                : task.status === "Continuous"
-                                  ? "bg-purple-900 text-purple-200 border border-purple-800"
-                                  : "bg-slate-800 text-slate-300 border border-slate-700"
-                          }`}
-                        >
-                          {task.status}
-                        </span>
-                      ) : (
-                        "N/A"
-                      );
-                    },
-                  },
-                  {
-                    header: "Assigned Hours",
-                    accessor: (a) => `${Math.max(0, a.hoursAssigned)}h`,
-                  },
-                  {
-                    header: "Date",
-                    accessor: (a) =>
-                      new Date(a.assignedDate).toLocaleDateString("en-US", {
-                        year: "numeric",
-                        month: "short",
-                        day: "numeric",
-                      }),
-                  },
-                  { header: "Note", accessor: (a) => a.note || "-" },
-                ]}
-              />
+              Object.entries(tasksByProject).map(
+                ([projectIdStr, projectTasks]) => {
+                  const projectId = Number(projectIdStr);
+                  const project = projects.find((p) => p.id === projectId);
+                  const completedTasks = projectTasks.filter(
+                    (t) => t.status === "Completed",
+                  ).length;
+                  const totalTasks = projectTasks.length;
+                  const progress =
+                    totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+
+                  return (
+                    <div
+                      key={projectId}
+                      className="rounded-lg border border-slate-700 bg-slate-800 p-6"
+                    >
+                      {/* Project Header */}
+                      <div className="mb-4 flex items-center justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <Link
+                              href={`/projects/${projectId}`}
+                              className="text-xl font-semibold text-blue-400 hover:text-blue-300 hover:underline"
+                            >
+                              {project?.name || "Unknown Project"}
+                            </Link>
+                            <span className="text-sm text-slate-400">
+                              {completedTasks}/{totalTasks} tasks completed
+                            </span>
+                          </div>
+                          <ProgressBar percentage={progress} variant="green" />
+                        </div>
+                      </div>
+
+                      {/* Project Tasks */}
+                      <div className="space-y-3">
+                        {projectTasks.map((task) => {
+                          const taskHours = getTaskHours(task.id);
+                          return (
+                            <div
+                              key={task.id}
+                              className="rounded-lg border border-slate-700 bg-slate-900/50 p-4 hover:bg-slate-900 transition-colors"
+                            >
+                              <div className="flex items-start justify-between gap-4">
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <Link
+                                      href={`/tasks/${task.id}`}
+                                      className="text-blue-400 hover:text-blue-300 hover:underline font-medium truncate"
+                                    >
+                                      {task.name}
+                                    </Link>
+                                  </div>
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <span
+                                      className={`rounded px-2 py-1 text-xs font-semibold ${getPriorityColor(task.priority)}`}
+                                    >
+                                      {task.priority}
+                                    </span>
+                                    <span
+                                      className={`rounded px-2 py-1 text-xs font-semibold ${getStatusColor(task.status)}`}
+                                    >
+                                      {task.status}
+                                    </span>
+                                    {task.note && (
+                                      <span
+                                        className="text-xs text-slate-400 truncate max-w-xs"
+                                        title={task.note}
+                                      >
+                                        📝 {task.note}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="text-right shrink-0">
+                                  <div className="text-lg font-bold text-white">
+                                    {taskHours}h
+                                  </div>
+                                  <div className="text-xs text-slate-400">
+                                    assigned
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                },
+              )
             )}
           </div>
         </>

@@ -10,6 +10,7 @@ import { Modal } from "../../../components/Modal";
 import { Input, Select, Textarea } from "../../../components/FormInputs";
 import { usePermissions } from "../../../contexts/PermissionContext";
 import { Toast, useToast } from "../../../components/Toast";
+import { ProgressBar } from "../../../components/ProgressBar";
 
 const PRIORITIES = ["Low", "Normal", "High", "Critical"];
 const STATUSES = ["Not started", "In progress", "Completed", "Continuous"];
@@ -498,12 +499,7 @@ export default function ProjectDetailPage() {
                     {totalEstimatedHours}h
                   </span>
                 </div>
-                <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-blue-500"
-                    style={{ width: "100%" }}
-                  />
-                </div>
+                <ProgressBar percentage={100} variant="blue" />
               </div>
               <div>
                 <div className="flex justify-between text-sm mb-1">
@@ -512,14 +508,16 @@ export default function ProjectDetailPage() {
                     {totalAssignedHours}h
                   </span>
                 </div>
-                <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
-                  <div
-                    className={`h-full ${totalAssignedHours > totalEstimatedHours ? "bg-red-500" : "bg-green-500"}`}
-                    style={{
-                      width: `${totalEstimatedHours > 0 ? Math.min(100, (totalAssignedHours / totalEstimatedHours) * 100) : 0}%`,
-                    }}
-                  />
-                </div>
+                <ProgressBar
+                  percentage={
+                    totalEstimatedHours > 0
+                      ? (totalAssignedHours / totalEstimatedHours) * 100
+                      : 0
+                  }
+                  variant={
+                    totalAssignedHours > totalEstimatedHours ? "red" : "green"
+                  }
+                />
               </div>
             </div>
           </div>
