@@ -37,6 +37,8 @@ interface Assignment {
   taskItemId: number;
   hoursAssigned: number;
   assignedDate: string;
+  year: number;
+  weekNumber: number;
   note?: string;
   assignedBy: string;
 }
@@ -71,6 +73,9 @@ export default function TaskDetailPage() {
   );
   const [selectedCoworkerId, setSelectedCoworkerId] = useState<number | null>(
     null,
+  );
+  const [selectedAssignmentDate, setSelectedAssignmentDate] = useState<string>(
+    new Date().toISOString().slice(0, 16),
   );
   const [taskModalOpen, setTaskModalOpen] = useState(false);
   const { toasts, showToast, removeToast } = useToast();
@@ -142,6 +147,7 @@ export default function TaskDetailPage() {
     setModalMode("create");
     setEditingAssignment(null);
     setSelectedCoworkerId(null);
+    setSelectedAssignmentDate(new Date().toISOString().slice(0, 16));
     setModalOpen(true);
   };
 
@@ -149,6 +155,9 @@ export default function TaskDetailPage() {
     setModalMode("edit");
     setEditingAssignment(assignment);
     setSelectedCoworkerId(assignment.coworkerId);
+    setSelectedAssignmentDate(
+      new Date(assignment.assignedDate).toISOString().slice(0, 16),
+    );
     setModalOpen(true);
   };
 
@@ -491,12 +500,19 @@ export default function TaskDetailPage() {
         </div>
 
         {/* Hours Stats */}
-        <div className="mb-8 grid gap-6 md:grid-cols-3">
+        <div className="mb-8 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           <div className="rounded-lg border border-slate-700 bg-slate-800 p-6">
             <p className="text-sm text-slate-400">Estimated Hours</p>
             <p className="mt-2 text-3xl font-bold text-white">
               {task.estimatedHours}h
             </p>
+          </div>
+          <div className="rounded-lg border border-slate-700 bg-slate-800 p-6">
+            <p className="text-sm text-slate-400">Weekly Effort</p>
+            <p className="mt-2 text-3xl font-bold text-purple-400">
+              {task.weeklyEffort}h
+            </p>
+            <p className="mt-1 text-xs text-slate-500">per week</p>
           </div>
           <div className="rounded-lg border border-slate-700 bg-slate-800 p-6">
             <p className="text-sm text-slate-400">Allocated Hours</p>
@@ -842,48 +858,82 @@ export default function TaskDetailPage() {
               (sum, a) => sum + a.hoursAssigned,
               0,
             );
-            const remainingHours = (task?.estimatedHours || 0) - totalAssigned;
+            const remainingTotal = (task?.estimatedHours || 0) - totalAssigned;
+
+            // Get current week info from the selected assignment date
+            const selectedDate = new Date(selectedAssignmentDate);
+            const currentWeekInfo = getIsoWeekNumber(selectedDate);
+
+            // Filter assignments for the current week
+            const currentWeekAssignments = taskAssignments.filter(
+              (a) =>
+                a.year === currentWeekInfo.year &&
+                a.weekNumber === currentWeekInfo.weekNumber,
+            );
+            const weeklyAssigned = currentWeekAssignments.reduce(
+              (sum, a) => sum + a.hoursAssigned,
+              0,
+            );
+            const weeklyRemaining = (task?.weeklyEffort || 0) - weeklyAssigned;
 
             return (
               <div className="rounded-lg border border-blue-700 bg-blue-900/20 p-3 space-y-2">
-                <div>
-                  <p className="text-sm text-blue-300">
-                    <strong>Task Estimated Hours:</strong>{" "}
-                    {task?.estimatedHours || 0}h
-                  </p>
-                </div>
-                {taskAssignments.length > 0 && (
-                  <div className="border-t border-blue-800 pt-2">
-                    <p className="text-xs font-semibold text-blue-300 mb-1">
-                      Already Assigned:
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <p className="text-xs text-blue-400">
+                      Task Estimated Total
                     </p>
-                    <ul className="text-xs text-blue-400 space-y-1 ml-2">
-                      {taskAssignments.map((a) => {
-                        const assignedCoworker = coworkers.find(
-                          (c) => c.id === a.coworkerId,
-                        );
-                        return (
-                          <li key={a.id}>
-                            • {assignedCoworker?.name || "Unknown"}:{" "}
-                            {a.hoursAssigned}h
-                          </li>
-                        );
-                      })}
-                    </ul>
-                    <p className="text-xs text-blue-300 mt-2">
-                      <strong>Total Assigned:</strong> {totalAssigned}h
-                    </p>
-                    <p
-                      className={`text-xs font-semibold mt-1 ${remainingHours >= 0 ? "text-green-400" : "text-red-400"}`}
-                    >
-                      <strong>Remaining:</strong> {remainingHours}h
-                      {remainingHours < 0 && " (Over-assigned!)"}
+                    <p className="text-sm font-semibold text-blue-200">
+                      {task?.estimatedHours || 0}h
                     </p>
                   </div>
-                )}
+                  <div>
+                    <p className="text-xs text-blue-400">
+                      Weekly Effort Target
+                    </p>
+                    <p className="text-sm font-semibold text-blue-200">
+                      {task?.weeklyEffort || 0}h/week
+                    </p>
+                  </div>
+                </div>
+                <div className="border-t border-blue-800 pt-2">
+                  <p className="text-xs text-blue-400 mb-1">
+                    Week {currentWeekInfo.weekNumber}, {currentWeekInfo.year}
+                  </p>
+                  {currentWeekAssignments.length > 0 && (
+                    <div>
+                      <p className="text-xs font-semibold text-blue-300 mb-1">
+                        Already Assigned This Week:
+                      </p>
+                      <ul className="text-xs text-blue-400 space-y-1 ml-2 mb-2">
+                        {currentWeekAssignments.map((a) => {
+                          const assignedCoworker = coworkers.find(
+                            (c) => c.id === a.coworkerId,
+                          );
+                          return (
+                            <li key={a.id}>
+                              • {assignedCoworker?.name || "Unknown"}:{" "}
+                              {a.hoursAssigned}h
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
+                  )}
+                  <p className="text-sm text-blue-200">
+                    <strong>Week Total Assigned:</strong> {weeklyAssigned}h
+                  </p>
+                  <p
+                    className={`text-sm font-semibold mt-1 ${weeklyRemaining >= 0 ? "text-green-400" : "text-red-400"}`}
+                  >
+                    <strong>Week Remaining Capacity:</strong> {weeklyRemaining}h
+                    {weeklyRemaining < 0 && " (Over-assigned!)"}
+                  </p>
+                </div>
                 {taskAssignments.length === 0 && (
-                  <p className="text-xs text-blue-400">
-                    No assignments yet. Use the estimated hours as a reference.
+                  <p className="text-xs text-blue-400 mt-2">
+                    No assignments yet. Target {task?.weeklyEffort || 0}h per
+                    week.
                   </p>
                 )}
               </div>
@@ -909,13 +959,8 @@ export default function TaskDetailPage() {
             name="assignedDate"
             type="datetime-local"
             required
-            defaultValue={
-              editingAssignment?.assignedDate
-                ? new Date(editingAssignment.assignedDate)
-                    .toISOString()
-                    .slice(0, 16)
-                : new Date().toISOString().slice(0, 16)
-            }
+            value={selectedAssignmentDate}
+            onChange={(e) => setSelectedAssignmentDate(e.target.value)}
           />
 
           <div className="flex gap-3 pt-4">

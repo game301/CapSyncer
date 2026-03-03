@@ -17,6 +17,17 @@ interface TaskItem {
   priority: string;
   status: string;
   estimatedHours: number;
+  weeklyEffort: number;
+}
+
+interface Assignment {
+  id: number;
+  coworkerId: number;
+  taskItemId: number;
+  hoursAssigned: number;
+  assignedDate: string;
+  year: number;
+  weekNumber: number;
 }
 
 interface CreateAssignmentModalProps {
@@ -37,27 +48,30 @@ export function CreateAssignmentModal({
   const permissions = usePermissions();
   const [coworkers, setCoworkers] = useState<Coworker[]>([]);
   const [tasks, setTasks] = useState<TaskItem[]>([]);
-  
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
+
   // Calculate ISO week number and year from a date (ISO 8601)
   const getWeekInfo = (dateString: string) => {
     // Parse date as local to avoid timezone issues
-    const [year, month, day] = dateString.split('-').map(Number);
+    const [year, month, day] = dateString.split("-").map(Number);
     const date = new Date(year, month - 1, day);
-    
+
     // Copy date so we don't mutate the original
     const tempDate = new Date(date.getTime());
     // Set to nearest Thursday: current date + 4 - current day number (make Sunday's day number 7)
     tempDate.setDate(tempDate.getDate() + 4 - (tempDate.getDay() || 7));
-    
+
     // Get first day of year
     const yearStart = new Date(tempDate.getFullYear(), 0, 1);
-    
+
     // Calculate full weeks to nearest Thursday
-    const weekNumber = Math.ceil((((tempDate.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
-    
+    const weekNumber = Math.ceil(
+      ((tempDate.getTime() - yearStart.getTime()) / 86400000 + 1) / 7,
+    );
+
     return {
       year: tempDate.getFullYear(),
-      weekNumber: weekNumber
+      weekNumber: weekNumber,
     };
   };
 
@@ -88,15 +102,17 @@ export function CreateAssignmentModal({
 
   const fetchData = async () => {
     try {
-      const [coworkersRes, tasksRes] = await Promise.all([
+      const [coworkersRes, tasksRes, assignmentsRes] = await Promise.all([
         fetch(`${apiBaseUrl}/api/coworkers`),
         fetch(`${apiBaseUrl}/api/tasks`),
+        fetch(`${apiBaseUrl}/api/assignments`),
       ]);
 
-      if (coworkersRes.ok && tasksRes.ok) {
-        const [coworkersData, tasksData] = await Promise.all([
+      if (coworkersRes.ok && tasksRes.ok && assignmentsRes.ok) {
+        const [coworkersData, tasksData, assignmentsData] = await Promise.all([
           coworkersRes.json(),
           tasksRes.json(),
+          assignmentsRes.json(),
         ]);
 
         const activeCoworkers = coworkersData.filter(
@@ -104,6 +120,7 @@ export function CreateAssignmentModal({
         );
         setCoworkers(activeCoworkers);
         setTasks(tasksData);
+        setAssignments(assignmentsData);
 
         if (!formData.coworkerId && activeCoworkers.length > 0) {
           setFormData((prev) => ({
@@ -129,10 +146,12 @@ export function CreateAssignmentModal({
 
     try {
       const weekInfo = getWeekInfo(formData.assignedDate);
-      
+
       // Convert date string to ISO DateTime format for the backend
-      const assignedDateTime = new Date(formData.assignedDate + 'T00:00:00').toISOString();
-      
+      const assignedDateTime = new Date(
+        formData.assignedDate + "T00:00:00",
+      ).toISOString();
+
       const response = await fetch(`${apiBaseUrl}/api/assignments`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -160,12 +179,19 @@ export function CreateAssignmentModal({
         onClose();
       } else {
         const errorText = await response.text();
-        console.error("Failed to create assignment:", response.status, errorText);
+        console.error(
+          "Failed to create assignment:",
+          response.status,
+          errorText,
+        );
         alert(`Failed to create assignment: ${response.status} ${errorText}`);
       }
     } catch (error) {
       console.error("Error creating assignment:", error);
-      alert("Error creating assignment: " + (error instanceof Error ? error.message : String(error)));
+      alert(
+        "Error creating assignment: " +
+          (error instanceof Error ? error.message : String(error)),
+      );
     } finally {
       setLoading(false);
     }
@@ -230,6 +256,61 @@ export function CreateAssignmentModal({
             ))}
           </select>
         </div>
+
+        {formData.taskItemId &&
+          (() => {
+            const selectedTask = tasks.find(
+              (t) => t.id === Number(formData.taskItemId),
+            );
+            if (!selectedTask) return null;
+
+            const weekInfo = getWeekInfo(formData.assignedDate);
+            const taskWeekAssignments = assignments.filter(
+              (a) =>
+                a.taskItemId === selectedTask.id &&
+                a.year === weekInfo.year &&
+                a.weekNumber === weekInfo.weekNumber,
+            );
+            const totalAssignedInWeek = taskWeekAssignments.reduce(
+              (sum, a) => sum + a.hoursAssigned,
+              0,
+            );
+            const remainingInWeek =
+              selectedTask.weeklyEffort - totalAssignedInWeek;
+
+            return (
+              <div className="rounded-lg border border-blue-700 bg-blue-900/20 p-3 space-y-2">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <p className="text-xs text-blue-400">Estimated Total</p>
+                    <p className="text-sm font-semibold text-blue-200">
+                      {selectedTask.estimatedHours}h
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-blue-400">Weekly Effort</p>
+                    <p className="text-sm font-semibold text-blue-200">
+                      {selectedTask.weeklyEffort}h/week
+                    </p>
+                  </div>
+                </div>
+                <div className="border-t border-blue-800 pt-2">
+                  <p className="text-xs text-blue-400">
+                    Week {weekInfo.weekNumber}, {weekInfo.year}
+                  </p>
+                  <p className="text-sm text-blue-200 mt-1">
+                    <strong>Already Assigned:</strong> {totalAssignedInWeek}h
+                  </p>
+                  <p
+                    className={`text-sm font-semibold mt-1 ${remainingInWeek >= 0 ? "text-green-400" : "text-red-400"}`}
+                  >
+                    <strong>Remaining Capacity:</strong> {remainingInWeek}h
+                    {remainingInWeek < 0 && " (Over-assigned!)"}
+                  </p>
+                </div>
+              </div>
+            );
+          })()}
 
         <div className="grid grid-cols-2 gap-4">
           <div>
