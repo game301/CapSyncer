@@ -240,8 +240,8 @@ export default function ProjectDetailPage() {
       }
     });
 
-    // Add projectId for new tasks
-    if (modalType === "task" && modalMode === "create") {
+    // Add projectId for tasks (both create and edit)
+    if (modalType === "task") {
       data.projectId = projectId;
     }
 

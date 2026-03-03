@@ -75,13 +75,21 @@ app.MapPost("/api/coworkers", async (Coworker c, CapSyncerDbContext db) =>
 });
 app.MapPut("/api/coworkers/{id}", async (int id, Coworker input, CapSyncerDbContext db) =>
 {
-    var c = await db.Coworkers.FindAsync(id);
+    var c = await db.Coworkers.AsNoTracking().FirstOrDefaultAsync(c => c.Id == id);
     if (c is null) return Results.NotFound();
-    c.Name = input.Name;
-    c.Capacity = input.Capacity;
-    c.IsActive = input.IsActive; // Allow updating IsActive status
+    
+    // Create a new instance with only the fields we want to update
+    var coworkerToUpdate = new Coworker
+    {
+        Id = id,
+        Name = input.Name,
+        Capacity = input.Capacity,
+        IsActive = input.IsActive
+    };
+    
+    db.Coworkers.Update(coworkerToUpdate);
     await db.SaveChangesAsync();
-    return Results.Ok(c);
+    return Results.Ok(coworkerToUpdate);
 });
 app.MapDelete("/api/coworkers/{id}", async (int id, CapSyncerDbContext db) =>
 {
@@ -105,11 +113,21 @@ app.MapDelete("/api/coworkers/{id}", async (int id, CapSyncerDbContext db) =>
 });
 app.MapPut("/api/coworkers/{id}/reactivate", async (int id, CapSyncerDbContext db) =>
 {
-    var c = await db.Coworkers.FindAsync(id);
+    var c = await db.Coworkers.AsNoTracking().FirstOrDefaultAsync(c => c.Id == id);
     if (c is null) return Results.NotFound();
-    c.IsActive = true;
+    
+    // Create a new instance with only the fields we want to update
+    var coworkerToUpdate = new Coworker
+    {
+        Id = id,
+        Name = c.Name,
+        Capacity = c.Capacity,
+        IsActive = true
+    };
+    
+    db.Coworkers.Update(coworkerToUpdate);
     await db.SaveChangesAsync();
-    return Results.Ok(c);
+    return Results.Ok(coworkerToUpdate);
 });
 
 // CRUD endpoints for Project
@@ -124,12 +142,21 @@ app.MapPost("/api/projects", async (Project p, CapSyncerDbContext db) =>
 });
 app.MapPut("/api/projects/{id}", async (int id, Project input, CapSyncerDbContext db) =>
 {
-    var p = await db.Projects.FindAsync(id);
+    var p = await db.Projects.AsNoTracking().FirstOrDefaultAsync(p => p.Id == id);
     if (p is null) return Results.NotFound();
-    p.Name = input.Name;
-    p.Status = input.Status;
+    
+    // Create a new instance with only the fields we want to update
+    var projectToUpdate = new Project
+    {
+        Id = id,
+        Name = input.Name,
+        Status = input.Status,
+        CreatedAt = p.CreatedAt // Preserve the original creation date
+    };
+    
+    db.Projects.Update(projectToUpdate);
     await db.SaveChangesAsync();
-    return Results.Ok(p);
+    return Results.Ok(projectToUpdate);
 });
 app.MapDelete("/api/projects/{id}", async (int id, CapSyncerDbContext db) =>
 {
@@ -152,22 +179,27 @@ app.MapPost("/api/tasks", async (TaskItem t, CapSyncerDbContext db) =>
 });
 app.MapPut("/api/tasks/{id}", async (int id, TaskItem input, CapSyncerDbContext db) =>
 {
-    var t = await db.Tasks.FindAsync(id);
+    var t = await db.Tasks.AsNoTracking().FirstOrDefaultAsync(t => t.Id == id);
     if (t is null) return Results.NotFound();
-    t.Name = input.Name;
-    t.Priority = input.Priority;
-    t.Status = input.Status;
-    t.EstimatedHours = input.EstimatedHours;
-    t.WeeklyEffort = input.WeeklyEffort;
-    t.Note = input.Note;
-    t.ProjectId = input.ProjectId;
-    // Don't update Added date, but update Completed if provided
-    if (input.Completed.HasValue)
+    
+    // Create a new instance with only the fields we want to update
+    var taskToUpdate = new TaskItem
     {
-        t.Completed = input.Completed;
-    }
+        Id = id,
+        Name = input.Name,
+        Priority = input.Priority,
+        Status = input.Status,
+        EstimatedHours = input.EstimatedHours,
+        WeeklyEffort = input.WeeklyEffort,
+        Note = input.Note,
+        ProjectId = input.ProjectId,
+        Added = t.Added, // Preserve the original Added date
+        Completed = input.Completed.HasValue ? input.Completed : t.Completed
+    };
+    
+    db.Tasks.Update(taskToUpdate);
     await db.SaveChangesAsync();
-    return Results.Ok(t);
+    return Results.Ok(taskToUpdate);
 });
 app.MapDelete("/api/tasks/{id}", async (int id, CapSyncerDbContext db) =>
 {
@@ -190,18 +222,26 @@ app.MapPost("/api/assignments", async (Assignment a, CapSyncerDbContext db) =>
 });
 app.MapPut("/api/assignments/{id}", async (int id, Assignment input, CapSyncerDbContext db) =>
 {
-    var a = await db.Assignments.FindAsync(id);
+    var a = await db.Assignments.AsNoTracking().FirstOrDefaultAsync(a => a.Id == id);
     if (a is null) return Results.NotFound();
-    a.CoworkerId = input.CoworkerId;
-    a.TaskItemId = input.TaskItemId;
-    a.HoursAssigned = input.HoursAssigned;
-    a.Note = input.Note;
-    a.AssignedDate = input.AssignedDate;
-    a.AssignedBy = input.AssignedBy;
-    a.Year = input.Year;
-    a.WeekNumber = input.WeekNumber;
+    
+    // Create a new instance with only the fields we want to update
+    var assignmentToUpdate = new Assignment
+    {
+        Id = id,
+        CoworkerId = input.CoworkerId,
+        TaskItemId = input.TaskItemId,
+        HoursAssigned = input.HoursAssigned,
+        Note = input.Note,
+        AssignedDate = input.AssignedDate,
+        AssignedBy = input.AssignedBy,
+        Year = input.Year,
+        WeekNumber = input.WeekNumber
+    };
+    
+    db.Assignments.Update(assignmentToUpdate);
     await db.SaveChangesAsync();
-    return Results.Ok(a);
+    return Results.Ok(assignmentToUpdate);
 });
 app.MapDelete("/api/assignments/{id}", async (int id, CapSyncerDbContext db) =>
 {
