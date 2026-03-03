@@ -1571,13 +1571,6 @@ function TeamView({
                     .reduce((sum, a) => sum + a.hoursAssigned, 0),
               },
               {
-                header: "Assignments",
-                accessor: (t) =>
-                  assignments.filter((a) => a.taskItemId === t.id).length,
-                sortKey: (t) =>
-                  assignments.filter((a) => a.taskItemId === t.id).length,
-              },
-              {
                 header: "Note",
                 accessor: (t) => (
                   <span

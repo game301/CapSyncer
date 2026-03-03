@@ -854,10 +854,6 @@ export default function ProjectDetailPage() {
                   ),
                 },
                 {
-                  header: "Assignments",
-                  accessor: (t) => t.assignmentCount,
-                },
-                {
                   header: "Note",
                   accessor: (t) => (
                     <span
