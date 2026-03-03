@@ -10,7 +10,6 @@ import { PageLayout } from "../../components/PageLayout";
 import { usePermissions } from "../../contexts/PermissionContext";
 import { Toast, useToast } from "../../components/Toast";
 import { WeekSelector } from "../../components/WeekSelector";
-import { ActionButtons } from "../../components/ActionButtons";
 import { ProgressBar } from "../../components/ProgressBar";
 
 // Priority and Status options
@@ -1843,10 +1842,26 @@ function PersonalView({
     {} as Record<number, TaskItem[]>,
   );
 
-  // Calculate total assigned hours per task
+  // Calculate total assigned hours per task for the selected coworker
   const getTaskHours = (taskId: number) => {
     return coworkerAssignments
       .filter((a) => a.taskItemId === taskId)
+      .reduce((sum, a) => sum + a.hoursAssigned, 0);
+  };
+
+  // Calculate weekly assigned hours for the selected coworker
+  const getWeeklyAssignedHours = (
+    taskId: number,
+    year: number,
+    weekNumber: number,
+  ) => {
+    return coworkerAssignments
+      .filter(
+        (a) =>
+          a.taskItemId === taskId &&
+          a.year === year &&
+          a.weekNumber === weekNumber,
+      )
       .reduce((sum, a) => sum + a.hoursAssigned, 0);
   };
 
@@ -1920,13 +1935,6 @@ function PersonalView({
               </select>
             </div>
           </div>
-          {selectedCoworker && (
-            <ActionButtons
-              onCreateTask={onCreateTask}
-              onCreateAssignment={() => onCreateAssignment(selectedCoworker)}
-              coworkerId={selectedCoworker}
-            />
-          )}
         </div>
       </div>
 
@@ -1974,13 +1982,13 @@ function PersonalView({
               </h3>
               <div className="grid grid-cols-3 gap-4">
                 <div className="text-center">
-                  <p className="text-3xl font-bold text-blue-400">
+                  <p className="text-3xl font-bold text-white">
                     {assignedTasks.length}
                   </p>
                   <p className="text-xs text-slate-400 mt-1">Total Tasks</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-3xl font-bold text-yellow-400">
+                  <p className="text-3xl font-bold text-blue-400">
                     {
                       assignedTasks.filter((t) => t.status === "In progress")
                         .length
@@ -2003,9 +2011,27 @@ function PersonalView({
 
           {/* Tasks Grouped by Project */}
           <div className="space-y-4">
-            <h2 className="text-2xl font-bold text-white">
-              My Tasks by Project
-            </h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-white">
+                My Tasks by Project
+              </h2>
+              <Button onClick={onCreateTask} variant="primary" size="md">
+                <svg
+                  className="mr-2 h-4 w-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 4v16m8-8H4"
+                  />
+                </svg>
+                Add Task
+              </Button>
+            </div>
 
             {Object.keys(tasksByProject).length === 0 ? (
               <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-12 text-center">
@@ -2096,10 +2122,23 @@ function PersonalView({
                                     </span>
                                     {task.note && (
                                       <span
-                                        className="text-xs text-slate-400 truncate max-w-xs"
+                                        className="flex items-center gap-1 text-xs text-slate-400 truncate max-w-xs"
                                         title={task.note}
                                       >
-                                        📝 {task.note}
+                                        <svg
+                                          className="h-3.5 w-3.5 shrink-0"
+                                          fill="none"
+                                          viewBox="0 0 24 24"
+                                          stroke="currentColor"
+                                        >
+                                          <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
+                                          />
+                                        </svg>
+                                        {task.note}
                                       </span>
                                     )}
                                   </div>
@@ -2109,7 +2148,7 @@ function PersonalView({
                                     {taskHours}h
                                   </div>
                                   <div className="text-xs text-slate-400">
-                                    assigned
+                                    total assigned
                                   </div>
                                 </div>
                               </div>
@@ -2121,6 +2160,146 @@ function PersonalView({
                   );
                 },
               )
+            )}
+          </div>
+
+          {/* Assignments Section */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-white">My Assignments</h2>
+              {selectedCoworker && (
+                <Button
+                  onClick={() => onCreateAssignment(selectedCoworker)}
+                  variant="primary"
+                  size="md"
+                >
+                  <svg
+                    className="mr-2 h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 4v16m8-8H4"
+                    />
+                  </svg>
+                  Add Assignment
+                </Button>
+              )}
+            </div>
+
+            {coworkerAssignments.length === 0 ? (
+              <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-12 text-center">
+                <svg
+                  className="mx-auto h-16 w-16 text-slate-600 mb-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.5}
+                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                  />
+                </svg>
+                <p className="text-slate-400 text-lg font-medium mb-2">
+                  No assignments yet
+                </p>
+                <p className="text-slate-500 text-sm">
+                  Assignments for {selectedCoworkerData.name} will appear here
+                </p>
+              </div>
+            ) : (
+              <div className="rounded-lg border border-slate-700 bg-slate-800 p-6">
+                <div className="space-y-3">
+                  {coworkerAssignments.map((assignment) => {
+                    const task = tasks.find(
+                      (t) => t.id === assignment.taskItemId,
+                    );
+                    const weeklyHours =
+                      assignment.year && assignment.weekNumber
+                        ? getWeeklyAssignedHours(
+                            assignment.taskItemId,
+                            assignment.year,
+                            assignment.weekNumber,
+                          )
+                        : assignment.hoursAssigned;
+                    return (
+                      <div
+                        key={assignment.id}
+                        className="rounded-lg border border-slate-700 bg-slate-900/50 p-4 hover:bg-slate-900 transition-colors"
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-2">
+                              {task ? (
+                                <Link
+                                  href={`/tasks/${task.id}`}
+                                  className="text-blue-400 hover:text-blue-300 hover:underline font-medium truncate"
+                                >
+                                  {task.name}
+                                </Link>
+                              ) : (
+                                <span className="text-slate-500 font-medium">
+                                  Unknown Task
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              {assignment.year && assignment.weekNumber && (
+                                <span className="rounded px-2 py-1 text-xs font-semibold bg-purple-900 text-purple-200 border border-purple-700">
+                                  {assignment.year} W{assignment.weekNumber}
+                                </span>
+                              )}
+                              <span className="rounded px-2 py-1 text-xs font-semibold bg-slate-800 text-slate-300 border border-slate-700">
+                                {new Date(
+                                  assignment.assignedDate,
+                                ).toLocaleDateString("en-US", {
+                                  month: "short",
+                                  day: "numeric",
+                                })}
+                              </span>
+                              {assignment.note && (
+                                <span
+                                  className="flex items-center gap-1 text-xs text-slate-400 truncate max-w-xs"
+                                  title={assignment.note}
+                                >
+                                  <svg
+                                    className="h-3.5 w-3.5 shrink-0"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
+                                    />
+                                  </svg>
+                                  {assignment.note}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="text-right shrink-0">
+                            <div className="text-lg font-bold text-white">
+                              {weeklyHours}h
+                            </div>
+                            <div className="text-xs text-slate-400">
+                              weekly assigned
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             )}
           </div>
         </>
