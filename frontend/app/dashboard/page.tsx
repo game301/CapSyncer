@@ -1942,7 +1942,7 @@ function PersonalView({
                   <span className="font-semibold text-blue-400">
                     {Math.max(0, stats.assignedHours)}h
                   </span>{" "}
-                  assigned
+                  allocated
                 </span>
                 <span className="text-slate-400">
                   of{" "}

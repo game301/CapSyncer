@@ -204,7 +204,7 @@ export default function CoworkerDetailPage() {
             </p>
           </div>
           <div className="rounded-lg border border-slate-700 bg-slate-800 p-6">
-            <p className="text-sm text-slate-400">Assigned Hours</p>
+            <p className="text-sm text-slate-400">Allocated Hours</p>
             <p className="mt-2 text-3xl font-bold text-blue-400">
               {totalHours}h
             </p>

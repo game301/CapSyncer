@@ -474,7 +474,7 @@ export default function TaskDetailPage() {
             </p>
           </div>
           <div className="rounded-lg border border-slate-700 bg-slate-800 p-6">
-            <p className="text-sm text-slate-400">Assigned Hours</p>
+            <p className="text-sm text-slate-400">Allocated Hours</p>
             <p className="mt-2 text-3xl font-bold text-blue-400">
               {totalAssignedHours}h
             </p>
@@ -494,7 +494,7 @@ export default function TaskDetailPage() {
           <div className="mb-8 rounded-lg border border-slate-700 bg-slate-800 p-6">
             <div className="mb-3 flex items-center justify-between">
               <h3 className="text-lg font-semibold text-white">
-                Assignment Progress
+                Allocation Progress
               </h3>
               <span className="text-lg font-bold text-white">
                 {Math.round(progressPercentage)}%

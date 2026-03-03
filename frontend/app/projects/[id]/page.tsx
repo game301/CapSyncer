@@ -570,7 +570,7 @@ export default function ProjectDetailPage() {
             </p>
           </div>
           <div className="rounded-lg border border-slate-700 bg-slate-800 p-6">
-            <p className="text-sm text-slate-400">Completion</p>
+            <p className="text-sm text-slate-400">Task Completion</p>
             <p className="mt-2 text-3xl font-bold text-blue-400">
               {Math.round(progressPercentage)}%
             </p>
@@ -582,7 +582,7 @@ export default function ProjectDetailPage() {
           {/* Hours Stats */}
           <div className="rounded-lg border border-slate-700 bg-slate-800 p-6">
             <h3 className="mb-4 text-lg font-semibold text-white">
-              Hours Overview
+              Hours Allocation
             </h3>
             <div className="space-y-4">
               <div>
@@ -596,7 +596,7 @@ export default function ProjectDetailPage() {
               </div>
               <div>
                 <div className="flex justify-between text-sm mb-1">
-                  <span className="text-slate-400">Assigned</span>
+                  <span className="text-slate-400">Allocated</span>
                   <span className="font-semibold text-white">
                     {totalAssignedHours}h
                   </span>
