@@ -12,6 +12,9 @@ import { usePermissions } from "../../../contexts/PermissionContext";
 import { Toast, useToast } from "../../../components/Toast";
 import { ProgressBar } from "../../../components/ProgressBar";
 
+const PRIORITIES = ["Low", "Normal", "High", "Critical"];
+const STATUSES = ["Not started", "In progress", "Completed", "Continuous"];
+
 interface TaskItem {
   id: number;
   name: string;
@@ -19,6 +22,8 @@ interface TaskItem {
   priority: string;
   status: string;
   estimatedHours: number;
+  weeklyEffort: number;
+  note: string;
 }
 
 interface Project {
@@ -51,6 +56,7 @@ export default function TaskDetailPage() {
 
   const [task, setTask] = useState<TaskItem | null>(null);
   const [project, setProject] = useState<Project | null>(null);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [allAssignments, setAllAssignments] = useState<Assignment[]>([]);
   const [tasks, setTasks] = useState<TaskItem[]>([]);
@@ -66,6 +72,7 @@ export default function TaskDetailPage() {
   const [selectedCoworkerId, setSelectedCoworkerId] = useState<number | null>(
     null,
   );
+  const [taskModalOpen, setTaskModalOpen] = useState(false);
   const { toasts, showToast, removeToast } = useToast();
 
   const apiBaseUrl =
@@ -93,6 +100,7 @@ export default function TaskDetailPage() {
       const coworkersData = await coworkersRes.json();
 
       setTask(taskData);
+      setProjects(projectsData);
       setProject(
         projectsData.find((p: Project) => p.id === taskData.projectId) || null,
       );
@@ -232,6 +240,56 @@ export default function TaskDetailPage() {
     }
   };
 
+  const handleTaskSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const data: Record<string, string | number> = {};
+
+    formData.forEach((value, key) => {
+      if (
+        key.includes("Id") ||
+        key === "estimatedHours" ||
+        key === "weeklyEffort"
+      ) {
+        data[key] = Number(value);
+      } else {
+        data[key] = String(value);
+      }
+    });
+
+    console.log("Updating task:", data);
+
+    try {
+      const response = await fetch(`${apiBaseUrl}/api/tasks/${taskId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
+      if (response.ok) {
+        showToast({
+          message: "Task updated successfully!",
+          type: "success",
+        });
+        setTaskModalOpen(false);
+        await fetchData();
+      } else {
+        const errorText = await response.text();
+        console.error("Update failed:", errorText);
+        showToast({
+          message: `Failed to update task: ${errorText || "Unknown error"}`,
+          type: "error",
+        });
+      }
+    } catch (err) {
+      console.error("Error updating task:", err);
+      showToast({
+        message: `Error updating task: ${err instanceof Error ? err.message : "Unknown error"}`,
+        type: "error",
+      });
+    }
+  };
+
   if (loading) {
     return (
       <PageLayout>
@@ -311,7 +369,29 @@ export default function TaskDetailPage() {
         <div className="mb-8 rounded-lg border border-slate-700 bg-slate-800 p-6">
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <h1 className="text-4xl font-bold text-white">{task.name}</h1>
+              <div className="flex items-center gap-4">
+                <h1 className="text-4xl font-bold text-white">{task.name}</h1>
+                <Button
+                  onClick={() => setTaskModalOpen(true)}
+                  variant="secondary"
+                  size="sm"
+                >
+                  <svg
+                    className="mr-1.5 h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                    />
+                  </svg>
+                  Edit
+                </Button>
+              </div>
               <div className="mt-4 flex flex-wrap gap-3">
                 <span
                   className={`rounded px-3 py-1 text-sm font-semibold ${
@@ -821,6 +901,77 @@ export default function TaskDetailPage() {
               type="button"
               variant="secondary"
               onClick={() => setModalOpen(false)}
+            >
+              Cancel
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Task Edit Modal */}
+      <Modal
+        isOpen={taskModalOpen}
+        onClose={() => setTaskModalOpen(false)}
+        title="Edit Task"
+      >
+        <form onSubmit={handleTaskSubmit} className="space-y-4">
+          <Input
+            label="Task Name"
+            name="name"
+            required
+            defaultValue={task?.name || ""}
+          />
+          <Select
+            label="Project"
+            name="projectId"
+            required
+            options={[
+              { value: "", label: "Select a project" },
+              ...projects.map((p) => ({ value: p.id, label: p.name })),
+            ]}
+            defaultValue={task?.projectId || ""}
+          />
+          <Select
+            label="Priority"
+            name="priority"
+            required
+            options={PRIORITIES.map((p) => ({ value: p, label: p }))}
+            defaultValue={task?.priority || "Normal"}
+          />
+          <Select
+            label="Status"
+            name="status"
+            required
+            options={STATUSES.map((s) => ({ value: s, label: s }))}
+            defaultValue={task?.status || "Not started"}
+          />
+          <Input
+            label="Estimated Hours"
+            name="estimatedHours"
+            type="number"
+            step="0.5"
+            min="0"
+            required
+            defaultValue={task?.estimatedHours || 0}
+          />
+          <Input
+            label="Weekly Effort"
+            name="weeklyEffort"
+            type="number"
+            step="0.5"
+            min="0"
+            required
+            defaultValue={task?.weeklyEffort || 0}
+          />
+          <Textarea label="Note" name="note" defaultValue={task?.note || ""} />
+          <div className="flex gap-3 pt-4">
+            <Button type="submit" variant="primary" className="flex-1">
+              Update
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setTaskModalOpen(false)}
             >
               Cancel
             </Button>

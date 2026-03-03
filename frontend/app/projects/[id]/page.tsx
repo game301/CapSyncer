@@ -14,10 +14,19 @@ import { ProgressBar } from "../../../components/ProgressBar";
 
 const PRIORITIES = ["Low", "Normal", "High", "Critical"];
 const STATUSES = ["Not started", "In progress", "Completed", "Continuous"];
+const PROJECT_STATUSES = [
+  "Planning",
+  "In Progress",
+  "On Hold",
+  "Completed",
+  "Cancelled",
+];
 
 interface Project {
   id: number;
   name: string;
+  status: string;
+  createdAt: string;
 }
 
 interface TaskItem {
@@ -71,6 +80,7 @@ export default function ProjectDetailPage() {
   const [editingEntity, setEditingEntity] = useState<
     TaskItem | Assignment | null
   >(null);
+  const [projectModalOpen, setProjectModalOpen] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
   const [selectedCoworkerId, setSelectedCoworkerId] = useState<number | null>(
     null,
@@ -314,6 +324,48 @@ export default function ProjectDetailPage() {
     }
   };
 
+  const handleProjectSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const data: Record<string, string | number> = {};
+
+    formData.forEach((value, key) => {
+      data[key] = String(value);
+    });
+
+    console.log("Updating project:", data);
+
+    try {
+      const response = await fetch(`${apiBaseUrl}/api/projects/${projectId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
+      if (response.ok) {
+        showToast({
+          message: "Project updated successfully!",
+          type: "success",
+        });
+        setProjectModalOpen(false);
+        await fetchData();
+      } else {
+        const errorText = await response.text();
+        console.error("Update failed:", errorText);
+        showToast({
+          message: `Failed to update project: ${errorText || "Unknown error"}`,
+          type: "error",
+        });
+      }
+    } catch (err) {
+      console.error("Error updating project:", err);
+      showToast({
+        message: `Error updating project: ${err instanceof Error ? err.message : "Unknown error"}`,
+        type: "error",
+      });
+    }
+  };
+
   if (loading) {
     return (
       <PageLayout>
@@ -417,9 +469,50 @@ export default function ProjectDetailPage() {
         {/* Project Info Card */}
         <div className="mb-8 rounded-lg border border-slate-700 bg-slate-800 p-6">
           <div className="flex items-start justify-between">
-            <div>
-              <h1 className="text-4xl font-bold text-white">{project.name}</h1>
-              <p className="mt-2 text-slate-400">Project Overview</p>
+            <div className="flex-1">
+              <div className="flex items-center gap-4">
+                <h1 className="text-4xl font-bold text-white">
+                  {project.name}
+                </h1>
+                <Button
+                  onClick={() => setProjectModalOpen(true)}
+                  variant="secondary"
+                  size="sm"
+                >
+                  <svg
+                    className="mr-1.5 h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                    />
+                  </svg>
+                  Edit
+                </Button>
+              </div>
+              <div className="mt-2 flex items-center gap-3">
+                <span
+                  className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${
+                    project.status === "Completed"
+                      ? "bg-green-900/50 text-green-300"
+                      : project.status === "In Progress"
+                        ? "bg-blue-900/50 text-blue-300"
+                        : project.status === "On Hold"
+                          ? "bg-yellow-900/50 text-yellow-300"
+                          : project.status === "Cancelled"
+                            ? "bg-red-900/50 text-red-300"
+                            : "bg-slate-700 text-slate-300"
+                  }`}
+                >
+                  {project.status}
+                </span>
+                <span className="text-sm text-slate-400">Project Overview</span>
+              </div>
               {isNewProject && (
                 <div className="mt-4 rounded-lg border border-green-700 bg-green-900/20 p-4">
                   <p className="text-sm font-semibold text-green-300 mb-2">
@@ -1191,6 +1284,41 @@ export default function ProjectDetailPage() {
               type="button"
               variant="secondary"
               onClick={() => setModalOpen(false)}
+            >
+              Cancel
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Project Edit Modal */}
+      <Modal
+        isOpen={projectModalOpen}
+        onClose={() => setProjectModalOpen(false)}
+        title="Edit Project"
+      >
+        <form onSubmit={handleProjectSubmit} className="space-y-4">
+          <Input
+            label="Project Name"
+            name="name"
+            required
+            defaultValue={project?.name || ""}
+          />
+          <Select
+            label="Status"
+            name="status"
+            required
+            options={PROJECT_STATUSES.map((s) => ({ value: s, label: s }))}
+            defaultValue={project?.status || "Planning"}
+          />
+          <div className="flex gap-3 pt-4">
+            <Button type="submit" variant="primary" className="flex-1">
+              Update
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setProjectModalOpen(false)}
             >
               Cancel
             </Button>
