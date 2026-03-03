@@ -13,7 +13,14 @@ import { Toast, useToast } from "../../../components/Toast";
 import { ProgressBar } from "../../../components/ProgressBar";
 
 const PRIORITIES = ["Low", "Normal", "High", "Critical"];
-const STATUSES = ["Not started", "In progress", "Completed", "Continuous"];
+const STATUSES = [
+  "Not started",
+  "In progress",
+  "On Hold",
+  "Completed",
+  "Continuous",
+  "Cancelled",
+];
 
 interface TaskItem {
   id: number;
@@ -445,10 +452,14 @@ export default function TaskDetailPage() {
                     task.status === "Completed"
                       ? "bg-green-900 text-green-200"
                       : task.status === "In progress"
-                        ? "bg-yellow-900 text-yellow-200"
-                        : task.status === "Continuous"
-                          ? "bg-blue-900 text-blue-200"
-                          : "bg-slate-700 text-slate-300"
+                        ? "bg-blue-900 text-blue-200"
+                        : task.status === "On Hold"
+                          ? "bg-yellow-900 text-yellow-200"
+                          : task.status === "Continuous"
+                            ? "bg-purple-900 text-purple-200"
+                            : task.status === "Cancelled"
+                              ? "bg-red-900 text-red-200"
+                              : "bg-slate-700 text-slate-300"
                   }`}
                 >
                   {task.status}

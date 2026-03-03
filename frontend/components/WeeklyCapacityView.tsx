@@ -479,9 +479,13 @@ export function WeeklyCapacityView({
                                             ? "bg-green-900/50 text-green-300"
                                             : task.status === "In progress"
                                               ? "bg-blue-900/50 text-blue-300"
-                                              : task.status === "Continuous"
-                                                ? "bg-purple-900/50 text-purple-300"
-                                                : "bg-gray-900/50 text-gray-300"
+                                              : task.status === "On Hold"
+                                                ? "bg-yellow-900/50 text-yellow-300"
+                                                : task.status === "Continuous"
+                                                  ? "bg-purple-900/50 text-purple-300"
+                                                  : task.status === "Cancelled"
+                                                    ? "bg-red-900/50 text-red-300"
+                                                    : "bg-gray-900/50 text-gray-300"
                                         }`}
                                       >
                                         {task.status}

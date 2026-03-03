@@ -13,7 +13,14 @@ import { Toast, useToast } from "../../../components/Toast";
 import { ProgressBar } from "../../../components/ProgressBar";
 
 const PRIORITIES = ["Low", "Normal", "High", "Critical"];
-const STATUSES = ["Not started", "In progress", "Completed", "Continuous"];
+const STATUSES = [
+  "Not started",
+  "In progress",
+  "On Hold",
+  "Completed",
+  "Continuous",
+  "Cancelled",
+];
 const PROJECT_STATUSES = [
   "Planning",
   "In Progress",
@@ -443,7 +450,9 @@ export default function ProjectDetailPage() {
   const notStartedTasks = tasks.filter(
     (t) => t.status === "Not started",
   ).length;
+  const onHoldTasks = tasks.filter((t) => t.status === "On Hold").length;
   const continuousTasks = tasks.filter((t) => t.status === "Continuous").length;
+  const cancelledTasks = tasks.filter((t) => t.status === "Cancelled").length;
 
   // Calculate completion percentage based on hours, not task count
   const completedTasksHours = tasks
@@ -714,8 +723,14 @@ export default function ProjectDetailPage() {
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-slate-400">In progress</span>
-                <span className="font-semibold text-yellow-400">
+                <span className="font-semibold text-blue-400">
                   {inProgressTasks}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-slate-400">On hold</span>
+                <span className="font-semibold text-yellow-400">
+                  {onHoldTasks}
                 </span>
               </div>
               <div className="flex justify-between items-center">
@@ -726,8 +741,14 @@ export default function ProjectDetailPage() {
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-slate-400">Continuous</span>
-                <span className="font-semibold text-blue-400">
+                <span className="font-semibold text-purple-400">
                   {continuousTasks}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-slate-400">Cancelled</span>
+                <span className="font-semibold text-red-400">
+                  {cancelledTasks}
                 </span>
               </div>
             </div>
@@ -826,9 +847,13 @@ export default function ProjectDetailPage() {
                           ? "bg-green-950 text-green-200 border border-green-800"
                           : t.status === "In progress"
                             ? "bg-blue-900 text-blue-200 border border-blue-800"
-                            : t.status === "Continuous"
-                              ? "bg-purple-900 text-purple-200 border border-purple-800"
-                              : "bg-slate-800 text-slate-300 border border-slate-700"
+                            : t.status === "On Hold"
+                              ? "bg-yellow-900 text-yellow-200 border border-yellow-800"
+                              : t.status === "Continuous"
+                                ? "bg-purple-900 text-purple-200 border border-purple-800"
+                                : t.status === "Cancelled"
+                                  ? "bg-red-950 text-red-200 border border-red-800"
+                                  : "bg-slate-800 text-slate-300 border border-slate-700"
                       }`}
                     >
                       {t.status}

@@ -14,7 +14,14 @@ import { ProgressBar } from "../../components/ProgressBar";
 
 // Priority and Status options
 const PRIORITIES = ["Low", "Normal", "High", "Critical"];
-const STATUSES = ["Not started", "In progress", "Completed", "Continuous"];
+const STATUSES = [
+  "Not started",
+  "In progress",
+  "On Hold",
+  "Completed",
+  "Continuous",
+  "Cancelled",
+];
 const PROJECT_STATUSES = [
   "Planning",
   "In Progress",
@@ -1526,9 +1533,13 @@ function TeamView({
                         ? "bg-green-950 text-green-200 border border-green-800"
                         : t.status === "In progress"
                           ? "bg-blue-900 text-blue-200 border border-blue-800"
-                          : t.status === "Continuous"
-                            ? "bg-purple-900 text-purple-200 border border-purple-800"
-                            : "bg-slate-800 text-slate-300 border border-slate-700"
+                          : t.status === "On Hold"
+                            ? "bg-yellow-900 text-yellow-200 border border-yellow-800"
+                            : t.status === "Continuous"
+                              ? "bg-purple-900 text-purple-200 border border-purple-800"
+                              : t.status === "Cancelled"
+                                ? "bg-red-950 text-red-200 border border-red-800"
+                                : "bg-slate-800 text-slate-300 border border-slate-700"
                     }`}
                   >
                     {t.status}
@@ -1538,8 +1549,10 @@ function TeamView({
                 customSortOrder: [
                   "Not started",
                   "In progress",
+                  "On Hold",
                   "Continuous",
                   "Completed",
+                  "Cancelled",
                 ],
               },
               {
