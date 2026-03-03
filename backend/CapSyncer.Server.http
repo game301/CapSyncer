@@ -1,10 +1,72 @@
 @CapSyncer_Server_HostAddress = http://localhost:5128
 
+###############################################
+# HEALTH & STATUS ENDPOINTS
+###############################################
+
+# Health check
+GET {{CapSyncer_Server_HostAddress}}/health
+
+###
+
+# API status
+GET {{CapSyncer_Server_HostAddress}}/api/status
+
+###
+
+###############################################
+# COWORKER ENDPOINTS
+###############################################
+
 # Get all coworkers
 GET {{CapSyncer_Server_HostAddress}}/api/coworkers
 Accept: application/json
 
 ###
+
+# Get coworker by ID
+GET {{CapSyncer_Server_HostAddress}}/api/coworkers/1
+Accept: application/json
+
+###
+
+# Create coworker
+POST {{CapSyncer_Server_HostAddress}}/api/coworkers
+Content-Type: application/json
+
+{
+  "name": "John Doe",
+  "capacity": 40,
+  "isActive": true
+}
+
+###
+
+# Update coworker
+PUT {{CapSyncer_Server_HostAddress}}/api/coworkers/1
+Content-Type: application/json
+
+{
+  "name": "John Doe Updated",
+  "capacity": 35,
+  "isActive": true
+}
+
+###
+
+# Delete coworker (soft delete on first call, permanent on second)
+DELETE {{CapSyncer_Server_HostAddress}}/api/coworkers/1
+
+###
+
+# Reactivate coworker
+PUT {{CapSyncer_Server_HostAddress}}/api/coworkers/1/reactivate
+
+###
+
+###############################################
+# PROJECT ENDPOINTS
+###############################################
 
 # Get all projects
 GET {{CapSyncer_Server_HostAddress}}/api/projects
@@ -12,14 +74,167 @@ Accept: application/json
 
 ###
 
+# Get project by ID
+GET {{CapSyncer_Server_HostAddress}}/api/projects/1
+Accept: application/json
+
+###
+
+# Create project
+POST {{CapSyncer_Server_HostAddress}}/api/projects
+Content-Type: application/json
+
+{
+  "name": "New Project",
+  "status": "Planning",
+  "createdAt": "2026-03-03T00:00:00Z"
+}
+
+###
+
+# Update project
+PUT {{CapSyncer_Server_HostAddress}}/api/projects/1
+Content-Type: application/json
+
+{
+  "name": "Updated Project",
+  "status": "In Progress"
+}
+
+###
+
+# Delete project
+DELETE {{CapSyncer_Server_HostAddress}}/api/projects/1
+
+###
+
+###############################################
+# TASK ENDPOINTS
+###############################################
+
 # Get all tasks
 GET {{CapSyncer_Server_HostAddress}}/api/tasks
 Accept: application/json
 
 ###
 
+# Get task by ID
+GET {{CapSyncer_Server_HostAddress}}/api/tasks/1
+Accept: application/json
+
+###
+
+# Create task
+POST {{CapSyncer_Server_HostAddress}}/api/tasks
+Content-Type: application/json
+
+{
+  "name": "New Task",
+  "priority": "Normal",
+  "status": "Not started",
+  "estimatedHours": 10,
+  "weeklyEffort": 5,
+  "note": "Task description",
+  "projectId": 1,
+  "added": "2026-03-03T00:00:00Z"
+}
+
+###
+
+# Update task
+PUT {{CapSyncer_Server_HostAddress}}/api/tasks/1
+Content-Type: application/json
+
+{
+  "name": "Updated Task",
+  "priority": "High",
+  "status": "In progress",
+  "estimatedHours": 15,
+  "weeklyEffort": 7,
+  "note": "Updated description",
+  "projectId": 1
+}
+
+###
+
+# Delete task
+DELETE {{CapSyncer_Server_HostAddress}}/api/tasks/1
+
+###
+
+###############################################
+# ASSIGNMENT ENDPOINTS
+###############################################
+
 # Get all assignments
 GET {{CapSyncer_Server_HostAddress}}/api/assignments
+Accept: application/json
+
+###
+
+# Get assignment by ID
+GET {{CapSyncer_Server_HostAddress}}/api/assignments/1
+Accept: application/json
+
+###
+
+# Create assignment
+POST {{CapSyncer_Server_HostAddress}}/api/assignments
+Content-Type: application/json
+
+{
+  "coworkerId": 1,
+  "taskItemId": 1,
+  "hoursAssigned": 8,
+  "note": "Assignment note",
+  "assignedDate": "2026-03-03T00:00:00Z",
+  "assignedBy": "Manager Name",
+  "year": 2026,
+  "weekNumber": 10
+}
+
+###
+
+# Update assignment
+PUT {{CapSyncer_Server_HostAddress}}/api/assignments/1
+Content-Type: application/json
+
+{
+  "coworkerId": 1,
+  "taskItemId": 1,
+  "hoursAssigned": 10,
+  "note": "Updated assignment note",
+  "assignedDate": "2026-03-03T00:00:00Z",
+  "assignedBy": "Manager Name",
+  "year": 2026,
+  "weekNumber": 10
+}
+
+###
+
+# Delete assignment
+DELETE {{CapSyncer_Server_HostAddress}}/api/assignments/1
+
+###
+
+###############################################
+# CAPACITY ENDPOINTS
+###############################################
+
+# Get weekly capacity for coworker in a specific year
+GET {{CapSyncer_Server_HostAddress}}/api/capacity/weekly/1/2026
+Accept: application/json
+
+###
+
+# Get current week number and year
+GET {{CapSyncer_Server_HostAddress}}/api/capacity/current-week
+Accept: application/json
+
+###
+
+# Get week number from specific date
+GET {{CapSyncer_Server_HostAddress}}/api/capacity/week-from-date?date=2026-03-03
 Accept: application/json
 
 ###
