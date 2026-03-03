@@ -90,6 +90,23 @@ export default function ProjectDetailPage() {
   const apiBaseUrl =
     process.env.NEXT_PUBLIC_API_BASEURL || "http://localhost:5128";
 
+  // Helper function to calculate ISO week number
+  const getIsoWeekNumber = (
+    date: Date,
+  ): { year: number; weekNumber: number } => {
+    const target = new Date(date.valueOf());
+    const dayNr = (date.getDay() + 6) % 7;
+    target.setDate(target.getDate() - dayNr + 3);
+    const firstThursday = target.valueOf();
+    target.setMonth(0, 1);
+    if (target.getDay() !== 4) {
+      target.setMonth(0, 1 + ((4 - target.getDay() + 7) % 7));
+    }
+    const weekNumber =
+      1 + Math.ceil((firstThursday - target.valueOf()) / 604800000);
+    return { year: target.getFullYear(), weekNumber };
+  };
+
   const fetchData = async () => {
     try {
       const [projectRes, tasksRes, assignmentsRes, coworkersRes] =
@@ -258,6 +275,14 @@ export default function ProjectDetailPage() {
     // Add assignedBy for assignments (use context userName, will be replaced with Azure AD later)
     if (modalType === "assignment") {
       data.assignedBy = permissions.userName || "Unknown User";
+
+      // Calculate year and weekNumber from assignedDate
+      if (data.assignedDate) {
+        const assignedDate = new Date(String(data.assignedDate));
+        const weekInfo = getIsoWeekNumber(assignedDate);
+        data.year = weekInfo.year;
+        data.weekNumber = weekInfo.weekNumber;
+      }
 
       // Validate required fields for assignments
       if (!data.coworkerId || data.coworkerId === 0) {
