@@ -550,6 +550,11 @@ export default function TaskDetailPage() {
                     ? "green"
                     : "blue"
               }
+              showDetails={true}
+              current={totalAssignedHours}
+              total={task.estimatedHours}
+              currentLabel="allocated"
+              unit="h"
             />
             {totalAssignedHours > task.estimatedHours && (
               <p className="mt-3 flex items-center gap-2 text-sm text-red-400">

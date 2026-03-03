@@ -1957,22 +1957,12 @@ function PersonalView({
               <ProgressBar
                 percentage={stats.percentage}
                 variant="auto"
-                className="mb-3"
+                showDetails={true}
+                current={Math.max(0, stats.assignedHours)}
+                total={stats.capacity}
+                currentLabel="allocated"
+                unit="h"
               />
-              <div className="flex justify-between text-sm">
-                <span className="text-slate-400">
-                  <span className="font-semibold text-blue-400">
-                    {Math.max(0, stats.assignedHours)}h
-                  </span>{" "}
-                  allocated
-                </span>
-                <span className="text-slate-400">
-                  of{" "}
-                  <span className="font-semibold text-white">
-                    {stats.capacity}h
-                  </span>
-                </span>
-              </div>
             </div>
 
             {/* Task Summary Card */}
@@ -2082,11 +2072,16 @@ function PersonalView({
                             >
                               {project?.name || "Unknown Project"}
                             </Link>
-                            <span className="text-sm text-slate-400">
-                              {completedTasks}/{totalTasks} tasks completed
-                            </span>
                           </div>
-                          <ProgressBar percentage={progress} variant="green" />
+                          <ProgressBar
+                            percentage={progress}
+                            variant="green"
+                            showDetails={true}
+                            current={completedTasks}
+                            total={totalTasks}
+                            currentLabel="completed"
+                            unit=" tasks"
+                          />
                         </div>
                       </div>
 

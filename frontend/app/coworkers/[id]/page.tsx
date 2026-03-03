@@ -232,11 +232,15 @@ export default function CoworkerDetailPage() {
           <h3 className="mb-4 text-lg font-semibold text-white">
             Capacity Overview
           </h3>
-          <ProgressBar percentage={usagePercentage} variant="auto" />
-          <div className="mt-2 flex justify-between text-sm text-slate-400">
-            <span>0h</span>
-            <span>{coworker.capacity}h capacity</span>
-          </div>
+          <ProgressBar
+            percentage={usagePercentage}
+            variant="auto"
+            showDetails={true}
+            current={totalHours}
+            total={coworker.capacity}
+            currentLabel="allocated"
+            unit="h"
+          />
         </div>
 
         {/* Tasks Table */}

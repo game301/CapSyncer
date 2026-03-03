@@ -20,6 +20,26 @@ interface ProgressBarProps {
    * Width class (e.g., "w-32", "w-full")
    */
   width?: string;
+  /**
+   * Show details below the progress bar (current/total values)
+   */
+  showDetails?: boolean;
+  /**
+   * Current value (e.g., assigned hours)
+   */
+  current?: number;
+  /**
+   * Total/maximum value (e.g., capacity)
+   */
+  total?: number;
+  /**
+   * Label for the current value (e.g., "allocated", "completed")
+   */
+  currentLabel?: string;
+  /**
+   * Unit to display (e.g., "h", "tasks")
+   */
+  unit?: string;
 }
 
 export function ProgressBar({
@@ -27,6 +47,11 @@ export function ProgressBar({
   variant = "auto",
   className = "",
   width = "w-full",
+  showDetails = false,
+  current,
+  total,
+  currentLabel = "current",
+  unit = "",
 }: ProgressBarProps) {
   const getColorClass = () => {
     if (variant !== "auto") {
@@ -45,14 +70,49 @@ export function ProgressBar({
     return "bg-green-500";
   };
 
+  const getTextColorClass = () => {
+    if (variant !== "auto") {
+      const colorMap = {
+        green: "text-green-400",
+        blue: "text-blue-400",
+        red: "text-red-400",
+        yellow: "text-yellow-400",
+      };
+      return colorMap[variant];
+    }
+
+    // Auto variant based on percentage
+    if (percentage > 100) return "text-red-400";
+    if (percentage > 80) return "text-yellow-400";
+    return "text-green-400";
+  };
+
   return (
-    <div
-      className={`h-3 overflow-hidden rounded-full bg-slate-700 ${width} ${className}`}
-    >
-      <div
-        className={`h-full transition-all ${getColorClass()}`}
-        style={{ width: `${Math.min(percentage, 100)}%` }}
-      />
+    <div className={className}>
+      <div className={`h-3 overflow-hidden rounded-full bg-slate-700 ${width}`}>
+        <div
+          className={`h-full transition-all ${getColorClass()}`}
+          style={{ width: `${Math.min(percentage, 100)}%` }}
+        />
+      </div>
+      {showDetails && current !== undefined && total !== undefined && (
+        <div className="flex justify-between text-sm mt-2">
+          <span className="text-slate-400">
+            <span className={`font-semibold ${getTextColorClass()}`}>
+              {current}
+              {unit}
+            </span>{" "}
+            {currentLabel}
+          </span>
+          <span className="text-slate-400">
+            of{" "}
+            <span className="font-semibold text-white">
+              {total}
+              {unit}
+            </span>
+          </span>
+        </div>
+      )}
     </div>
   );
 }

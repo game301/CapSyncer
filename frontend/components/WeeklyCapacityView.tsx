@@ -405,6 +405,11 @@ export function WeeklyCapacityView({
                     <ProgressBar
                       percentage={week.utilizationPercentage}
                       variant="auto"
+                      showDetails={true}
+                      current={week.usedHours}
+                      total={week.capacity}
+                      currentLabel="used"
+                      unit="h"
                     />
                   </div>
                 </div>

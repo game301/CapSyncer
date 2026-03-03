@@ -672,21 +672,13 @@ export default function ProjectDetailPage() {
             </h3>
             <div className="space-y-4">
               <div>
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="text-slate-400">Estimated</span>
-                  <span className="font-semibold text-white">
-                    {totalEstimatedHours}h
-                  </span>
+                <div className="text-sm mb-1 text-slate-400">Estimated</div>
+                <div className="text-2xl font-bold text-white">
+                  {totalEstimatedHours}h
                 </div>
-                <ProgressBar percentage={100} variant="blue" />
               </div>
               <div>
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="text-slate-400">Allocated</span>
-                  <span className="font-semibold text-white">
-                    {totalAssignedHours}h
-                  </span>
-                </div>
+                <div className="text-sm mb-1 text-slate-400">Allocated</div>
                 <ProgressBar
                   percentage={
                     totalEstimatedHours > 0
@@ -696,6 +688,11 @@ export default function ProjectDetailPage() {
                   variant={
                     totalAssignedHours > totalEstimatedHours ? "red" : "green"
                   }
+                  showDetails={true}
+                  current={totalAssignedHours}
+                  total={totalEstimatedHours}
+                  currentLabel="allocated"
+                  unit="h"
                 />
               </div>
             </div>
