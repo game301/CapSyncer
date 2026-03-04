@@ -4,17 +4,11 @@ using Microsoft.AspNetCore.Builder;
 
 var builder = DistributedApplication.CreateBuilder(args);
 
-// 1) PostgreSQL (container for local dev)
-// WithDataVolume: Creates a Docker volume so your tables/data survive container restarts.
-// WithLifetime: Keeps the container running even if you stop the .NET debugger.
-var postgres = builder.AddPostgres("postgres")
-                      .WithDataVolume()
-                      .WithLifetime(ContainerLifetime.Persistent);
-var db = postgres.AddDatabase("capsyncerdb");
+// PostgreSQL is managed manually via Docker (docker run command)
+// Connection string in backend/appsettings.json: Host=localhost;Port=5432;Database=capsyncerdb;Username=postgres;Password=postgres
 
-// 2) .NET Backend - Reference the database
-var api = builder.AddProject<Projects.CapSyncer_Server>("backend")
-    .WithReference(db);
+// .NET Backend
+var api = builder.AddProject<Projects.CapSyncer_Server>("backend");
 
 // Get the API URL for the frontend - with fallback
 var apiBaseUrl = "";

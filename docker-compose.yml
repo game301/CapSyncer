@@ -1,0 +1,22 @@
+services:
+  postgres:
+    image: postgres:17.6
+    container_name: capsyncer-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: capsyncerdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - capsyncer-pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d capsyncerdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  capsyncer-pgdata:
+    name: capsyncer-pgdata

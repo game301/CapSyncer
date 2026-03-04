@@ -12,10 +12,15 @@ builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
 });
 
-// Add services to the container.
+// Add DbContext with direct connection string
 builder.Services.AddDbContext<CapSyncerDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("capsyncerdb") ?? 
-                      "Host=127.0.0.1;Port=5432;Database=capsyncerdb;Username=postgres;Password=postgres"));
+{
+    var connectionString = builder.Configuration.GetConnectionString("capsyncerdb") 
+        ?? "Host=localhost;Port=5432;Database=capsyncerdb;Username=postgres;Password=postgres";
+    
+    Console.WriteLine($"Using connection string: {connectionString}");
+    options.UseNpgsql(connectionString);
+});
 
 // CORS configuration
 builder.Services.AddCors(options =>
@@ -44,20 +49,66 @@ if (!app.Environment.IsDevelopment())
 }
 app.UseCors(app.Environment.IsDevelopment() ? "DevCors" : "ProdCors");
 
-// Auto-migrate database on startup with error handling
+// Auto-create database and run migrations on startup
 if (app.Environment.IsDevelopment())
 {
     try
     {
         using (var scope = app.Services.CreateScope())
         {
+            var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+            var connectionString = configuration.GetConnectionString("capsyncerdb") 
+                ?? "Host=localhost;Port=5432;Database=capsyncerdb;Username=postgres;Password=postgres";
+
+            // Parse connection string to get database name
+            var connStringBuilder = new Npgsql.NpgsqlConnectionStringBuilder(connectionString);
+            var databaseName = connStringBuilder.Database;
+            var masterConnectionString = connectionString.Replace($"Database={databaseName}", "Database=postgres");
+
+            Console.WriteLine($"Checking if database '{databaseName}' exists...");
+
+            // Check if database exists, create if not
+            using (var masterConnection = new Npgsql.NpgsqlConnection(masterConnectionString))
+            {
+                await masterConnection.OpenAsync();
+                
+                using (var checkCmd = new Npgsql.NpgsqlCommand(
+                    $"SELECT 1 FROM pg_database WHERE datname = '{databaseName}'", masterConnection))
+                {
+                    var exists = await checkCmd.ExecuteScalarAsync();
+                    
+                    if (exists == null)
+                    {
+                        Console.WriteLine($"Database '{databaseName}' does not exist. Creating...");
+                        using (var createCmd = new Npgsql.NpgsqlCommand(
+                            $"CREATE DATABASE {databaseName}", masterConnection))
+                        {
+                            await createCmd.ExecuteNonQueryAsync();
+                            Console.WriteLine($"Database '{databaseName}' created successfully!");
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Database '{databaseName}' already exists.");
+                    }
+                }
+            }
+
+            // Run migrations
             var db = scope.ServiceProvider.GetRequiredService<CapSyncerDbContext>();
+            Console.WriteLine($"Running migrations...");
             db.Database.Migrate();
+            Console.WriteLine($"Migrations completed successfully!");
         }
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"Migration error: {ex.Message}");
+        Console.WriteLine($"Database initialization error: {ex.Message}");
+        Console.WriteLine($"Stack trace: {ex.StackTrace}");
+        if (ex.InnerException != null)
+        {
+            Console.WriteLine($"Inner exception: {ex.InnerException.Message}");
+        }
     }
 }
 

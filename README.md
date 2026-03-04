@@ -77,7 +77,38 @@ CapSyncer/
 - [Node.js 18+](https://nodejs.org/)
 - [Docker Desktop](https://www.docker.com/products/docker-desktop) (for PostgreSQL)
 
-### Running the Application
+### Quick Start (Recommended)
+
+**First time setup:**
+```powershell
+# Windows
+.\setup.ps1
+
+# Linux/Mac
+chmod +x setup.sh
+./setup.sh
+```
+
+**Start the application:**
+```powershell
+# Windows
+.\start.ps1
+
+# Linux/Mac
+chmod +x start.sh
+./start.sh
+```
+
+That's it! The scripts handle everything automatically.
+
+> **Note for Windows users:** If you get an execution policy error, run:
+> ```powershell
+> Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+> ```
+
+### Manual Setup
+
+If you prefer to run commands manually:
 
 1. **Clone the repository**
    ```bash
@@ -85,30 +116,64 @@ CapSyncer/
    cd CapSyncer
 ````
 
-2. **Start the backend with Aspire**
+2. **Start PostgreSQL with Docker Compose**
+
+   ```bash
+   docker-compose up -d
+   ```
+
+   This will:
+   - Start PostgreSQL 17.6 in Docker on port 5432
+   - Create `capsyncerdb` database automatically
+   - Set up persistent volume for data storage
+   - Configure health checks
+
+3. **Install frontend dependencies (first time only)**
+
+   ```bash
+   cd frontend
+   npm install
+   cd ..
+   ```
+
+4. **Start everything with Aspire**
 
    ```bash
    dotnet run --project CapSyncer.AppHost/CapSyncer.AppHost.csproj
    ```
 
-   This will:
-   - Start PostgreSQL in Docker
-   - Run database migrations
+   This single command will:
+   - Auto-create the database if it doesn't exist
+   - Run all EF Core migrations automatically
    - Start the backend API on http://localhost:5128
+   - **Start the frontend on http://localhost:3000**
    - Open the Aspire Dashboard
 
-3. **Install frontend dependencies**
+   **Note:** After the first `npm install`, you don't need to run the frontend separately. AppHost manages both backend and frontend.
 
-   ```bash
-   cd frontend
-   npm install
-   ```
+### Database Connection
 
-4. **Start the frontend development server**
-   ```bash
-   npm run dev
-   ```
-   Frontend will be available at http://localhost:3000
+To connect with **pgAdmin** or other database tools:
+
+- **Host:** localhost
+- **Port:** 5432
+- **Database:** capsyncerdb
+- **Username:** postgres
+- **Password:** postgres
+
+The database is automatically created and migrated on first run. All tables (Coworkers, Projects, Tasks, Assignments) are set up using EF Core migrations.
+
+To stop the database:
+
+```bash
+docker-compose down
+```
+
+To stop and **remove all data**:
+
+```bash
+docker-compose down -v
+```
 
 ### Database Management
 
