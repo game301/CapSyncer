@@ -200,6 +200,58 @@ dotnet test --collect:"XPlat Code Coverage"
 
 ## 📝 Recent Changes & Decisions (Session History)
 
+### March 4, 2026 - Logging & Monitoring Infrastructure
+
+**Implementation:**
+
+1. ✅ **Backend Monitoring (Aspire + OpenTelemetry)**:
+   - Integrated `builder.AddServiceDefaults()` in Program.cs for automatic observability
+   - Added `app.MapDefaultEndpoints()` for /health and /alive endpoints
+   - Configured health checks with DbContext monitoring
+   - Enhanced appsettings.json with structured JSON logging
+   - OpenTelemetry auto-tracks: HTTP requests, DB queries, traces, runtime metrics
+2. ✅ **Frontend Error Tracking**:
+   - Created ErrorBoundary component to catch all React errors
+   - Wrapped entire app in ErrorBoundary in layout.tsx
+   - Shows user-friendly error UI (no crashes)
+   - Logs errors with full context in development
+   - Ready for Sentry integration in production
+3. ✅ **Client-Side Logging**:
+   - Created logger utility in utils/logger.ts
+   - Methods: info(), warn(), error(), debug()
+   - API-specific helpers: logApiError(), logFetchError(), fetchWithLogging()
+   - Console logging in development, ready for external service
+4. ✅ **Documentation**:
+   - Created comprehensive MONITORING.md (282 lines)
+   - Updated AI_CONTEXT.md with logging section
+   - Added detailed code comments to ErrorBoundary and logger
+
+**Files Created:**
+
+- frontend/components/ErrorBoundary.tsx (161 lines)
+- frontend/utils/logger.ts (159 lines)
+- MONITORING.md (282 lines)
+
+**Files Modified:**
+
+- backend/Program.cs (added Aspire integration, health checks)
+- backend/appsettings.json (enhanced logging config)
+- frontend/app/layout.tsx (wrapped in ErrorBoundary)
+
+**Access Monitoring:**
+
+```powershell
+dotnet run --project CapSyncer.AppHost
+# Aspire Dashboard opens at http://localhost:17xxx
+# Tabs: Resources, Console, Structured, Traces, Metrics
+```
+
+**Test Results:**
+
+- Build: Clean, all 4 projects succeeded
+- Tests: 112/112 passing (100%)
+- TypeScript/ESLint: No errors
+
 ### March 4, 2026 - Documentation Corrections & Accuracy Updates
 
 **Corrections Made:**
@@ -296,7 +348,82 @@ className = "bg-red-100 text-red-800 border-red-200";
 
 ---
 
-## 🚀 Development Workflow
+## � Logging & Monitoring
+
+### Backend (Aspire + OpenTelemetry)
+
+**Automatically Tracked:**
+
+- ✅ HTTP requests (duration, status codes, routes)
+- ✅ Database queries (EF Core timing and commands)
+- ✅ Traces (full request flow with dependencies)
+- ✅ Runtime metrics (CPU, memory, GC, thread pool)
+- ✅ Health checks (database connectivity)
+- ✅ Structured logs (JSON formatted, searchable)
+
+**Implementation:**
+
+- `builder.AddServiceDefaults()` in Program.cs enables all telemetry
+- `app.MapDefaultEndpoints()` adds /health, /alive endpoints
+- Health check for DbContext monitors database
+- Logs configured in appsettings.json (Information level default)
+
+**Access:**
+
+```powershell
+dotnet run --project CapSyncer.AppHost
+# Dashboard opens automatically at http://localhost:17xxx
+```
+
+**Dashboard Tabs:**
+
+- Resources: Service status
+- Console: Real-time logs
+- Structured: Searchable logs
+- Traces: Request visualization
+- Metrics: Performance charts
+
+### Frontend (ErrorBoundary + Logger)
+
+**Automatically Tracked:**
+
+- ✅ React component errors (caught by ErrorBoundary)
+- ✅ User-friendly error UI (no app crashes)
+- ✅ Error logging with stack traces
+- ✅ Manual logging via logger utility
+
+**Implementation:**
+
+- `<ErrorBoundary>` wraps app in layout.tsx
+- `logger` utility in utils/logger.ts for manual logging
+- Logs to console in development
+- Ready for production service (Sentry, LogRocket)
+
+**Usage:**
+
+```typescript
+import { logger } from "@/utils/logger";
+
+logger.info("Action performed", { userId: 123 });
+logger.error("Operation failed", error);
+logger.logApiError("/api/tasks", "POST", 500, error);
+```
+
+**Health Endpoints:**
+
+- `/health` - Liveness probe (200 OK)
+- `/alive` - Readiness probe (200 OK)
+- `/api/status` - Detailed status (timestamp, environment, version)
+
+**Production Setup:**
+
+- Backend: Add Azure Application Insights (uncomment in ServiceDefaults/Extensions.cs)
+- Frontend: Add Sentry integration (install @sentry/nextjs)
+- See MONITORING.md for complete setup guide
+
+---
+
+## �🚀 Development Workflow
 
 ### Starting the Application
 

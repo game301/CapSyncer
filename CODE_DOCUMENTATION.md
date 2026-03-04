@@ -23,6 +23,7 @@
 - [API Design](#api-design)
 - [State Management](#state-management)
 - [Styling Conventions](#styling-conventions)
+- [Monitoring & Observability](#monitoring--observability)
 - [Testing Strategy](#testing-strategy)
 - [Code Conventions](#code-conventions)
 
@@ -574,6 +575,213 @@ const priorityColors = {
   Low: "text-gray-600",
 };
 ```
+
+---
+
+## 📊 Monitoring & Observability
+
+### Overview
+
+CapSyncer implements comprehensive monitoring through:
+
+- **Backend**: .NET Aspire + OpenTelemetry (automatic distributed tracing)
+- **Frontend**: ErrorBoundary + Logger utility (manual + automatic error tracking)
+- **Health Checks**: Database connectivity and service health monitoring
+
+### Backend Monitoring (Aspire + OpenTelemetry)
+
+**Implementation:**
+
+```csharp
+// Program.cs
+var builder = WebApplication.CreateBuilder(args);
+builder.AddServiceDefaults(); // Enables OpenTelemetry + Health Checks
+
+var app = builder.Build();
+app.MapDefaultEndpoints(); // Adds /health, /alive endpoints
+```
+
+**What's Automatically Tracked:**
+
+1. **HTTP Requests**
+   - Request duration, status codes, routes
+   - Visible in Aspire Dashboard > Resources tab
+
+2. **Database Queries**
+   - EF Core query timing and text
+   - Connection pool stats
+   - Visible in Aspire Dashboard > Traces tab
+
+3. **Distributed Traces**
+   - Full request flow visualization
+   - Dependencies between services
+   - Visible in Aspire Dashboard > Traces tab
+
+4. **Runtime Metrics**
+   - CPU usage, memory, GC collections
+   - Thread pool utilization
+   - Visible in Aspire Dashboard > Metrics tab
+
+5. **Structured Logs**
+   - JSON-formatted with timestamps
+   - Searchable by level, message, context
+   - Visible in Aspire Dashboard > Console + Structured tabs
+
+**Configuration:**
+
+```json
+// appsettings.json
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning",
+      "Microsoft.EntityFrameworkCore.Database.Command": "Warning"
+    },
+    "Console": {
+      "FormatterName": "json",
+      "FormatterOptions": {
+        "TimestampFormat": "yyyy-MM-ddTHH:mm:ss.fffZ",
+        "UseUtcTimestamp": true,
+        "IncludeScopes": true
+      }
+    }
+  },
+  "HealthChecks": {
+    "UI": {
+      "EvaluateHealthChecksAfter": 10
+    }
+  }
+}
+```
+
+**Health Endpoints:**
+
+- `GET /health` - Liveness probe (200 OK if healthy)
+- `GET /alive` - Readiness probe (200 OK if ready)
+- `GET /api/status` - Detailed status (timestamp, environment, version)
+
+**Accessing Aspire Dashboard:**
+
+```powershell
+cd CapSyncer.AppHost
+dotnet run  # Opens dashboard at http://localhost:17xxx
+```
+
+Dashboard provides real-time visibility into:
+
+- Service status and logs
+- Request traces and timing
+- Performance metrics and trends
+- Health check results
+
+### Frontend Monitoring
+
+#### ErrorBoundary Component
+
+**Purpose**: Catch all React component errors to prevent app crashes
+
+**Implementation:**
+
+```tsx
+// app/layout.tsx
+export default function RootLayout({ children }) {
+  return (
+    <html lang="en">
+      <body>
+        <ErrorBoundary>
+          <PermissionProvider>{children}</PermissionProvider>
+        </ErrorBoundary>
+      </body>
+    </html>
+  );
+}
+```
+
+**Features:**
+
+- Catches errors in any React component
+- Shows user-friendly fallback UI with refresh button
+- Logs error details in development (console)
+- Ready for production service integration (Sentry, LogRocket)
+- Captures component stack traces
+
+**Location**: `frontend/components/ErrorBoundary.tsx`
+
+#### Logger Utility
+
+**Purpose**: Centralized client-side logging with structured format
+
+**Usage:**
+
+```typescript
+import { logger } from "@/utils/logger";
+
+// Basic logging
+logger.info("User action completed", { userId: 123, action: "create-task" });
+logger.warn("API rate limit approaching", { remaining: 5 });
+logger.error("Operation failed", error, { context: "task-save" });
+logger.debug("Debug info", { state: currentState }); // Dev only
+
+// API-specific logging
+logger.logApiError("/api/tasks", "POST", 500, error, { taskId: 456 });
+logger.logFetchError("/api/coworkers", networkError);
+
+// Fetch with automatic logging
+const response = await fetchWithLogging("/api/tasks", { method: "GET" });
+```
+
+**Features:**
+
+- Structured log format (timestamp, level, message, context)
+- Environment-aware (verbose in dev, errors only in prod)
+- Automatic context capture (URL, user agent, timestamp)
+- Ready for external service integration
+- Type-safe with TypeScript
+
+**Location**: `frontend/utils/logger.ts`
+
+### Production Integration
+
+**Backend:**
+
+1. **Azure Application Insights**:
+
+   ```csharp
+   // Uncomment in CapSyncer.ServiceDefaults/Extensions.cs
+   builder.Services.AddApplicationInsightsTelemetry();
+   ```
+
+2. **Configure connection string**:
+   ```json
+   {
+     "ApplicationInsights": {
+       "ConnectionString": "InstrumentationKey=..."
+     }
+   }
+   ```
+
+**Frontend:**
+
+1. **Install Sentry**:
+
+   ```bash
+   npm install @sentry/nextjs
+   ```
+
+2. **Initialize**:
+
+   ```typescript
+   // sentry.client.config.ts
+   Sentry.init({
+     dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
+     tracesSampleRate: 1.0,
+   });
+   ```
+
+3. **Update ErrorBoundary and logger to send to Sentry**
+
+See [MONITORING.md](MONITORING.md) for complete setup guide.
 
 ---
 

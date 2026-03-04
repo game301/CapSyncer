@@ -21,6 +21,14 @@ using System.Text.Json.Serialization;
 var builder = WebApplication.CreateBuilder(args);
 
 // ============================================================================
+// ASPIRE SERVICE DEFAULTS - Observability & Monitoring
+// ============================================================================
+
+// Add Aspire service defaults: OpenTelemetry (metrics, traces, logs), health checks, service discovery
+// This enables automatic monitoring in Aspire Dashboard
+builder.AddServiceDefaults();
+
+// ============================================================================
 // SERVICE CONFIGURATION
 // ============================================================================
 
@@ -77,7 +85,18 @@ builder.Services.AddCors(options =>
     });
 });
 
+// Add health checks for monitoring
+builder.Services.AddHealthChecks()
+    .AddDbContextCheck<CapSyncerDbContext>("database", tags: new[] { "ready" });
+
 var app = builder.Build();
+
+// ============================================================================
+// MIDDLEWARE PIPELINE
+// ============================================================================
+
+// Map health check endpoints (provided by ServiceDefaults)
+app.MapDefaultEndpoints();
 
 // Configure the HTTP request pipeline.
 // Only use HTTPS redirection in production to avoid CORS issues in development
@@ -551,18 +570,21 @@ app.MapGet("/api/capacity/week-from-date", (DateTime date) =>
 // ============================================================================
 
 /// <summary>
-/// GET /health - Basic health check endpoint
-/// Used by container orchestration and monitoring systems
-/// Returns: 200 OK
-/// </summary>
-app.MapGet("/health", () => Results.Ok());
-
-/// <summary>
 /// GET /api/status - Detailed API status endpoint
-/// Returns current server time and status
+/// Returns current server time, status, and version info
 /// Used for frontend-backend connectivity tests
 /// </summary>
-app.MapGet("/api/status", () => Results.Json(new { status = "ok", now = DateTime.UtcNow }));
+app.MapGet("/api/status", (ILogger<Program> logger) =>
+{
+    logger.LogInformation("Status check requested");
+    return Results.Json(new
+    {
+        status = "ok",
+        timestamp = DateTime.UtcNow,
+        environment = app.Environment.EnvironmentName,
+        version = "1.0.0"
+    });
+});
 
 app.Run();
 

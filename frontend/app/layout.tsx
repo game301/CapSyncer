@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { PermissionProvider } from "../contexts/PermissionContext";
+import { ErrorBoundary } from "../components/ErrorBoundary";
 
 export const metadata: Metadata = {
   title: {
@@ -82,7 +83,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased">
-        <PermissionProvider>{children}</PermissionProvider>
+        <ErrorBoundary>
+          <PermissionProvider>{children}</PermissionProvider>
+        </ErrorBoundary>
       </body>
     </html>
   );
