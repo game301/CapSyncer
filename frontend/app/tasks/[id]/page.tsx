@@ -14,8 +14,8 @@ import { ProgressBar } from "../../../components/ProgressBar";
 
 const PRIORITIES = ["Low", "Normal", "High", "Critical"];
 const STATUSES = [
-  "Not started",
-  "In progress",
+  "Planning",
+  "In Progress",
   "On Hold",
   "Completed",
   "Continuous",
@@ -451,7 +451,7 @@ export default function TaskDetailPage() {
                   className={`rounded px-3 py-1 text-sm font-semibold whitespace-nowrap ${
                     task.status === "Completed"
                       ? "bg-green-900 text-green-200"
-                      : task.status === "In progress"
+                      : task.status === "In Progress"
                         ? "bg-blue-900 text-blue-200"
                         : task.status === "On Hold"
                           ? "bg-yellow-900 text-yellow-200"
@@ -1029,7 +1029,7 @@ export default function TaskDetailPage() {
             name="status"
             required
             options={STATUSES.map((s) => ({ value: s, label: s }))}
-            defaultValue={task?.status || "Not started"}
+            defaultValue={task?.status || "Planning"}
           />
           <Input
             label="Estimated Hours"

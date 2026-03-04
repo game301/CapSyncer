@@ -49,8 +49,8 @@ public class TasksApiTests : IDisposable
     }
 
     [Theory]
-    [InlineData("Not started")]
-    [InlineData("In progress")]
+    [InlineData("Planning")]
+    [InlineData("In Progress")]
     [InlineData("Continuous")]
     [InlineData("Completed")]
     public async Task TaskStatus_CanBeSetToValidValue(string status)
@@ -91,7 +91,7 @@ public class TasksApiTests : IDisposable
         {
             Name = "Design Homepage",
             Priority = "High",
-            Status = "Not started",
+            Status = "Planning",
             EstimatedHours = 20,
             WeeklyEffort = 8,
             ProjectId = project.Id,
@@ -121,7 +121,7 @@ public class TasksApiTests : IDisposable
         {
             Name = "Build API",
             Priority = "Normal",
-            Status = "Not started",
+            Status = "Planning",
             ProjectId = project.Id,
             EstimatedHours = 40,
             WeeklyEffort = 10
@@ -130,7 +130,7 @@ public class TasksApiTests : IDisposable
         await _context.SaveChangesAsync ();
 
         // Act
-        task.Status = "In progress";
+        task.Status = "In Progress";
         task.Priority = "High";
         _context.Tasks.Update(task);
         await _context.SaveChangesAsync();
@@ -138,7 +138,7 @@ public class TasksApiTests : IDisposable
         // Assert
         var updated = await _context.Tasks.FindAsync(task.Id);
         Assert.NotNull(updated);
-        Assert.Equal("In progress", updated.Status);
+        Assert.Equal("In Progress", updated.Status);
         Assert.Equal("High", updated.Priority);
     }
 

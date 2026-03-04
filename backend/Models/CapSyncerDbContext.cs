@@ -61,7 +61,7 @@ namespace CapSyncer.Server.Models
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
         public string Priority { get; set; } = "Normal"; // Minor, Critical, High, etc.
-        public string Status { get; set; } = "Not started"; // In progress, Continuous, etc.
+        public string Status { get; set; } = "Planning"; // In Progress, Continuous, etc.
         public double EstimatedHours { get; set; }
         public double WeeklyEffort { get; set; }
         public DateTime Added { get; set; } = DateTime.UtcNow;

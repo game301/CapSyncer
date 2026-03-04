@@ -24,9 +24,10 @@ public class ProjectTests
     }
 
     [Theory]
-    [InlineData("Active")]
-    [InlineData("Completed")]
+    [InlineData("Planning")]
+    [InlineData("In Progress")]
     [InlineData("On Hold")]
+    [InlineData("Completed")]
     [InlineData("Cancelled")]
     public void Project_ShouldAccept_ValidStatusValues(string status)
     {

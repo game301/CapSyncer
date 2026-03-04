@@ -343,7 +343,7 @@ export default function CoworkerDetailPage() {
                       className={`rounded px-2 py-1 text-xs font-semibold whitespace-nowrap ${
                         t.status === "Completed"
                           ? "bg-green-950 text-green-200 border border-green-800"
-                          : t.status === "In progress"
+                          : t.status === "In Progress"
                             ? "bg-blue-900 text-blue-200 border border-blue-800"
                             : t.status === "On Hold"
                               ? "bg-yellow-900 text-yellow-200 border border-yellow-800"

@@ -36,7 +36,7 @@ public class ProjectsIntegrationTests : IntegrationTestBase, IClassFixture<WebAp
         var created = await response.Content.ReadFromJsonAsync<Project>();
         Assert.NotNull(created);
         Assert.Equal("Website Redesign", created.Name);
-        Assert.Equal("Active", created.Status);
+        Assert.Equal("Planning", created.Status);
         Assert.True(created.CreatedAt <= DateTime.UtcNow);
     }
 
@@ -116,7 +116,7 @@ public class ProjectsIntegrationTests : IntegrationTestBase, IClassFixture<WebAp
             ProjectId = project!.Id,
             Name = "Test Task",
             Priority = "Medium",
-            Status = "Not started",
+            Status = "Planning",
             EstimatedHours = 15,
             WeeklyEffort = 3
         });

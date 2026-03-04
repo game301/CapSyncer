@@ -14,8 +14,8 @@ import { ProgressBar } from "../../../components/ProgressBar";
 
 const PRIORITIES = ["Low", "Normal", "High", "Critical"];
 const STATUSES = [
-  "Not started",
-  "In progress",
+  "Planning",
+  "In Progress",
   "On Hold",
   "Completed",
   "Continuous",
@@ -445,10 +445,10 @@ export default function ProjectDetailPage() {
 
   const completedTasks = tasks.filter((t) => t.status === "Completed").length;
   const inProgressTasks = tasks.filter(
-    (t) => t.status === "In progress",
+    (t) => t.status === "In Progress",
   ).length;
   const notStartedTasks = tasks.filter(
-    (t) => t.status === "Not started",
+    (t) => t.status === "Planning",
   ).length;
   const onHoldTasks = tasks.filter((t) => t.status === "On Hold").length;
   const continuousTasks = tasks.filter((t) => t.status === "Continuous").length;
@@ -716,13 +716,13 @@ export default function ProjectDetailPage() {
             </h3>
             <div className="space-y-3">
               <div className="flex justify-between items-center">
-                <span className="text-sm text-slate-400">Not started</span>
+                <span className="text-sm text-slate-400">Planning</span>
                 <span className="font-semibold text-slate-300">
                   {notStartedTasks}
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-slate-400">In progress</span>
+                <span className="text-sm text-slate-400">In Progress</span>
                 <span className="font-semibold text-blue-400">
                   {inProgressTasks}
                 </span>
@@ -845,7 +845,7 @@ export default function ProjectDetailPage() {
                       className={`rounded px-2 py-1 text-xs font-semibold whitespace-nowrap ${
                         t.status === "Completed"
                           ? "bg-green-950 text-green-200 border border-green-800"
-                          : t.status === "In progress"
+                          : t.status === "In Progress"
                             ? "bg-blue-900 text-blue-200 border border-blue-800"
                             : t.status === "On Hold"
                               ? "bg-yellow-900 text-yellow-200 border border-yellow-800"
@@ -1144,7 +1144,7 @@ export default function ProjectDetailPage() {
                 required
                 options={STATUSES.map((s) => ({ value: s, label: s }))}
                 defaultValue={
-                  (editingEntity as TaskItem)?.status || "Not started"
+                  (editingEntity as TaskItem)?.status || "Planning"
                 }
               />
               <Input

@@ -35,7 +35,7 @@ public class TasksIntegrationTests : IntegrationTestBase, IClassFixture<WebAppli
             Name = "Implement feature",
             Note = "Add new functionality",
             Priority = "High",
-            Status = "Not started",
+            Status = "Planning",
             EstimatedHours = 16,
             WeeklyEffort = 4
         });
@@ -68,7 +68,7 @@ public class TasksIntegrationTests : IntegrationTestBase, IClassFixture<WebAppli
             ProjectId = project!.Id,
             Name = "Task 1",
             Priority = "High",
-            Status = "Not started",
+            Status = "Planning",
             EstimatedHours = 24,
             WeeklyEffort = 8
         });
@@ -142,7 +142,7 @@ public class TasksIntegrationTests : IntegrationTestBase, IClassFixture<WebAppli
             ProjectId = project!.Id,
             Name = "Test Task",
             Priority = priority,
-            Status = "Not started",
+            Status = "Planning",
             EstimatedHours = 10,
             WeeklyEffort = 2
         });
@@ -165,7 +165,7 @@ public class TasksIntegrationTests : IntegrationTestBase, IClassFixture<WebAppli
             ProjectId = project!.Id,
             Name = "Feature",
             Priority = "High",
-            Status = "Not started",
+            Status = "Planning",
             EstimatedHours = 12,
             WeeklyEffort = 3
         });
@@ -178,7 +178,11 @@ public class TasksIntegrationTests : IntegrationTestBase, IClassFixture<WebAppli
             ProjectId = project.Id,
             Name = "Feature",
             Priority = "High",
-            Status = "Completed"
+            Status = "Completed",
+            EstimatedHours = task.EstimatedHours,
+            WeeklyEffort = task.WeeklyEffort,
+            Note = task.Note,
+            Added = task.Added
         });
 
         // Assert
@@ -187,6 +191,63 @@ public class TasksIntegrationTests : IntegrationTestBase, IClassFixture<WebAppli
         var getResponse = await _client.GetAsync($"/api/tasks/{task.Id}");
         var updated = await getResponse.Content.ReadFromJsonAsync<TaskItem>();
         Assert.Equal("Completed", updated!.Status);
+    }
+
+    [Fact]
+    public async Task POST_Task_RequiresPositiveWeeklyEffort()
+    {
+        // Arrange - Create project first
+        var projectResponse = await _client.PostAsJsonAsync("/api/projects", new
+        {
+            Name = "Test Project"
+        });
+        var project = await projectResponse.Content.ReadFromJsonAsync<Project>();
+
+        // Act - Try to create task with WeeklyEffort = 0
+        var response = await _client.PostAsJsonAsync("/api/tasks", new
+        {
+            Name = "Test Task",
+            ProjectId = project!.Id,
+            WeeklyEffort = 0
+        });
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task PUT_Task_RequiresPositiveWeeklyEffort()
+    {
+        // Arrange - Create project and task
+        var projectResponse = await _client.PostAsJsonAsync("/api/projects", new
+        {
+            Name = "Test Project"
+        });
+        var project = await projectResponse.Content.ReadFromJsonAsync<Project>();
+
+        var taskResponse = await _client.PostAsJsonAsync("/api/tasks", new
+        {
+            Name = "Test Task",
+            ProjectId = project!.Id,
+            WeeklyEffort = 5
+        });
+        var task = await taskResponse.Content.ReadFromJsonAsync<TaskItem>();
+
+        // Act - Try to update task with WeeklyEffort = 0
+        var updateResponse = await _client.PutAsJsonAsync($"/api/tasks/{task!.Id}", new
+        {
+            Id = task.Id,
+            ProjectId = project.Id,
+            Name = task.Name,
+            Status = task.Status,
+            EstimatedHours = task.EstimatedHours,
+            WeeklyEffort = 0,
+            Note = task.Note,
+            Added = task.Added
+        });
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, updateResponse.StatusCode);
     }
 
 }

@@ -209,7 +209,6 @@ app.MapGet("/api/projects/{id}", async (int id, CapSyncerDbContext db) =>
 });
 app.MapPost("/api/projects", async (Project p, CapSyncerDbContext db) =>
 {
-    p.Status = "Active"; // New projects default to Active status
     db.Projects.Add(p);
     await db.SaveChangesAsync();
     return Results.Created($"/api/projects/{p.Id}", p);
@@ -260,6 +259,11 @@ app.MapGet("/api/tasks/{id}", async (int id, CapSyncerDbContext db) =>
 });
 app.MapPost("/api/tasks", async (TaskItem t, CapSyncerDbContext db) =>
 {
+    if (t.WeeklyEffort <= 0)
+    {
+        return Results.BadRequest("WeeklyEffort must be greater than 0");
+    }
+    
     db.Tasks.Add(t);
     await db.SaveChangesAsync();
     return Results.Created($"/api/tasks/{t.Id}", t);
@@ -268,6 +272,11 @@ app.MapPut("/api/tasks/{id}", async (int id, TaskItem input, CapSyncerDbContext 
 {
     var t = await db.Tasks.AsNoTracking().FirstOrDefaultAsync(t => t.Id == id);
     if (t is null) return Results.NotFound();
+    
+    if (input.WeeklyEffort <= 0)
+    {
+        return Results.BadRequest("WeeklyEffort must be greater than 0");
+    }
     
     // Create a new instance with only the fields we want to update
     var taskToUpdate = new TaskItem

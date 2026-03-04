@@ -15,8 +15,8 @@ import { ProgressBar } from "../../components/ProgressBar";
 // Priority and Status options
 const PRIORITIES = ["Low", "Normal", "High", "Critical"];
 const STATUSES = [
-  "Not started",
-  "In progress",
+  "Planning",
+  "In Progress",
   "On Hold",
   "Completed",
   "Continuous",
@@ -634,9 +634,7 @@ export default function Dashboard() {
                 name="status"
                 required
                 options={STATUSES.map((s) => ({ value: s, label: s }))}
-                defaultValue={
-                  (editingEntity as TaskItem)?.status || "Not started"
-                }
+                defaultValue={(editingEntity as TaskItem)?.status || "Planning"}
               />
               <Input
                 label="Estimated Hours"
@@ -1531,7 +1529,7 @@ function TeamView({
                     className={`rounded px-2 py-1 text-xs font-semibold whitespace-nowrap ${
                       t.status === "Completed"
                         ? "bg-green-950 text-green-200 border border-green-800"
-                        : t.status === "In progress"
+                        : t.status === "In Progress"
                           ? "bg-blue-900 text-blue-200 border border-blue-800"
                           : t.status === "On Hold"
                             ? "bg-yellow-900 text-yellow-200 border border-yellow-800"
@@ -1547,8 +1545,8 @@ function TeamView({
                 ),
                 sortKey: "status",
                 customSortOrder: [
-                  "Not started",
-                  "In progress",
+                  "Planning",
+                  "In Progress",
                   "On Hold",
                   "Continuous",
                   "Completed",
@@ -1915,11 +1913,11 @@ function PersonalView({
     switch (status) {
       case "Completed":
         return "bg-green-950 text-green-200 border border-green-800";
-      case "In progress":
+      case "In Progress":
         return "bg-blue-900 text-blue-200 border border-blue-800";
       case "Continuous":
         return "bg-purple-900 text-purple-200 border border-purple-800";
-      case "Not started":
+      case "Planning":
         return "bg-slate-800 text-slate-300 border border-slate-700";
       default:
         return "bg-slate-800 text-slate-300 border border-slate-700";
@@ -2009,7 +2007,7 @@ function PersonalView({
                 <div className="text-center">
                   <p className="text-3xl font-bold text-blue-400">
                     {
-                      assignedTasks.filter((t) => t.status === "In progress")
+                      assignedTasks.filter((t) => t.status === "In Progress")
                         .length
                     }
                   </p>

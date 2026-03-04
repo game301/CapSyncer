@@ -31,7 +31,7 @@ public class AssignmentsIntegrationTests : IntegrationTestBase, IClassFixture<We
             ProjectId = project!.Id,
             Name = "Test Task",
             Priority = "High",
-            Status = "Not started",
+            Status = "Planning",
             EstimatedHours = 20,
             WeeklyEffort = 5
         });

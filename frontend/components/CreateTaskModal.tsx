@@ -25,7 +25,7 @@ export function CreateTaskModal({
     name: "",
     projectId: "",
     priority: "Medium",
-    status: "Not started",
+    status: "Planning",
     estimatedHours: "",
     weeklyEffort: "",
     note: "",
@@ -78,7 +78,7 @@ export function CreateTaskModal({
           name: "",
           projectId: projects[0]?.id ? String(projects[0].id) : "",
           priority: "Medium",
-          status: "Not started",
+          status: "Planning",
           estimatedHours: "",
           weeklyEffort: "",
           note: "",
@@ -101,7 +101,7 @@ export function CreateTaskModal({
       name: "",
       projectId: projects[0]?.id ? String(projects[0].id) : "",
       priority: "Medium",
-      status: "Not started",
+      status: "Planning",
       estimatedHours: "",
       weeklyEffort: "",
       note: "",
@@ -176,8 +176,8 @@ export function CreateTaskModal({
               }
               className="w-full rounded border border-slate-600 bg-slate-700 px-3 py-2 text-white"
             >
-              <option value="Not started">Not started</option>
-              <option value="In progress">In progress</option>
+              <option value="Planning">Planning</option>
+              <option value="In Progress">In Progress</option>
               <option value="Completed">Completed</option>
               <option value="Continuous">Continuous</option>
             </select>

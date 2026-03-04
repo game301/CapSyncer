@@ -477,7 +477,7 @@ export function WeeklyCapacityView({
                                         className={`rounded px-2 py-0.5 text-xs font-semibold ${
                                           task.status === "Completed"
                                             ? "bg-green-900/50 text-green-300"
-                                            : task.status === "In progress"
+                                            : task.status === "In Progress"
                                               ? "bg-blue-900/50 text-blue-300"
                                               : task.status === "On Hold"
                                                 ? "bg-yellow-900/50 text-yellow-300"

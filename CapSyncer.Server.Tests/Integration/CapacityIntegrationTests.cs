@@ -52,7 +52,7 @@ public class CapacityIntegrationTests : IntegrationTestBase, IClassFixture<WebAp
             ProjectId = project!.Id,
             Name = "Feature",
             Priority = "High",
-            Status = "Not started",
+            Status = "Planning",
             EstimatedHours = 20,
             WeeklyEffort = 5
         });
