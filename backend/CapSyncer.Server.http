@@ -131,7 +131,7 @@ Content-Type: application/json
 {
   "name": "New Task",
   "priority": "Normal",
-  "status": "Not started",
+  "status": "Planning",
   "estimatedHours": 10,
   "weeklyEffort": 5,
   "note": "Task description",
@@ -148,7 +148,7 @@ Content-Type: application/json
 {
   "name": "Updated Task",
   "priority": "High",
-  "status": "In progress",
+  "status": "In Progress",
   "estimatedHours": 15,
   "weeklyEffort": 7,
   "note": "Updated description",
@@ -220,6 +220,12 @@ DELETE {{CapSyncer_Server_HostAddress}}/api/assignments/1
 ###############################################
 # CAPACITY ENDPOINTS
 ###############################################
+
+# Get weekly capacity for all active coworkers in a specific week
+GET {{CapSyncer_Server_HostAddress}}/api/capacity/weekly?year=2026&weekNumber=10
+Accept: application/json
+
+###
 
 # Get weekly capacity for coworker in a specific year
 GET {{CapSyncer_Server_HostAddress}}/api/capacity/weekly/1/2026
