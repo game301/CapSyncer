@@ -54,6 +54,7 @@ export function Button({
   return (
     <button
       className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`}
+      aria-label={props["aria-label"]}
       {...props}
     >
       {icon && iconPosition === "left" && (

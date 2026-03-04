@@ -41,6 +41,7 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
             variant="secondary"
             size="icon"
             className="p-2"
+            aria-label="Close modal"
             icon={
               <svg
                 className="h-5 w-5"

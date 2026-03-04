@@ -54,6 +54,7 @@ export function SearchInput({
           variant="secondary"
           size="icon"
           className="absolute right-3 top-2.5 bg-transparent hover:bg-slate-700"
+          aria-label="Clear search"
           icon={
             <svg
               className="h-5 w-5"

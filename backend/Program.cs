@@ -1,3 +1,18 @@
+/*
+ * CapSyncer.Server - Minimal API Backend
+ * 
+ * This application provides a RESTful API for team capacity management.
+ * Features:
+ * - Coworker management with soft delete
+ * - Project and task tracking
+ * - Assignment tracking with weekly capacity calculation
+ * - PostgreSQL for production, InMemory for testing
+ * 
+ * Technology Stack:
+ * - .NET 10.0 Minimal APIs
+ * - Entity Framework Core with PostgreSQL
+ * - xUnit for testing (114 tests)
+ */
 
 using CapSyncer.Server.Models;
 using Microsoft.EntityFrameworkCore;
@@ -5,14 +20,21 @@ using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configure JSON serialization to handle circular references
+// ============================================================================
+// SERVICE CONFIGURATION
+// ============================================================================
+
+// Configure JSON serialization to handle circular references in navigation properties
+// This prevents infinite loops when serializing objects with bidirectional relationships
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
     options.SerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
     options.SerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
 });
 
-// Add DbContext - use InMemory for testing, PostgreSQL for other environments
+// Configure Entity Framework DbContext
+// - Testing environment: Uses InMemory database (unique per test run)
+// - Development/Production: Uses PostgreSQL database
 builder.Services.AddDbContext<CapSyncerDbContext>(options =>
 {
     var environment = builder.Environment.EnvironmentName;
@@ -35,7 +57,9 @@ builder.Services.AddDbContext<CapSyncerDbContext>(options =>
     }
 });
 
-// CORS configuration
+// Configure CORS (Cross-Origin Resource Sharing) policies
+// DevCors: Allows localhost origins for frontend development
+// ProdCors: Restricts to production domain (update with actual domain)
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("DevCors", policy =>
@@ -46,6 +70,7 @@ builder.Services.AddCors(options =>
     });
     options.AddPolicy("ProdCors", policy =>
     {
+        // TODO: Update with your actual production domain
         policy.WithOrigins("https://your-production-domain.com")
               .AllowAnyHeader()
               .AllowAnyMethod();
@@ -125,11 +150,26 @@ if (app.Environment.IsDevelopment())
     }
 }
 
+// ============================================================================
+// API ENDPOINTS - COWORKERS
+// ============================================================================
+// Coworkers represent team members with weekly capacity (hours)
+// Features: Soft delete (IsActive flag), reactivation support
 
-// CRUD endpoints for Coworker
+/// <summary>
+/// GET /api/coworkers - Returns all coworkers (including soft-deleted)
+/// </summary>
 app.MapGet("/api/coworkers", async (CapSyncerDbContext db) => await db.Coworkers.ToListAsync());
+
+/// <summary>
+/// GET /api/coworkers/{id} - Returns a specific coworker by ID
+/// </summary>
 app.MapGet("/api/coworkers/{id}", async (int id, CapSyncerDbContext db) =>
     await db.Coworkers.FindAsync(id) is Coworker c ? Results.Ok(c) : Results.NotFound());
+
+/// <summary>
+/// POST /api/coworkers - Creates a new coworker (automatically set as active)
+/// </summary>
 app.MapPost("/api/coworkers", async (Coworker c, CapSyncerDbContext db) =>
 {
     c.IsActive = true; // New coworkers are active by default
@@ -137,9 +177,14 @@ app.MapPost("/api/coworkers", async (Coworker c, CapSyncerDbContext db) =>
     await db.SaveChangesAsync();
     return Results.Created($"/api/coworkers/{c.Id}", c);
 });
+
+/// <summary>
+/// PUT /api/coworkers/{id} - Updates an existing coworker
+/// Preserves relationships with assignments
+/// </summary>
 app.MapPut("/api/coworkers/{id}", async (int id, Coworker input, CapSyncerDbContext db) =>
 {
-    // Validate ID match
+    // Validate ID match to prevent accidental updates
     if (input.Id != 0 && input.Id != id) return Results.BadRequest(new { error = "ID mismatch" });
     
     var c = await db.Coworkers.AsNoTracking().FirstOrDefaultAsync(c => c.Id == id);
@@ -158,6 +203,12 @@ app.MapPut("/api/coworkers/{id}", async (int id, Coworker input, CapSyncerDbCont
     await db.SaveChangesAsync();
     return Results.NoContent();
 });
+
+/// <summary>
+/// DELETE /api/coworkers/{id} - Soft delete on first call, permanent delete on second
+/// First call: Sets IsActive = false (soft delete)
+/// Second call: Removes from database (hard delete)
+/// </summary>
 app.MapDelete("/api/coworkers/{id}", async (int id, CapSyncerDbContext db) =>
 {
     var c = await db.Coworkers.FindAsync(id);
@@ -178,6 +229,11 @@ app.MapDelete("/api/coworkers/{id}", async (int id, CapSyncerDbContext db) =>
         return Results.NoContent();
     }
 });
+
+/// <summary>
+/// PUT /api/coworkers/{id}/reactivate - Reactivates a soft-deleted coworker
+/// Sets IsActive = true for coworkers that were soft-deleted
+/// </summary>
 app.MapPut("/api/coworkers/{id}/reactivate", async (int id, CapSyncerDbContext db) =>
 {
     var c = await db.Coworkers.AsNoTracking().FirstOrDefaultAsync(c => c.Id == id);
@@ -197,9 +253,22 @@ app.MapPut("/api/coworkers/{id}/reactivate", async (int id, CapSyncerDbContext d
     return Results.Ok(coworkerToUpdate);
 });
 
-// CRUD endpoints for Project
+// ============================================================================
+// API ENDPOINTS - PROJECTS
+// ============================================================================
+// Projects are containers for tasks with status tracking
+// Default status: "Planning" (NOT "Active")
+// Cascade delete: Deleting a project removes all its tasks and assignments
+
+/// <summary>
+/// GET /api/projects - Returns all projects with their associated tasks
+/// </summary>
 app.MapGet("/api/projects", async (CapSyncerDbContext db) => 
     await db.Projects.Include(p => p.Tasks).ToListAsync());
+
+/// <summary>
+/// GET /api/projects/{id} - Returns a specific project with its tasks
+/// </summary>
 app.MapGet("/api/projects/{id}", async (int id, CapSyncerDbContext db) =>
 {
     var project = await db.Projects
@@ -248,8 +317,21 @@ app.MapDelete("/api/projects/{id}", async (int id, CapSyncerDbContext db) =>
     return Results.NoContent();
 });
 
-// CRUD endpoints for TaskItem
+// ============================================================================
+// API ENDPOINTS - TASKS
+// ============================================================================
+// Tasks represent work items with effort estimation and status tracking
+// IMPORTANT: WeeklyEffort must be > 0 (validated on POST and PUT)
+// Default status: "Planning"
+
+/// <summary>
+/// GET /api/tasks - Returns all tasks
+/// </summary>
 app.MapGet("/api/tasks", async (CapSyncerDbContext db) => await db.Tasks.ToListAsync());
+
+/// <summary>
+/// GET /api/tasks/{id} - Returns a specific task with its assignments
+/// </summary>
 app.MapGet("/api/tasks/{id}", async (int id, CapSyncerDbContext db) =>
 {
     var task = await db.Tasks
@@ -306,10 +388,26 @@ app.MapDelete("/api/tasks/{id}", async (int id, CapSyncerDbContext db) =>
     return Results.NoContent();
 });
 
-// CRUD endpoints for Assignment
+// ============================================================================
+// API ENDPOINTS - ASSIGNMENTS
+// ============================================================================
+// Assignments link coworkers to tasks with hour allocations and week tracking
+// Used to calculate weekly capacity utilization
+
+/// <summary>
+/// GET /api/assignments - Returns all assignments with coworker and task details
+/// </summary>
 app.MapGet("/api/assignments", async (CapSyncerDbContext db) => await db.Assignments.Include(a => a.Coworker).Include(a => a.TaskItem).ToListAsync());
+
+/// <summary>
+/// GET /api/assignments/{id} - Returns a specific assignment with related data
+/// </summary>
 app.MapGet("/api/assignments/{id}", async (int id, CapSyncerDbContext db) =>
     await db.Assignments.Include(a => a.Coworker).Include(a => a.TaskItem).FirstOrDefaultAsync(a => a.Id == id) is Assignment a ? Results.Ok(a) : Results.NotFound());
+
+/// <summary>
+/// POST /api/assignments - Creates a new assignment
+/// </summary>
 app.MapPost("/api/assignments", async (Assignment a, CapSyncerDbContext db) =>
 {
     db.Assignments.Add(a);
@@ -348,7 +446,17 @@ app.MapDelete("/api/assignments/{id}", async (int id, CapSyncerDbContext db) =>
     return Results.NoContent();
 });
 
-// Get weekly capacity for all coworkers in a specific week
+// ============================================================================
+// API ENDPOINTS - CAPACITY MANAGEMENT
+// ============================================================================
+// Capacity endpoints calculate weekly utilization and availability
+// Based on coworker capacity, assignments, and ISO week numbers
+
+/// <summary>
+/// GET /api/capacity/weekly?year={year}&weekNumber={weekNumber}
+/// Returns capacity data for all active coworkers in a specific week
+/// Calculates: used hours, available hours, utilization percentage
+/// </summary>
 app.MapGet("/api/capacity/weekly", async (int year, int weekNumber, CapSyncerDbContext db) =>
 {
     var coworkers = await db.Coworkers
@@ -438,15 +546,34 @@ app.MapGet("/api/capacity/week-from-date", (DateTime date) =>
     });
 });
 
-// Basic health endpoint required by the AppHost health check
+// ============================================================================
+// HEALTH & STATUS ENDPOINTS
+// ============================================================================
+
+/// <summary>
+/// GET /health - Basic health check endpoint
+/// Used by container orchestration and monitoring systems
+/// Returns: 200 OK
+/// </summary>
 app.MapGet("/health", () => Results.Ok());
 
-// Simple API endpoint for frontend-backend communication tests
+/// <summary>
+/// GET /api/status - Detailed API status endpoint
+/// Returns current server time and status
+/// Used for frontend-backend connectivity tests
+/// </summary>
 app.MapGet("/api/status", () => Results.Json(new { status = "ok", now = DateTime.UtcNow }));
 
 app.Run();
 
-// Helper method to calculate ISO week number
+// ============================================================================
+// HELPER METHODS
+// ============================================================================
+
+/// <summary>
+/// Calculates ISO 8601 week number from a given date
+/// ISO week 1 is the week containing the first Thursday of the year
+/// </summary>
 static (int Year, int WeekNumber) GetIsoWeekNumber(DateTime date)
 {
     // ISO 8601 week date system:

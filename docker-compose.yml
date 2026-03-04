@@ -1,4 +1,5 @@
 services:
+  # PostgreSQL database service
   postgres:
     image: postgres:17.6
     container_name: capsyncer-postgres
@@ -16,7 +17,50 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - capsyncer-network
+
+  # Backend .NET API service
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: capsyncer-backend
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - CONNECTIONSTRINGS__CAPSYNCERDB=Host=postgres;Port=5432;Database=capsyncerdb;Username=postgres;Password=postgres
+      - CORS__ALLOWED_ORIGINS=http://localhost:3000,http://frontend:3000
+    ports:
+      - "5128:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - capsyncer-network
+
+  # Frontend Next.js service
+  frontend:
+    build:
+      context: frontend
+      dockerfile: Dockerfile
+    container_name: capsyncer-frontend
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://localhost:5128
+      - NEXT_PUBLIC_BASE_URL=http://localhost:3000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - capsyncer-network
 
 volumes:
   capsyncer-pgdata:
     name: capsyncer-pgdata
+
+networks:
+  capsyncer-network:
+    driver: bridge

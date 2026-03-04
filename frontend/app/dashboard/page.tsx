@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Table, SearchInput, useTableSearch } from "../../components/Table";
@@ -70,7 +70,7 @@ interface Assignment {
 type ViewMode = "team" | "personal";
 type EntityType = "coworkers" | "projects" | "tasks" | "assignments";
 
-export default function Dashboard() {
+function Dashboard() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const permissions = usePermissions();
@@ -2329,3 +2329,14 @@ function PersonalView({
     </div>
   );
 }
+
+// Wrap in Suspense to fix build error with useSearchParams
+function DashboardPage() {
+  return (
+    <Suspense fallback={<div className="p-6">Loading dashboard...</div>}>
+      <Dashboard />
+    </Suspense>
+  );
+}
+
+export default DashboardPage;

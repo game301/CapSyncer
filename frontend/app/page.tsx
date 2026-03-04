@@ -1,5 +1,12 @@
 import Link from "next/link";
 import { PageLayout } from "../components/PageLayout";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  alternates: {
+    canonical: "/",
+  },
+};
 
 export default function Home() {
   return (

@@ -12,16 +12,17 @@ CapSyncer helps teams manage workload capacity by tracking team members, project
 
 - **.NET 10** - Latest .NET runtime
 - **ASP.NET Core Minimal APIs** - Lightweight REST API endpoints
-- **Entity Framework Core** - ORM for database operations
-- **.NET Aspire** - Cloud-native orchestration and service discovery
+- **Entity Framework Core 10.0.3** - ORM for database operations
+- **.NET Aspire 13.1.2** - Cloud-native orchestration and service discovery
 - **PostgreSQL 17.6** - Primary database
 
 ### Frontend
 
-- **Next.js 16.1** - React framework with App Router
-- **TypeScript** - Type-safe JavaScript
-- **Tailwind CSS** - Utility-first CSS framework
-- **React 19** - Latest React for UI components
+- **Next.js 16.1.6** - React framework with App Router
+- **React 19.2.3** - Latest React for UI components
+- **TypeScript 5** - Type-safe JavaScript
+- **Tailwind CSS 4** - Utility-first CSS framework
+- **Custom Components** - Purpose-built UI components
 
 ## Features
 
@@ -53,7 +54,7 @@ CapSyncer helps teams manage workload capacity by tracking team members, project
 
 ## Project Structure
 
-````
+```
 CapSyncer/
 ├── backend/                    # ASP.NET Core backend
 │   ├── Models/                # EF Core models and DbContext
@@ -69,51 +70,74 @@ CapSyncer/
 │   └── components/            # Shared React components
 ├── CapSyncer.AppHost/         # .NET Aspire orchestrator
 └── CapSyncer.ServiceDefaults/ # Shared service configuration
+```
 
 ## Getting Started
 
 ### Prerequisites
+
 - [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
-- [Node.js 18+](https://nodejs.org/)
-- [Docker Desktop](https://www.docker.com/products/docker-desktop) (for PostgreSQL)
+- [Node.js 20+](https://nodejs.org/)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop) (for PostgreSQL only)
+- [.NET Aspire workload](https://learn.microsoft.com/en-us/dotnet/aspire/fundamentals/setup-tooling) (recommended)
 
-### Quick Start (Recommended)
+### Quick Start with Aspire (Recommended)
 
-**First time setup:**
+**This is the primary development workflow.**
+
+1. **Install Aspire workload** (one-time setup)
+
+   ```powershell
+   dotnet workload install aspire
+   ```
+
+2. **Run the application**
+   ```powershell
+   dotnet run --project CapSyncer.AppHost
+   ```
+
+That's it! Aspire will:
+
+- ✅ Automatically start PostgreSQL in a container
+- ✅ Start the backend API on http://localhost:5128
+- ✅ Start the frontend on http://localhost:3000
+- ✅ Open the Aspire Dashboard (browser opens automatically, typically http://localhost:17xxx)
+- ✅ Auto-create the database and run migrations
+- ✅ Provide real-time logs and health monitoring
+
+> **Note:** Docker is only used for PostgreSQL. The backend and frontend run natively, not in containers.
+
+### Alternative: Using Setup Scripts
+
+If you have the setup scripts:
+
 ```powershell
 # Windows
-.\setup.ps1
+.\setup.ps1    # First time only
+.\start.ps1    # Start the application
 
 # Linux/Mac
-chmod +x setup.sh
-./setup.sh
+chmod +x setup.sh start.sh
+./setup.sh     # First time only
+./start.sh     # Start the application
 ```
-
-**Start the application:**
-```powershell
-# Windows
-.\start.ps1
-
-# Linux/Mac
-chmod +x start.sh
-./start.sh
-```
-
-That's it! The scripts handle everything automatically.
 
 > **Note for Windows users:** If you get an execution policy error, run:
+>
 > ```powershell
 > Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 > ```
 
-### Manual Setup
+### Manual Setup (Without Aspire)
 
-If you prefer to run commands manually:
+**Only use this if you cannot use Aspire.**
 
 1. **Clone the repository**
    ```bash
    git clone <your-repo-url>
    cd CapSyncer
+   ```
+
 ````
 
 2. **Start PostgreSQL with Docker Compose**
@@ -290,6 +314,94 @@ See [TESTING.md](TESTING.md) for detailed testing documentation.
 - ✅ Context Tests (React Context, Hooks)
 - ✅ E2E Tests (Complete User Workflows)
 
+## 📚 Documentation
+
+Comprehensive documentation is available to help you understand and work with CapSyncer:
+
+### Core Documentation
+
+- **[AI_CONTEXT.md](AI_CONTEXT.md)** - AI agent memory and project context
+  - Complete project overview and architecture
+  - Business rules and conventions (status values, validation rules)
+  - API endpoints reference (27 total endpoints)
+  - Recent changes history
+  - Development workflow and testing guide
+  - **📌 START HERE for AI agents and new developers**
+
+- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Production deployment guide
+  - Docker deployment with docker-compose
+  - Production environment setup
+  - SSL/HTTPS configuration with Nginx
+  - Database backups and maintenance
+  - Monitoring and health checks
+  - Troubleshooting common issues
+
+### Additional Guides
+
+- **[API_GUIDE_AND_CLEANUP.md](API_GUIDE_AND_CLEANUP.md)** - API documentation and cleanup notes
+- **[TESTING.md](TESTING.md)** - Complete testing guide (unit, integration, E2E)
+- **[HOW_TO_VIEW_DATABASE.md](HOW_TO_VIEW_DATABASE.md)** - Database access and management
+- **[PROJECT_STATUS.md](PROJECT_STATUS.md)** - Project status tracking
+- **[SETUP_STATUS.md](SETUP_STATUS.md)** - Setup completion checklist
+- **[FULL_TEST_REPORT.md](FULL_TEST_REPORT.md)** - Detailed test results
+
+### Configuration Files
+
+- **[backend/.env.example](backend/.env.example)** - Backend environment variables template
+- **[frontend/.env.example](frontend/.env.example)** - Frontend environment variables template
+- **[backend/CapSyncer.Server.http](backend/CapSyncer.Server.http)** - HTTP test file with all 27 endpoints
+
+### Docker & Deployment
+
+- **[docker-compose.yml](docker-compose.yml)** - Multi-service orchestration (PostgreSQL, Backend, Frontend)
+- **[backend/Dockerfile](backend/Dockerfile)** - .NET API containerization
+- **[frontend/Dockerfile](frontend/Dockerfile)** - Next.js frontend containerization
+- **[backend/.dockerignore](backend/.dockerignore)** - Backend Docker ignore rules
+- **[frontend/.dockerignore](frontend/.dockerignore)** - Frontend Docker ignore rules
+
+## 🐳 Docker Deployment
+
+**Important:** CapSyncer uses **.NET Aspire** for development. Docker containers are for **production deployment only**. The PostgreSQL database can run in Docker for both development and production.
+
+### Development (Aspire - Recommended)
+
+```powershell
+# Install Aspire workload (one-time)
+dotnet workload install aspire
+
+# Run everything
+dotnet run --project CapSyncer.AppHost
+```
+
+Aspire automatically manages:
+- PostgreSQL container
+- Backend API (http://localhost:5128)
+- Frontend (http://localhost:3000)
+- Aspire Dashboard (opens in browser automatically)
+
+### Production (Docker)
+
+```bash
+# 1. Create environment files
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env.local
+
+# 2. Start all services (PostgreSQL + Backend + Frontend)
+docker-compose up -d --build
+
+# 3. Access the application
+# Frontend: http://localhost:3000
+# Backend: http://localhost:5128
+# PostgreSQL: localhost:5432
+```
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for complete deployment instructions including:
+- Production configuration
+- Nginx reverse proxy setup
+- SSL certificates with Let's Encrypt
+- Database backups
+- Monitoring and troubleshooting
+
 ## Git Workflow
 
 This project uses [Conventional Commits](https://www.conventionalcommits.org/):
@@ -309,3 +421,4 @@ MIT
 ## Author
 
 Built with ❤️ using .NET Aspire and Next.js
+````
