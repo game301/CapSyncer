@@ -159,14 +159,14 @@ public class TasksApiTests : IDisposable
         };
         _context.Tasks.Add(task);
         await _context.SaveChangesAsync();
-        var taskId = task.Id;
+        var TaskItemId = task.Id;
 
         // Act
         _context.Tasks.Remove(task);
         await _context.SaveChangesAsync();
 
         // Assert
-        var deleted = await _context.Tasks.FindAsync(taskId);
+        var deleted = await _context.Tasks.FindAsync(TaskItemId);
         Assert.Null(deleted);
     }
 

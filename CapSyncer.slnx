@@ -4,4 +4,5 @@
   </Folder>
   <Project Path="CapSyncer.AppHost/CapSyncer.AppHost.csproj" />
   <Project Path="CapSyncer.ServiceDefaults/CapSyncer.ServiceDefaults.csproj" />
+  <Project Path="CapSyncer.Server.Tests/CapSyncer.Server.Tests.csproj" />
 </Solution>

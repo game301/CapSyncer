@@ -238,6 +238,58 @@ dotnet ef migrations add MigrationName
 
 Components are organized in `/frontend/components` for better reusability. Pages use the Next.js 16 App Router pattern with dynamic routes for detail views.
 
+### Testing
+
+CapSyncer has a comprehensive test suite covering unit, integration, and E2E tests.
+
+**Package Management:** Tests use **separate package.json files** for clean dependency management:
+
+- `frontend/package.json` - Component tests (Jest + React Testing Library)
+- `e2e/package.json` - E2E tests (Playwright - independent)
+- `backend.tests/` - .NET xUnit tests (no Node.js packages)
+
+**Run all tests:**
+
+```powershell
+# Windows
+.\run-all-tests.ps1
+
+# Linux/Mac
+chmod +x run-all-tests.sh
+./run-all-tests.sh
+```
+
+**Run specific test suites:**
+
+```bash
+# Backend unit tests
+cd backend.tests
+dotnet test --filter "FullyQualifiedName~Unit"
+
+# Backend integration tests
+dotnet test --filter "FullyQualifiedName~Integration"
+
+# Frontend component tests
+cd frontend
+npm test
+
+# E2E tests (requires app running)
+cd e2e
+npm install
+npx playwright install
+npm run test:e2e
+```
+
+See [TESTING.md](TESTING.md) for detailed testing documentation.
+
+**Test Coverage:**
+
+- ✅ Backend Unit Tests (Models, Business Logic)
+- ✅ Backend Integration Tests (API Endpoints)
+- ✅ Frontend Component Tests (React Components)
+- ✅ Context Tests (React Context, Hooks)
+- ✅ E2E Tests (Complete User Workflows)
+
 ## Git Workflow
 
 This project uses [Conventional Commits](https://www.conventionalcommits.org/):

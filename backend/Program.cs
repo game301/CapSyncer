@@ -12,14 +12,27 @@ builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
 });
 
-// Add DbContext with direct connection string
+// Add DbContext - use InMemory for testing, PostgreSQL for other environments
 builder.Services.AddDbContext<CapSyncerDbContext>(options =>
 {
-    var connectionString = builder.Configuration.GetConnectionString("capsyncerdb") 
-        ?? "Host=localhost;Port=5432;Database=capsyncerdb;Username=postgres;Password=postgres";
+    var environment = builder.Environment.EnvironmentName;
     
-    Console.WriteLine($"Using connection string: {connectionString}");
-    options.UseNpgsql(connectionString);
+    if (environment == "Testing")
+    {
+        // Use InMemory database for integration tests
+        // Use the database name from configuration (set by tests) or generate a unique one
+        var dbName = builder.Configuration["TestDatabaseName"] ?? $"TestDb_{Guid.NewGuid()}";
+        options.UseInMemoryDatabase(dbName);
+    }
+    else
+    {
+        // Use PostgreSQL for development and production
+        var connectionString = builder.Configuration.GetConnectionString("capsyncerdb") 
+            ?? "Host=localhost;Port=5432;Database=capsyncerdb;Username=postgres;Password=postgres";
+        
+        Console.WriteLine($"Using connection string: {connectionString}");
+        options.UseNpgsql(connectionString);
+    }
 });
 
 // CORS configuration
@@ -126,6 +139,9 @@ app.MapPost("/api/coworkers", async (Coworker c, CapSyncerDbContext db) =>
 });
 app.MapPut("/api/coworkers/{id}", async (int id, Coworker input, CapSyncerDbContext db) =>
 {
+    // Validate ID match
+    if (input.Id != 0 && input.Id != id) return Results.BadRequest(new { error = "ID mismatch" });
+    
     var c = await db.Coworkers.AsNoTracking().FirstOrDefaultAsync(c => c.Id == id);
     if (c is null) return Results.NotFound();
     
@@ -140,7 +156,7 @@ app.MapPut("/api/coworkers/{id}", async (int id, Coworker input, CapSyncerDbCont
     
     db.Coworkers.Update(coworkerToUpdate);
     await db.SaveChangesAsync();
-    return Results.Ok(coworkerToUpdate);
+    return Results.NoContent();
 });
 app.MapDelete("/api/coworkers/{id}", async (int id, CapSyncerDbContext db) =>
 {
@@ -159,7 +175,7 @@ app.MapDelete("/api/coworkers/{id}", async (int id, CapSyncerDbContext db) =>
         // Second delete: permanent delete (remove from database)
         db.Coworkers.Remove(c);
         await db.SaveChangesAsync();
-        return Results.Ok(new { message = "permanent-delete" });
+        return Results.NoContent();
     }
 });
 app.MapPut("/api/coworkers/{id}/reactivate", async (int id, CapSyncerDbContext db) =>
@@ -182,11 +198,18 @@ app.MapPut("/api/coworkers/{id}/reactivate", async (int id, CapSyncerDbContext d
 });
 
 // CRUD endpoints for Project
-app.MapGet("/api/projects", async (CapSyncerDbContext db) => await db.Projects.ToListAsync());
+app.MapGet("/api/projects", async (CapSyncerDbContext db) => 
+    await db.Projects.Include(p => p.Tasks).ToListAsync());
 app.MapGet("/api/projects/{id}", async (int id, CapSyncerDbContext db) =>
-    await db.Projects.FindAsync(id) is Project p ? Results.Ok(p) : Results.NotFound());
+{
+    var project = await db.Projects
+        .Include(p => p.Tasks)
+        .FirstOrDefaultAsync(p => p.Id == id);
+    return project is not null ? Results.Ok(project) : Results.NotFound();
+});
 app.MapPost("/api/projects", async (Project p, CapSyncerDbContext db) =>
 {
+    p.Status = "Active"; // New projects default to Active status
     db.Projects.Add(p);
     await db.SaveChangesAsync();
     return Results.Created($"/api/projects/{p.Id}", p);
@@ -207,12 +230,20 @@ app.MapPut("/api/projects/{id}", async (int id, Project input, CapSyncerDbContex
     
     db.Projects.Update(projectToUpdate);
     await db.SaveChangesAsync();
-    return Results.Ok(projectToUpdate);
+    return Results.NoContent();
 });
 app.MapDelete("/api/projects/{id}", async (int id, CapSyncerDbContext db) =>
 {
-    var p = await db.Projects.FindAsync(id);
+    var p = await db.Projects.Include(p => p.Tasks).ThenInclude(t => t.Assignments).FirstOrDefaultAsync(p => p.Id == id);
     if (p is null) return Results.NotFound();
+    
+    // Manually cascade delete for InMemory database compatibility
+    foreach (var task in p.Tasks.ToList())
+    {
+        db.Assignments.RemoveRange(task.Assignments);
+        db.Tasks.Remove(task);
+    }
+    
     db.Projects.Remove(p);
     await db.SaveChangesAsync();
     return Results.NoContent();
@@ -221,7 +252,12 @@ app.MapDelete("/api/projects/{id}", async (int id, CapSyncerDbContext db) =>
 // CRUD endpoints for TaskItem
 app.MapGet("/api/tasks", async (CapSyncerDbContext db) => await db.Tasks.ToListAsync());
 app.MapGet("/api/tasks/{id}", async (int id, CapSyncerDbContext db) =>
-    await db.Tasks.FirstOrDefaultAsync(t => t.Id == id) is TaskItem t ? Results.Ok(t) : Results.NotFound());
+{
+    var task = await db.Tasks
+        .Include(t => t.Assignments)
+        .FirstOrDefaultAsync(t => t.Id == id);
+    return task is not null ? Results.Ok(task) : Results.NotFound();
+});
 app.MapPost("/api/tasks", async (TaskItem t, CapSyncerDbContext db) =>
 {
     db.Tasks.Add(t);
@@ -250,7 +286,7 @@ app.MapPut("/api/tasks/{id}", async (int id, TaskItem input, CapSyncerDbContext 
     
     db.Tasks.Update(taskToUpdate);
     await db.SaveChangesAsync();
-    return Results.Ok(taskToUpdate);
+    return Results.NoContent();
 });
 app.MapDelete("/api/tasks/{id}", async (int id, CapSyncerDbContext db) =>
 {
@@ -292,7 +328,7 @@ app.MapPut("/api/assignments/{id}", async (int id, Assignment input, CapSyncerDb
     
     db.Assignments.Update(assignmentToUpdate);
     await db.SaveChangesAsync();
-    return Results.Ok(assignmentToUpdate);
+    return Results.NoContent();
 });
 app.MapDelete("/api/assignments/{id}", async (int id, CapSyncerDbContext db) =>
 {
@@ -301,6 +337,39 @@ app.MapDelete("/api/assignments/{id}", async (int id, CapSyncerDbContext db) =>
     db.Assignments.Remove(a);
     await db.SaveChangesAsync();
     return Results.NoContent();
+});
+
+// Get weekly capacity for all coworkers in a specific week
+app.MapGet("/api/capacity/weekly", async (int year, int weekNumber, CapSyncerDbContext db) =>
+{
+    var coworkers = await db.Coworkers
+        .Where(c => c.IsActive)
+        .Include(c => c.Assignments)
+        .ToListAsync();
+
+    var weeklyData = coworkers.Select(coworker =>
+    {
+        var weekAssignments = coworker.Assignments
+            .Where(a => a.Year == year && a.WeekNumber == weekNumber)
+            .ToList();
+        var usedHours = weekAssignments.Sum(a => a.HoursAssigned);
+        var availableHours = coworker.Capacity - usedHours;
+        
+        return new
+        {
+            CoworkerId = coworker.Id,
+            CoworkerName = coworker.Name,
+            WeekNumber = weekNumber,
+            Year = year,
+            Capacity = coworker.Capacity,
+            UsedHours = usedHours,
+            AvailableHours = availableHours,
+            UtilizationPercentage = coworker.Capacity > 0 ? (usedHours / coworker.Capacity * 100) : 0,
+            AssignmentCount = weekAssignments.Count
+        };
+    }).ToList();
+
+    return Results.Ok(weeklyData);
 });
 
 // Get weekly capacity for a coworker in a specific year
@@ -378,3 +447,6 @@ static (int Year, int WeekNumber) GetIsoWeekNumber(DateTime date)
     int weekNumber = (thursday.DayOfYear - 1) / 7 + 1;
     return (year, weekNumber);
 }
+
+// Make Program class accessible for integration tests
+public partial class Program { }

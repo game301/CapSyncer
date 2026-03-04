@@ -10,6 +10,32 @@ namespace CapSyncer.Server.Models
         public DbSet<Project> Projects { get; set; } = null!;
         public DbSet<TaskItem> Tasks { get; set; } = null!;
         public DbSet<Assignment> Assignments { get; set; } = null!;
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            // Configure cascade delete for Project -> Tasks
+            modelBuilder.Entity<TaskItem>()
+                .HasOne(t => t.Project)
+                .WithMany(p => p.Tasks)
+                .HasForeignKey(t => t.ProjectId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Configure cascade delete for Task -> Assignments
+            modelBuilder.Entity<Assignment>()
+                .HasOne(a => a.TaskItem)
+                .WithMany(t => t.Assignments)
+                .HasForeignKey(a => a.TaskItemId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Configure cascade delete for Coworker -> Assignments
+            modelBuilder.Entity<Assignment>()
+                .HasOne(a => a.Coworker)
+                .WithMany(c => c.Assignments)
+                .HasForeignKey(a => a.CoworkerId)
+                .OnDelete(DeleteBehavior.Cascade);
+        }
     }
 
     public class Coworker
