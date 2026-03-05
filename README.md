@@ -2,6 +2,8 @@
 
 A modern team capacity management system built with .NET Aspire and Next.js.
 
+**Last Updated:** March 5, 2026
+
 ## Overview
 
 CapSyncer helps teams manage workload capacity by tracking team members, projects, tasks, and assignments. It provides a comprehensive dashboard to visualize and manage team resources efficiently.
@@ -45,12 +47,24 @@ CapSyncer helps teams manage workload capacity by tracking team members, project
 - 📄 Detailed views for each entity type
 - 🧭 Breadcrumb navigation and back buttons
 
-### UI Components
+### UI Components & Utilities
 
-- Reusable Table component with sorting and actions
+**Reusable Components:**
+
+- Table component with sorting and actions
 - Modal dialogs for CRUD operations
-- Form inputs with validation
-- Consistent layout with Navbar and Footer
+- Form inputs (Input, Select, Textarea) with validation
+- Button, LoadingSpinner, Toast notifications
+- ProgressBar, ErrorBoundary
+- Consistent layout with PageLayout, Navbar and Footer
+
+**Utility Modules:**
+
+- **logger.ts** - Structured logging (production-safe debug levels)
+- **config.ts** - Environment variable access with type safety
+- **date.ts** - ISO week calculations and date formatting
+- **types.ts** - Shared TypeScript interfaces (single source of truth)
+- **api.ts** - Standardized API wrappers with automatic logging
 
 ## Project Structure
 
@@ -67,7 +81,9 @@ CapSyncer/
 │   │   ├── projects/[id]/    # Project detail pages
 │   │   ├── tasks/[id]/       # Task detail pages
 │   │   └── assignments/[id]/ # Assignment detail pages
-│   └── components/            # Shared React components
+│   ├── components/            # Shared React components
+│   ├── utils/                 # Utility modules (logger, api, types, config, date)
+│   └── contexts/              # React contexts (PermissionContext)
 ├── CapSyncer.AppHost/         # .NET Aspire orchestrator
 └── CapSyncer.ServiceDefaults/ # Shared service configuration
 ```

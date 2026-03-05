@@ -2,7 +2,7 @@
 
 > Comprehensive guide to the CapSyncer codebase architecture and conventions
 
-**Last Updated:** March 4, 2026  
+**Last Updated:** March 5, 2026  
 **Version:** 1.0.0
 
 **⚠️ Important Notes:**
@@ -278,9 +278,20 @@ frontend/
 │   ├── Button.tsx
 │   ├── Modal.tsx
 │   ├── Table.tsx
+│   ├── FormInputs.tsx     # Input, Select, Textarea
+│   ├── LoadingSpinner.tsx # LoadingSpinner, LoadingPage
+│   ├── Toast.tsx          # Toast notifications
+│   ├── ErrorBoundary.tsx  # Error boundary
+│   ├── ProgressBar.tsx
 │   ├── CreateTaskModal.tsx
 │   ├── WeeklyCapacityView.tsx
 │   └── PageLayout.tsx
+├── utils/                  # Utility modules (March 2026 refactoring)
+│   ├── logger.ts          # Structured logging
+│   ├── config.ts          # Environment variables
+│   ├── date.ts            # Date utilities (ISO week, formatting)
+│   ├── types.ts           # Shared TypeScript interfaces
+│   └── api.ts             # API wrappers (apiGet, apiPost, apiPut, apiDelete)
 ├── contexts/
 │   └── PermissionContext.tsx
 ├── public/                # Static assets
@@ -316,29 +327,49 @@ export default function TaskDetailPage({ params }: { params: { id: string } }) {
 
 ### Data Fetching Pattern
 
-**Client-side fetching** (not using server components for this SPA-style app):
+**Modern Pattern (March 2026 Refactoring)** - Using shared API utilities:
 
 ```typescript
-const [data, setData] = useState<EntityType[]>([]);
+import { apiGet, apiPost, apiPut, apiDelete } from "@/utils/api";
+import type { TaskItem } from "@/utils/types";
+import { logger } from "@/utils/logger";
+
+const [data, setData] = useState<TaskItem[]>([]);
 const [loading, setLoading] = useState(true);
 
 useEffect(() => {
   const fetchData = async () => {
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/endpoint`,
-      );
-      const data = await response.json();
-      setData(data);
-    } catch (error) {
-      console.error("Error:", error);
-    } finally {
+    const { data, error } = await apiGet<TaskItem[]>("/api/tasks");
+
+    if (error) {
+      logger.error("Failed to fetch tasks", { error: error.message });
       setLoading(false);
+      return;
     }
+
+    setData(data || []);
+    setLoading(false);
   };
 
   fetchData();
 }, []);
+```
+
+**Benefits of API Utilities:**
+
+- Automatic error handling and logging
+- Type-safe generic functions
+- Centralized API base URL configuration
+- Performance tracking (request duration)
+- Consistent error response structure
+
+**Legacy Pattern** (prior to March 2026, replaced):
+
+```typescript
+// Old pattern - replaced with apiGet/apiPost/apiPut/apiDelete
+const response = await fetch(`${API_BASE_URL}/api/endpoint`);
+if (!response.ok) throw new Error("Failed");
+const data = await response.json();
 ```
 
 ### Component Patterns
@@ -518,7 +549,300 @@ Examples:
 
 ---
 
-## 🔄 State Management
+## �️ Frontend Utilities (March 2026 Refactoring)
+
+### Overview
+
+The March 2026 refactoring introduced 5 utility modules to eliminate code duplication and standardize patterns across the frontend. This reduced ~500 lines of boilerplate code while improving type safety and maintainability.
+
+### utils/types.ts - Shared Type Definitions
+
+**Purpose:** Single source of truth for TypeScript interfaces
+
+**Exports:**
+
+```typescript
+// Core Entity Types
+export interface Coworker {
+  id: number;
+  name: string;
+  capacity: number;
+  isActive: boolean;
+}
+
+export interface Project {
+  id: number;
+  name: string;
+  status: string;
+  createdAt: string;
+}
+
+export interface TaskItem {
+  id: number;
+  name: string;
+  projectId: number;
+  priority: string;
+  status: string;
+  estimatedHours: number;
+  weeklyEffort: number;
+  note: string;
+}
+
+export interface Assignment {
+  id: number;
+  coworkerId: number;
+  taskItemId: number;
+  hoursAssigned: number;
+  assignedDate: string;
+  year: number;
+  weekNumber: number;
+  note?: string;
+  assignedBy: string;
+}
+
+// API Response Types
+export interface ApiError {
+  message: string;
+  code?: string;
+  details?: unknown;
+}
+
+export interface ApiResponse<T> {
+  data: T | null;
+  error: ApiError | null;
+}
+```
+
+**Benefits:**
+
+- Eliminated 21 duplicate interface definitions across pages
+- Single point of maintenance for type changes
+- Prevents type inconsistencies between components
+
+### utils/api.ts - API Client Wrappers
+
+**Purpose:** Standardized HTTP client with automatic logging and error handling
+
+**Functions:**
+
+```typescript
+// GET request with automatic error handling
+export async function apiGet<T>(endpoint: string): Promise<ApiResponse<T>>;
+
+// POST request with JSON body
+export async function apiPost<T>(
+  endpoint: string,
+  body: unknown,
+): Promise<ApiResponse<T>>;
+
+// PUT request for updates
+export async function apiPut<T>(
+  endpoint: string,
+  body: unknown,
+): Promise<ApiResponse<T>>;
+
+// DELETE request
+export async function apiDelete(endpoint: string): Promise<ApiResponse<void>>;
+
+// Type guard helper
+export function hasError<T>(
+  response: ApiResponse<T>,
+): response is ApiResponse<T> & { error: ApiError };
+```
+
+**Usage Example:**
+
+```typescript
+import { apiGet, apiPost } from "@/utils/api";
+import type { Coworker } from "@/utils/types";
+
+// GET request
+const { data, error } = await apiGet<Coworker[]>("/api/coworkers");
+if (error) {
+  logger.error("Failed to fetch", { error: error.message });
+  return;
+}
+console.log(data); // TypeScript knows data is Coworker[] | null
+
+// POST request
+const { data: newCoworker, error: createError } = await apiPost<Coworker>(
+  "/api/coworkers",
+  { name: "John Doe", capacity: 40 },
+);
+```
+
+**Features:**
+
+- Automatic API_BASE_URL prepending
+- Request duration tracking (logged automatically)
+- Standardized error response structure
+- Type-safe generic functions
+- Production-ready error handling
+
+**Benefits:**
+
+- Replaced 42+ manual fetch calls
+- Automatic performance logging
+- Consistent error handling across entire app
+- ~10-15 lines saved per API call
+
+### utils/logger.ts - Structured Logging
+
+**Purpose:** Production-safe logging with structured context
+
+**Functions:**
+
+```typescript
+export const logger = {
+  info: (message: string, context?: Record<string, unknown>) => void;
+  warn: (message: string, context?: Record<string, unknown>) => void;
+  error: (message: string, context?: Record<string, unknown>) => void;
+  debug: (message: string, context?: Record<string, unknown>) => void; // Development only
+};
+```
+
+**Usage:**
+
+```typescript
+import { logger } from "@/utils/logger";
+
+// Simple message
+logger.info("Coworker created successfully");
+
+// With structured context
+logger.error("Failed to fetch tasks", {
+  error: error.message,
+  taskId: 123,
+  userId: session.userId,
+});
+
+// Debug logs (stripped in production)
+logger.debug("Component rendering", { props, state });
+```
+
+**Features:**
+
+- Automatic timestamp prefixing
+- Structured context objects (better than string concatenation)
+- Colored output in development
+- `debug()` logs excluded from production builds
+- Ready for external service integration (Sentry, DataDog)
+
+### utils/config.ts - Environment Configuration
+
+**Purpose:** Type-safe access to environment variables
+
+**Exports:**
+
+```typescript
+export const API_BASE_URL: string; // http://localhost:5128 (dev)
+export const BASE_URL: string; // http://localhost:3000 (dev)
+export const APP_NAME: string; // "CapSyncer"
+export const APP_DESCRIPTION: string; // SEO description
+```
+
+**Usage:**
+
+```typescript
+import { API_BASE_URL, APP_NAME } from "@/utils/config";
+
+// Use in API calls (apiGet/Post/Put/Delete use this automatically)
+const response = await fetch(`${API_BASE_URL}/api/coworkers`);
+
+// Use in page metadata
+<title>{`${APP_NAME} - Dashboard`}</title>
+```
+
+**Benefits:**
+
+- Single source of truth for environment variables
+- Type-safe exports (compile-time checks)
+- Easy to update for different environments
+- Prevents typos in process.env access
+
+### utils/date.ts - Date Utilities
+
+**Purpose:** ISO 8601 week calculations and date formatting
+
+**Functions:**
+
+```typescript
+// Calculate ISO week number (1-53) and year
+export function getIsoWeekNumber(date: Date): {
+  year: number;
+  weekNumber: number;
+};
+
+// Format Date to HTML5 datetime-local input value
+export function toDateTimeLocalString(date: Date): string;
+
+// Format date with Intl.DateTimeFormat
+export function formatDate(
+  date: Date | string,
+  options?: Intl.DateTimeFormatOptions,
+): string;
+
+// Calculate days between two dates
+export function daysBetween(start: Date, end: Date): number;
+
+// Calculate weeks between two dates
+export function weeksBetween(start: Date, end: Date): number;
+```
+
+**Usage:**
+
+```typescript
+import { getIsoWeekNumber, formatDate } from "@/utils/date";
+
+// Get current ISO week
+const { year, weekNumber } = getIsoWeekNumber(new Date());
+console.log(`Week ${weekNumber}, ${year}`); // "Week 10, 2026"
+
+// Format for display
+const formatted = formatDate(assignment.assignedDate, {
+  year: "numeric",
+  month: "short",
+  day: "numeric",
+});
+// "Mar 5, 2026"
+```
+
+**Benefits:**
+
+- Replaced 2 duplicate 24-line getIsoWeekNumber implementations
+- ISO 8601 compliance (Monday = week start)
+- Consistent date formatting across app
+- Comprehensive JSDoc documentation
+
+### Refactoring Impact Summary
+
+**Code Reduction:**
+
+- Removed 21 duplicate interface definitions
+- Eliminated 42+ manual fetch() calls
+- Replaced 2 duplicate date calculation functions
+- Total: ~500 lines of boilerplate removed
+
+**Pages Refactored:**
+
+- ✅ capacity/page.tsx
+- ✅ assignments/[id]/page.tsx
+- ✅ coworkers/[id]/page.tsx
+- ✅ dashboard/page.tsx (7 API calls updated)
+- ✅ tasks/[id]/page.tsx (5 API calls updated)
+- ✅ projects/[id]/page.tsx (6 API calls updated)
+
+**Quality Improvements:**
+
+- Single source of truth for types (DRY principle)
+- Automatic performance tracking on all API calls
+- Consistent error handling and logging
+- Type-safe generic functions
+- Production-ready logging system
+
+---
+
+## �🔄 State Management
 
 ### React Context (PermissionContext)
 

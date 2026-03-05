@@ -101,6 +101,127 @@
 - **Durability**: Committed data persists
 - EF Core handles ACID automatically, but be mindful of transaction boundaries
 
+#### Security Best Practices
+
+**⚠️ CRITICAL: Always follow these security rules when writing code:**
+
+##### 1. Secrets and Environment Variables
+
+- **NEVER commit secrets** to git (.env files, API keys, connection strings)
+- Use `.env.example` files to document required variables (without actual values)
+- Store secrets in:
+  - **Development**: `.env` files (git-ignored)
+  - **Production**: Azure Key Vault, Docker secrets, or environment variables
+- Verify `.gitignore` includes: `*.env`, `appsettings.json` (if contains secrets)
+- Use `process.env.VARIABLE_NAME` (frontend) or `Configuration["Key"]` (backend)
+
+##### 2. Input Validation
+
+- **Validate ALL user inputs** before processing:
+  - Check data types, ranges, formats
+  - Use `[Required]`, `[Range]`, `[StringLength]` attributes (backend)
+  - Use HTML5 validation attributes (frontend: required, min, max, pattern)
+  - Validate file uploads (size, type, content)
+- **Sanitize inputs** to prevent injection attacks:
+  - EF Core uses parameterized queries (automatic SQL injection prevention)
+  - React escapes JSX content automatically (XSS prevention)
+  - NEVER use `dangerouslySetInnerHTML` unless absolutely necessary
+- **Validate on both client AND server** (client-side is UX, server-side is security)
+
+##### 3. Authentication & Authorization
+
+- **Current State**: No authentication implemented yet (planned for Phase 2)
+- **Planned Approach**: Azure AD B2C integration
+- **Permission System**:
+  - Frontend: `PermissionContext` provides role-based UI controls
+  - Backend: Add `[Authorize]` attributes when implementing auth
+  - Roles: Admin, Manager, Team Member (planned)
+- **Never trust client-side permissions** - always validate on backend
+
+##### 4. SQL Injection Prevention
+
+- ✅ **Already Protected**: EF Core uses parameterized queries automatically
+- **DO NOT** use raw SQL with string concatenation:
+
+  ```csharp
+  // ❌ WRONG - SQL injection vulnerability
+  db.Database.ExecuteSqlRaw($"SELECT * FROM Users WHERE Id = {userId}");
+
+  // ✅ CORRECT - parameterized query
+  db.Database.ExecuteSqlRaw("SELECT * FROM Users WHERE Id = {0}", userId);
+  ```
+
+- Prefer LINQ queries over raw SQL whenever possible
+
+##### 5. XSS (Cross-Site Scripting) Prevention
+
+- ✅ **Already Protected**: React escapes JSX content by default
+- **DO NOT** use `dangerouslySetInnerHTML` unless necessary
+- If HTML rendering is required:
+  - Use a sanitization library (DOMPurify)
+  - Validate and whitelist allowed tags
+  - Never render user input as raw HTML
+- Encode data in API responses (EF Core handles this)
+
+##### 6. CORS Configuration
+
+- **Current Setup**: Allows `http://localhost:3000` (development)
+- **Production TODO**: Update CORS policy with actual domain
+- **Location**: `backend/Program.cs` - `builder.Services.AddCors()`
+- **Rule**: Never use `AllowAnyOrigin()` in production
+
+##### 7. Logging Security
+
+- **DO NOT log sensitive data**:
+  - ❌ Passwords, tokens, API keys
+  - ❌ Full credit card numbers, SSNs, PII
+  - ❌ Session IDs, authentication tokens
+- **Safe to log**:
+  - ✅ User IDs (not usernames if PII)
+  - ✅ Request paths and methods
+  - ✅ Error messages (without sensitive context)
+  - ✅ Performance metrics
+- Use `logger.debug()` for detailed logs (automatically disabled in production)
+
+##### 8. Dependency Security
+
+- **Keep dependencies updated**:
+  - Run `dotnet list package --outdated` (backend)
+  - Run `npm outdated` (frontend)
+  - Review security advisories: `npm audit` / `dotnet list package --vulnerable`
+- **Verify package sources**:
+  - Use official NuGet packages (nuget.org)
+  - Use npm packages with high download counts and recent updates
+  - Check GitHub repository activity before adding new dependencies
+- **Pin exact versions** in production (avoid wildcards like `^` or `~`)
+
+##### 9. Error Handling
+
+- **Never expose stack traces to users** in production
+- **Frontend**: ErrorBoundary shows friendly message, logs details
+- **Backend**: Return generic error messages, log details server-side
+
+  ```csharp
+  // ❌ WRONG - exposes implementation details
+  catch (Exception ex) {
+      return BadRequest(ex.Message + "\n" + ex.StackTrace);
+  }
+
+  // ✅ CORRECT - generic message, detailed logging
+  catch (Exception ex) {
+      logger.LogError(ex, "Failed to create project");
+      return StatusCode(500, "An error occurred processing your request");
+  }
+  ```
+
+##### 10. Rate Limiting (TODO)
+
+- **Not implemented yet** (planned for production)
+- Consider adding:
+  - API rate limiting (AspNetCoreRateLimit)
+  - Login attempt limits (brute force protection)
+  - IP-based throttling for public endpoints
+
 #### Frontend Component Guidelines
 
 - **Create reusable components** when:
