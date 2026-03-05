@@ -119,7 +119,7 @@ export function Footer() {
                   <span className="text-xs font-bold text-cyan-400">🐘</span>
                 </div>
                 <div className="text-slate-400">
-                  <div className="font-medium">PostgreSQL 17</div>
+                  <div className="font-medium">PostgreSQL 17.6</div>
                   <div className="text-xs text-slate-500">
                     Aspire Orchestration
                   </div>

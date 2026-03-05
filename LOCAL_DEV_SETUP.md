@@ -81,9 +81,17 @@ Build succeeded in ~8s
 
 ## ▶️ Running the Application
 
-### Option 1: Using Aspire (Recommended)
+### Option 1: Manual Start (Recommended)
 
-**Single command starts everything:**
+**You need to start PostgreSQL manually, then use Aspire to orchestrate backend/frontend:**
+
+**Step 1 - Start PostgreSQL:**
+
+```powershell
+docker run -d --name capsyncer-postgres -e POSTGRES_PASSWORD=postgres -p 5432:5432 postgres:17.6
+```
+
+**Step 2 - Start Application with Aspire:**
 
 ```powershell
 dotnet run --project CapSyncer.AppHost
@@ -91,11 +99,10 @@ dotnet run --project CapSyncer.AppHost
 
 This automatically:
 
-- ✅ Starts PostgreSQL 17.6 in Docker
 - ✅ Starts backend API on `http://localhost:5128`
 - ✅ Starts frontend on `http://localhost:3000`
-- ✅ Opens Aspire Dashboard (typically `http://localhost:17xxx`)
-- ✅ Creates database and runs migrations automatically
+- ✅ Opens Aspire Dashboard for monitoring (typically `http://localhost:15249`)
+- ✅ Backend auto-creates database and runs migrations
 - ✅ Provides live logs and health monitoring
 
 **Your browser will automatically open to the Aspire Dashboard.**
@@ -103,15 +110,17 @@ This automatically:
 **Access the application:**
 
 - 🌐 **Frontend:** http://localhost:3000
-- 🔧 **Backend API:** http://localhost:5128/api/status
-- 📊 **Aspire Dashboard:** The URL shown in terminal (e.g., `http://localhost:17065`)
+- 🔧 **Backend API:** http://localhost:5128/api/coworkers (test endpoint)
+- 📊 **Aspire Dashboard:** Check terminal output for URL (e.g., `http://localhost:15249`)
 
-### Option 2: Manual Start (If Aspire Fails)
+> **Note:** PostgreSQL is NOT managed by Aspire. You must start it manually with Docker as shown in Step 1.
+
+### Option 2: Full Manual Start (Without Aspire)
 
 **Terminal 1 - Start PostgreSQL:**
 
 ```powershell
-docker run -d --name capsyncerdb -e POSTGRES_PASSWORD=postgres -p 5432:5432 postgres:17.6
+docker run -d --name capsyncer-postgres -e POSTGRES_PASSWORD=postgres -p 5432:5432 postgres:17.6
 ```
 
 **Terminal 2 - Start Backend:**
@@ -135,11 +144,13 @@ npm run dev
 ### Start Development
 
 ```powershell
-# Start everything with Aspire (recommended)
+# Step 1: Start PostgreSQL (always required)
+docker run -d --name capsyncer-postgres -e POSTGRES_PASSWORD=postgres -p 5432:5432 postgres:17.6
+
+# Step 2: Start with Aspire (recommended)
 dotnet run --project CapSyncer.AppHost
 
-# Or manually (3 separate terminals)
-# Terminal 1: docker run -d --name capsyncerdb -e POSTGRES_PASSWORD=postgres -p 5432:5432 postgres:17.6
+# OR manually (3 separate terminals after Step 1)
 # Terminal 2: cd backend; dotnet run
 # Terminal 3: cd frontend; npm run dev
 ```
@@ -147,11 +158,15 @@ dotnet run --project CapSyncer.AppHost
 ### Stop Development
 
 ```powershell
-# If using Aspire, just press Ctrl+C in the terminal
+# Stop Aspire (if running)
+# Press Ctrl+C in the terminal
 
-# If running manually:
-docker stop capsyncerdb
-docker rm capsyncerdb
+# Stop and remove PostgreSQL container
+docker stop capsyncer-postgres
+docker rm capsyncer-postgres
+
+# Optional: Remove database data
+docker volume rm capsyncer-pgdata
 ```
 
 ### Run Tests
@@ -183,8 +198,13 @@ npm run build
 Invoke-WebRequest -Uri "http://localhost:5128/api/coworkers" -UseBasicParsing | Select-Object -ExpandProperty Content
 
 # Connect to PostgreSQL directly
-docker ps  # Find container ID
-docker exec -it <CONTAINER_ID> psql -U postgres -d capsyncerdb
+docker exec -it capsyncer-postgres psql -U postgres -d capsyncerdb
+
+# List all tables
+docker exec capsyncer-postgres psql -U postgres -d capsyncerdb -c "\dt"
+
+# View container logs
+docker logs capsyncer-postgres
 ```
 
 ---
@@ -224,7 +244,13 @@ CapSyncer/
 **Solution:** Stop the existing PostgreSQL container:
 
 ```powershell
-docker stop $(docker ps -q --filter "ancestor=postgres:17.6")
+# Find and stop any PostgreSQL container on port 5432
+docker ps -a --filter "publish=5432"
+docker stop capsyncer-postgres
+docker rm capsyncer-postgres
+
+# Or stop any postgres container
+docker ps -q --filter "ancestor=postgres" | ForEach-Object { docker stop $_ }
 ```
 
 ### Problem: "ASPIRE_ALLOW_UNSECURED_TRANSPORT" warning
