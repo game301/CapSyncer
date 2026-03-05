@@ -28,10 +28,13 @@
 
 **Before starting ANY work on this project, verify:**
 
-1. ✅ **Documentation up-to-date**
+1. ✅ **Documentation up-to-date** ⚠️ CRITICAL
+   - **ALWAYS update documentation when making ANY code changes**
    - Check AI_CONTEXT.md, README.md, CODE_DOCUMENTATION.md dates
    - Verify all markdown files reflect current code state
    - Update "Last Updated" dates when making changes
+   - **No exceptions** - documentation drift causes major confusion
+   - See "Documentation Maintenance Rules" section below for detailed guidance
 
 2. ✅ **Tests work and are relevant**
    - Run `dotnet test` - should see 112/112 passing
@@ -260,7 +263,10 @@
 - [ ] No commented-out code (remove or document why kept)
 - [ ] All TODOs are intentional (production features only)
 - [ ] New features have tests
-- [ ] Documentation updated (AI_CONTEXT.md, README.md if needed)
+- [ ] **Documentation updated** (AI_CONTEXT.md, README.md, CODE_DOCUMENTATION.md if needed)
+  - **THIS IS MANDATORY** - Never skip documentation updates
+  - Update "Last Updated" dates in modified files
+  - Add entry to "Recent Changes" section if significant change
 - [ ] TypeScript has no errors: `npm run build` (includes type checking)
 
 ### Git Commit Recommendations
@@ -538,7 +544,17 @@ dotnet test --collect:"XPlat Code Coverage"
 
 ---
 
+# 📊 CURRENT PROJECT STATE
+
+> **NOTE:** This section contains time-sensitive information about recent changes and project status.
+> It is separate from the permanent guidelines above. Update this section with each significant change.
+
+---
+
 ## 📝 Recent Changes & Decisions (Session History)
+
+> **Purpose:** Track recent work sessions, decisions, and changes for continuity between AI sessions.
+> **Maintenance:** Add new entries at the top (most recent first). Archive old entries after 30 days.
 
 ### March 5, 2026 - Code Refactoring & Logger Implementation
 
@@ -1075,16 +1091,54 @@ dotnet build --nologo
 
 ## 📝 Documentation Maintenance Rules
 
-**When making changes to the project:**
+### ⚠️ MANDATORY: Always Update Documentation When Code Changes
 
-1. ✅ Update `AI_CONTEXT.md` FIRST - This is the source of truth
-2. ✅ Update related MD files (README, CODE_DOCUMENTATION, DEPLOYMENT)
-3. ✅ Update version numbers if dependencies change
-4. ✅ Update test counts if tests are added/removed
-5. ✅ Update HTTP file if API endpoints change
-6. ✅ Keep "Last Updated" dates current
+**Documentation is NOT optional.** Every code change must be accompanied by documentation updates.
 
-**Remember:** Documentation should always reflect the current state of the code.
+**The Documentation Update Process:**
+
+1. ✅ **Update `AI_CONTEXT.md` FIRST** - This is the source of truth
+   - Update "Last Updated" date at the top
+   - Add entry to "Recent Changes & Decisions" section for significant changes
+   - Update any affected guideline sections
+   - Update architecture/patterns if applicable
+
+2. ✅ **Update `README.md`** if user-facing changes:
+   - New features or components
+   - Setup/installation changes
+   - Technology stack updates
+   - Update "Last Updated" date
+
+3. ✅ **Update `CODE_DOCUMENTATION.md`** if technical changes:
+   - Architecture modifications
+   - New patterns or conventions
+   - API endpoint changes
+   - Component structure updates
+   - Update "Last Updated" date
+
+4. ✅ **Update other specialized docs** as needed:
+   - `DEPLOYMENT.md` - For deployment process changes
+   - `TESTING.md` - For test strategy changes
+   - `MONITORING.md` - For logging/monitoring changes
+   - `backend/CapSyncer.Server.http` - For API endpoint changes
+
+5. ✅ **Update project state tracking:**
+   - Test counts if tests added/removed (currently 112)
+   - Version numbers if dependencies change
+   - Keep all "Last Updated" dates current
+
+**Documentation Structure Guidelines:**
+
+- **Permanent Guidelines**: Core principles, patterns, conventions (top sections)
+- **Current Project State**: Recent changes, status, decisions (bottom sections)
+- **Clearly separate** these two types of information with visual dividers
+- Use section headers like "CURRENT PROJECT STATE" to indicate temporal information
+
+**Remember:**
+
+- Documentation drift causes major confusion and wastes time
+- If you change code, you MUST update docs - no exceptions
+- Outdated documentation is worse than no documentation
 
 ---
 
@@ -1099,7 +1153,13 @@ When working on this project:
 3. **Validate business rules** - WeeklyEffort > 0, Capacity > 0, etc.
 4. **Use proper logging** - logger.debug/info/warn/error (NO console.log)
 5. **Create reusable components** - If pattern appears 2+ times, extract component
-6. **Update documentation** - This file (AI_CONTEXT.md) first, then README/CODE_DOCUMENTATION
+6. **⚠️ UPDATE DOCUMENTATION (MANDATORY)** - See "Documentation Maintenance Rules" above
+   - Update AI_CONTEXT.md FIRST (source of truth)
+   - Update README.md if user-facing changes
+   - Update CODE_DOCUMENTATION.md if technical changes
+   - Update "Last Updated" dates in ALL modified docs
+   - Add entry to "Recent Changes" section
+   - Documentation is NEVER optional
 7. **Run tests** - Verify with `dotnet test` (should be 112/112 passing)
 8. **Update HTTP file** - Add/modify examples when API changes
 9. **Update test count** - Keep accurate count in documentation
