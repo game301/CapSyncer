@@ -114,9 +114,11 @@
   - ProgressBar, WeeklyCapacityView
   - CreateTaskModal, CreateAssignmentModal
 - **Existing utility modules:**
-  - logger.ts (structured logging)
-  - config.ts (environment variables)
-  - date.ts (date manipulation and formatting)
+  - **logger.ts** - Structured logging with production-safe debug levels
+  - **config.ts** - Centralized environment variable access (API_BASE_URL, BASE_URL, APP_NAME)
+  - **date.ts** - Date manipulation and ISO week calculations
+  - **types.ts** - Shared TypeScript interfaces (Coworker, Project, TaskItem, Assignment)
+  - **api.ts** - Fetch wrappers with logging and error handling (apiGet, apiPost, apiPut, apiDelete)
 - **Component structure:**
   ```typescript
   // 1. Imports
@@ -533,6 +535,66 @@ dotnet test --collect:"XPlat Code Coverage"
 - **DRY**: Eliminated all code duplication across pages
 - **SOLID (Single Responsibility)**: Each utility has one clear purpose
 - **YAGNI**: Only extracted actually duplicated code, not speculative features
+
+### March 5, 2026 - Additional Refactoring: Shared Types & API Utilities
+
+**New Utilities Created:**
+
+1. ✅ **Created Shared Type Definitions** (`frontend/utils/types.ts`):
+   - Centralized TypeScript interfaces to eliminate 21+ duplicate interface definitions
+   - Exported types: Coworker, Project, TaskItem, Assignment, ApiError, ApiResponse
+   - Comprehensive JSDoc documentation for all types
+   - Benefits: Single source of truth, consistency across codebase, DRY principle
+
+2. ✅ **Created API Client Utilities** (`frontend/utils/api.ts`):
+   - Reusable fetch wrappers: `apiGet()`, `apiPost()`, `apiPut()`, `apiDelete()`
+   - Standardized error handling and response parsing
+   - Automatic logging with performance metrics (duration tracking)
+   - Type-safe generic functions with proper error types
+   - Helper: `hasError()` for type-safe error checking
+   - Benefits: Consistent API calls, reduced boilerplate, centralized logging
+
+**Usage Examples:**
+
+```typescript
+// Before: Manual fetch with duplicate error handling
+const response = await fetch(`${API_BASE_URL}/api/coworkers`);
+if (!response.ok) {
+  showToast({ message: "Failed to fetch", type: "error" });
+  return;
+}
+const data = await response.json();
+
+// After: Use shared API utility
+import { apiGet } from "@/utils/api";
+import { Coworker } from "@/utils/types";
+
+const { data, error } = await apiGet<Coworker[]>("/api/coworkers");
+if (error) {
+  showToast({ message: error.message, type: "error" });
+  return;
+}
+// TypeScript knows data is Coworker[] here
+```
+
+**Impact:**
+
+- **Type definitions**: 21 duplicate interfaces can now be centralized (not yet migrated)
+- **API utilities**: Ready for pages to adopt (reduces ~10 lines per fetch call)
+- **Logging**: Automatic performance tracking for all API calls
+- **Type safety**: ApiResponse<T> provides proper error handling types
+
+**Next Steps for Full Adoption:**
+
+- Migrate pages to use shared types from utils/types.ts
+- Replace fetch calls with apiGet/apiPost/apiPut/apiDelete utilities
+- Remove local interface definitions from page components
+
+**Principles Applied:**
+
+- **DRY**: Eliminates duplicate type definitions and fetch patterns
+- **SOLID (Single Responsibility)**: types.ts for types, api.ts for API calls
+- **Type Safety**: Generic types ensure compile-time correctness
 
 ### March 4, 2026 - Logging & Monitoring Infrastructure
 
