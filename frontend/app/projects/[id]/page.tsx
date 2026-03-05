@@ -1147,6 +1147,7 @@ export default function ProjectDetailPage() {
                 label="Estimated Hours"
                 name="estimatedHours"
                 type="number"
+                min="0"
                 required
                 defaultValue={(editingEntity as TaskItem)?.estimatedHours || 0}
               />
@@ -1154,6 +1155,8 @@ export default function ProjectDetailPage() {
                 label="Weekly Effort"
                 name="weeklyEffort"
                 type="number"
+                min="0.01"
+                step="any"
                 required
                 defaultValue={(editingEntity as TaskItem)?.weeklyEffort || 0}
               />
