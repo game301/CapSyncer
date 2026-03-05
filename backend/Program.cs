@@ -154,7 +154,7 @@ if (app.Environment.IsDevelopment())
             // Run migrations
             var db = scope.ServiceProvider.GetRequiredService<CapSyncerDbContext>();
             logger.LogInformation("Running database migrations...");
-            db.Database.Migrate();
+            await db.Database.MigrateAsync();
             logger.LogInformation("Database migrations completed successfully");
         }
     }
