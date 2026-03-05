@@ -67,7 +67,7 @@ export default function Home() {
 
           {/* Feature Highlights */}
           <div className="grid gap-6 md:grid-cols-3">
-            <div className="group rounded-2xl border border-slate-700/50 bg-gradient-to-br from-slate-800/80 to-slate-900/80 p-8 backdrop-blur-sm transition hover:border-slate-600">
+            <div className="group rounded-2xl border border-slate-700/50 bg-linear-to-br from-slate-800/80 to-slate-900/80 p-8 backdrop-blur-sm transition hover:border-slate-600">
               <div className="mb-4 inline-flex rounded-xl bg-blue-500/10 p-3">
                 <svg
                   className="h-8 w-8 text-blue-400"
@@ -92,7 +92,7 @@ export default function Home() {
               </p>
             </div>
 
-            <div className="group rounded-2xl border border-slate-700/50 bg-gradient-to-br from-slate-800/80 to-slate-900/80 p-8 backdrop-blur-sm transition hover:border-slate-600">
+            <div className="group rounded-2xl border border-slate-700/50 bg-linear-to-br from-slate-800/80 to-slate-900/80 p-8 backdrop-blur-sm transition hover:border-slate-600">
               <div className="mb-4 inline-flex rounded-xl bg-purple-500/10 p-3">
                 <svg
                   className="h-8 w-8 text-purple-400"
@@ -117,7 +117,7 @@ export default function Home() {
               </p>
             </div>
 
-            <div className="group rounded-2xl border border-slate-700/50 bg-gradient-to-br from-slate-800/80 to-slate-900/80 p-8 backdrop-blur-sm transition hover:border-slate-600">
+            <div className="group rounded-2xl border border-slate-700/50 bg-linear-to-br from-slate-800/80 to-slate-900/80 p-8 backdrop-blur-sm transition hover:border-slate-600">
               <div className="mb-4 inline-flex rounded-xl bg-green-500/10 p-3">
                 <svg
                   className="h-8 w-8 text-green-400"
