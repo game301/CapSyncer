@@ -44,7 +44,7 @@ CapSyncer follows a **modern n-tier architecture** with clear separation of conc
 │  └──────────────────────────────────────────┘  │
 │  ┌──────────────────────────────────────────┐  │
 │  │  Components                               │  │
-│  │  ├── UI Components (shadcn/ui)           │  │
+│  │  ├── Custom Components                   │  │
 │  │  ├── Business Components                 │  │
 │  │  └── Layout Components                   │  │
 │  └──────────────────────────────────────────┘  │
@@ -62,7 +62,7 @@ CapSyncer follows a **modern n-tier architecture** with clear separation of conc
 │  │  ├── Projects (5 endpoints)              │  │
 │  │  ├── Tasks (5 endpoints)                 │  │
 │  │  ├── Assignments (5 endpoints)           │  │
-│  │  ├── Capacity (4 endpoints)              │  │
+│  │  ├── Calendar (4 endpoints)              │  │
 │  │  └── Health (2 endpoints)                │  │
 │  └──────────────────────────────────────────┘  │
 │  ┌──────────────────────────────────────────┐  │
@@ -129,7 +129,7 @@ backend/
    - Projects (5 endpoints) - Lines 256-350
    - Tasks (5 endpoints) - Lines 356-390
    - Assignments (5 endpoints) - Lines 391-433
-   - Capacity (4 endpoints) - Lines 434-547
+   - Calendar (4 endpoints) - Lines 434-547
    - Health (2 endpoints) - Lines 548-556
 
 4. **Helper Methods** (Lines 557-600)
@@ -825,7 +825,7 @@ const formatted = formatDate(assignment.assignedDate, {
 
 **Pages Refactored:**
 
-- ✅ capacity/page.tsx
+- ✅ calendar/page.tsx
 - ✅ assignments/[id]/page.tsx
 - ✅ coworkers/[id]/page.tsx
 - ✅ dashboard/page.tsx (7 API calls updated)

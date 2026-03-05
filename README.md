@@ -354,12 +354,10 @@ Comprehensive documentation is available to help you understand and work with Ca
 
 ### Additional Guides
 
-- **[API_GUIDE_AND_CLEANUP.md](API_GUIDE_AND_CLEANUP.md)** - API documentation and cleanup notes
+- **[LOCAL_DEV_SETUP.md](LOCAL_DEV_SETUP.md)** - Local development setup guide
 - **[TESTING.md](TESTING.md)** - Complete testing guide (unit, integration, E2E)
-- **[HOW_TO_VIEW_DATABASE.md](HOW_TO_VIEW_DATABASE.md)** - Database access and management
-- **[PROJECT_STATUS.md](PROJECT_STATUS.md)** - Project status tracking
-- **[SETUP_STATUS.md](SETUP_STATUS.md)** - Setup completion checklist
-- **[FULL_TEST_REPORT.md](FULL_TEST_REPORT.md)** - Detailed test results
+- **[MONITORING.md](MONITORING.md)** - Observability and monitoring guide
+- **[CODE_DOCUMENTATION.md](CODE_DOCUMENTATION.md)** - Technical architecture and code guide
 
 ### Configuration Files
 
