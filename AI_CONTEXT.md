@@ -1,6 +1,6 @@
 # CapSyncer - AI Agent Context & Memory
 
-> **Last Updated:** March 4, 2026
+> **Last Updated:** March 5, 2026
 >
 > This document serves as a persistent memory for AI agents working on this project. It contains critical project context, conventions, and recent changes to ensure consistency across sessions.
 >
@@ -16,7 +16,219 @@
 - **Frontend**: Next.js 16.1.6 (App Router) with TypeScript and Tailwind CSS 4
 - **Orchestration**: .NET Aspire 13.1.2 (development)
 - **Database**: PostgreSQL 17.6 (production/dev) / InMemory (testing)
-- **Testing**: xUnit with 112 tests (100% passing)
+- **Testing**: xUnit with 114 tests (100% passing)
+
+---
+
+## 🤖 AI Agent Guidelines (READ FIRST)
+
+> **📌 This file is automatically loaded into AI context.** The first 200 lines are read on every session start, so critical information should be placed early.
+
+### Pre-Work Checklist
+
+**Before starting ANY work on this project, verify:**
+
+1. ✅ **Documentation up-to-date**
+   - Check AI_CONTEXT.md, README.md, CODE_DOCUMENTATION.md dates
+   - Verify all markdown files reflect current code state
+   - Update "Last Updated" dates when making changes
+
+2. ✅ **Tests work and are relevant**
+   - Run `dotnet test` - should see 114/114 passing
+   - Verify tests cover new/changed functionality
+   - Remove obsolete tests, add tests for new features
+
+3. ✅ **Logging properly implemented**
+   - Backend: Uses Aspire OpenTelemetry (automatic)
+   - Frontend: Uses logger utility (logger.info/warn/error/debug)
+   - NO console.log for debugging - use logger.debug instead
+   - Error boundaries catch React errors
+
+4. ✅ **Code documentation and comments**
+   - Public APIs have XML docs (C#) or JSDoc (TypeScript)
+   - Complex logic has inline comments explaining WHY, not WHAT
+   - File headers describe purpose and responsibility
+
+5. ✅ **Setup files and scripts correct**
+   - Configuration files valid (appsettings.json, .env examples)
+   - **.gitignore** files present (root, frontend)
+   - **.env.example** files present (backend, frontend) - DO NOT commit .env files
+   - Package.json dependencies match installed packages
+   - .csproj files reference correct NuGet versions
+   - Docker files (production only) are functional
+
+6. ✅ **All needed packages installed**
+   - Backend: `dotnet restore` succeeds
+   - Frontend: `npm install` succeeds
+   - No missing dependencies or version conflicts
+
+### Project Standards & Principles
+
+**ALWAYS follow these principles when writing code:**
+
+#### YAGNI (You Aren't Gonna Need It)
+
+- Don't add functionality until it's needed
+- Remove unused code, imports, and dependencies
+- Keep components focused on current requirements
+
+#### DRY (Don't Repeat Yourself)
+
+- Extract repeated logic into reusable functions/components
+- Use shared utilities (logger, API helpers, formatters)
+- Frontend: Create reusable components when pattern appears 2+ times
+- Backend: Use helper methods for repeated validation/transformation
+
+#### SOLID Principles (Basic)
+
+- **Single Responsibility**: One component/class = one purpose
+- **Open/Closed**: Extend behavior with composition, not modification
+- **Liskov Substitution**: Subclasses should be interchangeable
+- **Interface Segregation**: Small, focused interfaces/props
+- **Dependency Inversion**: Depend on abstractions (contexts, services)
+
+#### CRUD Operations
+
+- All entities support: Create, Read, Update, Delete
+- RESTful conventions: POST (create), GET (read), PUT (update), DELETE (delete)
+- Soft delete for Coworkers (IsActive flag), hard delete for others
+
+#### ACID Principles (Database)
+
+- **Atomicity**: Transactions are all-or-nothing
+- **Consistency**: Database always in valid state
+- **Isolation**: Concurrent operations don't interfere
+- **Durability**: Committed data persists
+- EF Core handles ACID automatically, but be mindful of transaction boundaries
+
+#### Frontend Component Guidelines
+
+- **Create reusable components** when:
+  - Pattern appears 2+ times across different pages
+  - Component is self-contained with clear props
+  - Component reduces complexity in parent
+- **Existing reusable components:**
+  - Button, Input, Select, Textarea (FormInputs)
+  - Table, Modal, Toast
+  - PageLayout, ErrorBoundary
+  - ProgressBar, WeeklyCapacityView
+- **Component structure:**
+  ```typescript
+  // 1. Imports
+  // 2. TypeScript interfaces/types
+  // 3. Component definition with clear props
+  // 4. State and effects
+  // 5. Event handlers
+  // 6. JSX return
+  ```
+
+### Code Quality Checklist
+
+**Before committing code:**
+
+- [ ] Builds without errors: `dotnet build` and `npm run build`
+- [ ] All tests pass: `dotnet test`
+- [ ] No console.log statements (use logger.debug)
+- [ ] No commented-out code (remove or document why kept)
+- [ ] All TODOs are intentional (production features only)
+- [ ] New features have tests
+- [ ] Documentation updated (AI_CONTEXT.md, README.md if needed)
+- [ ] TypeScript has no errors: `npm run build` (includes type checking)
+
+### Git Commit Recommendations
+
+**After completing work, AI agents should suggest appropriate git commits:**
+
+**Commit Message Format:**
+
+```
+<type>(<scope>): <short summary>
+
+<optional detailed description>
+
+<optional footer with breaking changes or issue references>
+```
+
+**Commit Types:**
+
+- `feat`: New feature (e.g., `feat(frontend): add reusable ProgressBar component`)
+- `fix`: Bug fix (e.g., `fix(api): validate WeeklyEffort > 0 on task creation`)
+- `refactor`: Code restructuring without behavior change (e.g., `refactor: extract logger utility`)
+- `docs`: Documentation only (e.g., `docs: update AI_CONTEXT with SOLID principles`)
+- `test`: Adding/updating tests (e.g., `test: add integration tests for capacity endpoints`)
+- `chore`: Maintenance tasks (e.g., `chore: update dependencies to latest versions`)
+- `style`: Formatting, whitespace (e.g., `style: format code with prettier`)
+- `perf`: Performance improvement (e.g., `perf: optimize database queries with indexes`)
+
+**Examples of Good Commits:**
+
+```bash
+# Single feature with multiple files
+git add frontend/components/ProgressBar.tsx frontend/app/projects/[id]/page.tsx
+git commit -m "feat(frontend): add reusable ProgressBar component
+
+- Created ProgressBar component with percentage/current/total props
+- Replaced inline progress bars in project detail page
+- Follows DRY principle by extracting repeated pattern
+- Added TypeScript interfaces for type safety"
+
+# Documentation update
+git add AI_CONTEXT.md README.md
+git commit -m "docs: add AI agent guidelines and project standards
+
+- Added Pre-Work Checklist (6 items)
+- Documented YAGNI, DRY, SOLID, CRUD, ACID principles
+- Added git commit recommendations
+- Updated Pre-Work Checklist with .gitignore/.env verification"
+
+# Bug fix with test
+git add backend/Program.cs backend.tests/TasksIntegrationTests.cs
+git commit -m "fix(api): enforce WeeklyEffort > 0 validation on task PUT
+
+- Added validation in PUT endpoint (was only in POST)
+- Updated test to verify validation on update
+- Fixes issue where tasks could be updated with 0 effort"
+
+# Refactoring
+git add frontend/app/tasks/[id]/page.tsx frontend/app/dashboard/page.tsx
+git commit -m "refactor(frontend): replace console.log with logger utility
+
+- Replaced 5 debug console.log statements with logger.debug
+- Added structured context objects for better debugging
+- Follows logging standards (production-safe)"
+```
+
+**Files to Check Before Committing:**
+
+```bash
+# See what changed
+git status
+
+# Review changes
+git diff
+
+# Stage specific files (recommended over git add .)
+git add <specific-files>
+
+# Verify .env files are NOT staged
+git status | grep -E "\.env$"  # Should show nothing
+```
+
+**❌ DO NOT Commit:**
+
+- `.env` files (use `.env.example` as template)
+- `bin/` or `obj/` folders (ignored by .gitignore)
+- `node_modules/` (ignored by .gitignore)
+- `.vs/` or `.vscode/` personal settings
+- Large binary files or build artifacts
+
+**✅ DO Commit:**
+
+- Source code (`.cs`, `.tsx`, `.ts`, `.css`)
+- Configuration templates (`.env.example`, `appsettings.json`)
+- Documentation (`.md` files)
+- Tests
+- `.gitignore` and `.dockerignore` files
 
 ---
 
@@ -199,6 +411,48 @@ dotnet test --collect:"XPlat Code Coverage"
 ---
 
 ## 📝 Recent Changes & Decisions (Session History)
+
+### March 5, 2026 - Code Refactoring & Logger Implementation
+
+**Refactoring Completed:**
+
+1. ✅ **Documentation Cleanup**:
+   - Deleted API_GUIDE_AND_CLEANUP.md (265 lines of duplicate/outdated content)
+   - Content was fully duplicated in AI_CONTEXT.md and CODE_DOCUMENTATION.md
+   - Project documentation reduced from 15 to 10 files (33% reduction)
+   - All remaining docs verified accurate and up-to-date
+
+2. ✅ **Logger Implementation**:
+   - Replaced 5 debug console.log statements with structured logger.debug calls
+   - Added logger imports to 3 frontend files:
+     - app/tasks/[id]/page.tsx (2 replacements)
+     - app/dashboard/page.tsx (1 replacement)
+     - app/projects/[id]/page.tsx (2 replacements)
+   - Changed from: `console.log("message:", data)`
+   - Changed to: `logger.debug("message", { data, context })`
+   - Benefits: Production-safe, structured context, consistent logging
+
+3. ✅ **Code Quality Audit**:
+   - Backend: No unused code found, well-organized Program.cs (610 lines)
+   - Frontend: No debugger statements or commented code
+   - Models: All properties actively used
+   - Only 4 intentional TODOs remain (production features: CORS domain, Sentry integration)
+
+**Build Verification:**
+
+- Frontend: 4.8s compile, 0 errors
+- Backend: 6.3s build, 0 errors
+- All tests: 114/114 passing (100%)
+
+**Files Modified:**
+
+- frontend/app/tasks/[id]/page.tsx
+- frontend/app/dashboard/page.tsx
+- frontend/app/projects/[id]/page.tsx
+
+**Files Deleted:**
+
+- API_GUIDE_AND_CLEANUP.md
 
 ### March 4, 2026 - Logging & Monitoring Infrastructure
 
@@ -486,7 +740,7 @@ dotnet build --nologo
 **API & Development:**
 
 - `backend/CapSyncer.Server.http` - HTTP test file with all 27 endpoints
-- `API_GUIDE_AND_CLEANUP.md` - API documentation and notes
+- `MONITORING.md` - Comprehensive monitoring and logging guide
 
 **Testing & Database:**
 
@@ -531,14 +785,20 @@ dotnet build --nologo
 
 ## 🔄 Update Instructions for AI Agents
 
+**⚠️ BEFORE starting any work, complete the Pre-Work Checklist above.**
+
 When working on this project:
 
-1. **Always check status values** - Use "Planning" and "In Progress" (never "Not started" or "In progress")
-2. **Validate WeeklyEffort** - Must be > 0 for tasks
-3. **Update this file** - Add new decisions, changes, or conventions
-4. **Run tests** - Verify changes with `dotnet test`
-5. **Check HTTP file** - Update examples when API changes
-6. **Update test count** - If tests added/removed
+1. **Follow Project Standards** - Review "AI Agent Guidelines" section (YAGNI, DRY, SOLID, etc.)
+2. **Check status values** - Use "Planning" and "In Progress" (never "Not started" or "In progress")
+3. **Validate business rules** - WeeklyEffort > 0, Capacity > 0, etc.
+4. **Use proper logging** - logger.debug/info/warn/error (NO console.log)
+5. **Create reusable components** - If pattern appears 2+ times, extract component
+6. **Update documentation** - This file (AI_CONTEXT.md) first, then README/CODE_DOCUMENTATION
+7. **Run tests** - Verify with `dotnet test` (should be 114/114 passing)
+8. **Update HTTP file** - Add/modify examples when API changes
+9. **Update test count** - Keep accurate count in documentation
+10. **Verify builds** - Both `dotnet build` and `npm run build` must succeed
 
 ---
 
