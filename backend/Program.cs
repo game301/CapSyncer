@@ -784,17 +784,17 @@ app.MapDelete("/api/assignments/{id}", async (int id, CapSyncerDbContext db, ILo
 });
 
 // ============================================================================
-// API ENDPOINTS - CAPACITY MANAGEMENT
+// API ENDPOINTS - CALENDAR
 // ============================================================================
-// Capacity endpoints calculate weekly utilization and availability
+// Calendar endpoints provide weekly capacity data and ISO week utilities
 // Based on coworker capacity, assignments, and ISO week numbers
 
 /// <summary>
-/// GET /api/capacity/weekly?year={year}&weekNumber={weekNumber}
+/// GET /api/calendar/weekly?year={year}&weekNumber={weekNumber}
 /// Returns capacity data for all active coworkers in a specific week
 /// Calculates: used hours, available hours, utilization percentage
 /// </summary>
-app.MapGet("/api/capacity/weekly", async (int year, int weekNumber, CapSyncerDbContext db, ILogger<Program> logger) =>
+app.MapGet("/api/calendar/weekly", async (int year, int weekNumber, CapSyncerDbContext db, ILogger<Program> logger) =>
 {
     logger.LogInformation("Retrieving weekly capacity for year: {Year}, week: {WeekNumber}", year, weekNumber);
     try
@@ -838,7 +838,7 @@ app.MapGet("/api/capacity/weekly", async (int year, int weekNumber, CapSyncerDbC
 });
 
 // Get weekly capacity for a coworker in a specific year
-app.MapGet("/api/capacity/weekly/{coworkerId}/{year}", async (int coworkerId, int year, CapSyncerDbContext db, ILogger<Program> logger) =>
+app.MapGet("/api/calendar/weekly/{coworkerId}/{year}", async (int coworkerId, int year, CapSyncerDbContext db, ILogger<Program> logger) =>
 {
     logger.LogInformation("Retrieving yearly capacity for coworker ID: {CoworkerId}, year: {Year}", coworkerId, year);
     try
@@ -885,7 +885,7 @@ app.MapGet("/api/capacity/weekly/{coworkerId}/{year}", async (int coworkerId, in
 });
 
 // Get current week number and year
-app.MapGet("/api/capacity/current-week", (ILogger<Program> logger) =>
+app.MapGet("/api/calendar/current-week", (ILogger<Program> logger) =>
 {
     logger.LogDebug("Current week information requested");
     var now = DateTime.UtcNow;
@@ -899,7 +899,7 @@ app.MapGet("/api/capacity/current-week", (ILogger<Program> logger) =>
 });
 
 // Get ISO week number from a date
-app.MapGet("/api/capacity/week-from-date", (DateTime date, ILogger<Program> logger) =>
+app.MapGet("/api/calendar/week-from-date", (DateTime date, ILogger<Program> logger) =>
 {
     logger.LogDebug("Week number requested for date: {Date}", date);
     var weekInfo = GetIsoWeekNumber(date);

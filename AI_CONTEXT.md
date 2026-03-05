@@ -477,12 +477,12 @@ frontend/
 - `PUT /api/assignments/{id}` - Update
 - `DELETE /api/assignments/{id}` - Delete
 
-**Capacity (4):**
+**Calendar (4):**
 
-- `GET /api/capacity/weekly?year={year}&weekNumber={weekNumber}` - All coworkers for a week
-- `GET /api/capacity/weekly/{coworkerId}/{year}` - Coworker's year
-- `GET /api/capacity/current-week` - Current ISO week info
-- `GET /api/capacity/week-from-date?date={date}` - Convert date to week
+- `GET /api/calendar/weekly?year={year}&weekNumber={weekNumber}` - All coworkers for a week
+- `GET /api/calendar/weekly/{coworkerId}/{year}` - Coworker's year
+- `GET /api/calendar/current-week` - Current ISO week info
+- `GET /api/calendar/week-from-date?date={date}` - Convert date to week
 
 ---
 

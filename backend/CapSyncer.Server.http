@@ -218,29 +218,29 @@ DELETE {{CapSyncer_Server_HostAddress}}/api/assignments/1
 ###
 
 ###############################################
-# CAPACITY ENDPOINTS
+# CALENDAR ENDPOINTS
 ###############################################
 
 # Get weekly capacity for all active coworkers in a specific week
-GET {{CapSyncer_Server_HostAddress}}/api/capacity/weekly?year=2026&weekNumber=10
+GET {{CapSyncer_Server_HostAddress}}/api/calendar/weekly?year=2026&weekNumber=10
 Accept: application/json
 
 ###
 
 # Get weekly capacity for coworker in a specific year
-GET {{CapSyncer_Server_HostAddress}}/api/capacity/weekly/1/2026
+GET {{CapSyncer_Server_HostAddress}}/api/calendar/weekly/1/2026
 Accept: application/json
 
 ###
 
 # Get current week number and year
-GET {{CapSyncer_Server_HostAddress}}/api/capacity/current-week
+GET {{CapSyncer_Server_HostAddress}}/api/calendar/current-week
 Accept: application/json
 
 ###
 
 # Get week number from specific date
-GET {{CapSyncer_Server_HostAddress}}/api/capacity/week-from-date?date=2026-03-03
+GET {{CapSyncer_Server_HostAddress}}/api/calendar/week-from-date?date=2026-03-03
 Accept: application/json
 
 ###

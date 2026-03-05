@@ -75,7 +75,7 @@ export function WeeklyCapacityView({
     setLoading(true);
     try {
       const response = await fetch(
-        `${apiBaseUrl}/api/capacity/weekly/${coworkerId}/${year}`,
+        `${apiBaseUrl}/api/calendar/weekly/${coworkerId}/${year}`,
       );
       if (response.ok) {
         const data = await response.json();

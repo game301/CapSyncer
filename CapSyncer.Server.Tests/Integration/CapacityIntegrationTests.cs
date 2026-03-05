@@ -21,7 +21,7 @@ public class CapacityIntegrationTests : IntegrationTestBase, IClassFixture<WebAp
     public async Task GET_CurrentWeek_ReturnsWeekInfo()
     {
         // Act
-        var response = await _client.GetAsync("/api/capacity/current-week");
+        var response = await _client.GetAsync("/api/calendar/current-week");
 
         // Assert
         response.EnsureSuccessStatusCode();
@@ -69,7 +69,7 @@ public class CapacityIntegrationTests : IntegrationTestBase, IClassFixture<WebAp
         });
 
         // Act
-        var response = await _client.GetAsync("/api/capacity/weekly?year=2026&weekNumber=10");
+        var response = await _client.GetAsync("/api/calendar/weekly?year=2026&weekNumber=10");
 
         // Assert
         response.EnsureSuccessStatusCode();
@@ -119,7 +119,7 @@ public class CapacityIntegrationTests : IntegrationTestBase, IClassFixture<WebAp
         });
 
         // Act
-        var response = await _client.GetAsync("/api/capacity/weekly?year=2026&weekNumber=15");
+        var response = await _client.GetAsync("/api/calendar/weekly?year=2026&weekNumber=15");
 
         // Assert
         response.EnsureSuccessStatusCode();
@@ -158,7 +158,7 @@ public class CapacityIntegrationTests : IntegrationTestBase, IClassFixture<WebAp
         });
 
         // Act
-        var response = await _client.GetAsync("/api/capacity/weekly?year=2026&weekNumber=10");
+        var response = await _client.GetAsync("/api/calendar/weekly?year=2026&weekNumber=10");
 
         // Assert
         response.EnsureSuccessStatusCode();

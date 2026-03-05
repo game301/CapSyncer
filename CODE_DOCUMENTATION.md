@@ -545,7 +545,7 @@ Examples:
 
 - `/api/coworkers` - Collection
 - `/api/coworkers/5` - Specific item
-- `/api/capacity/weekly/5/2026` - Hierarchical resource
+- `/api/calendar/weekly/5/2026` - Hierarchical resource
 
 ---
 
