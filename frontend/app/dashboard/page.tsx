@@ -15,7 +15,12 @@ import { Toast, useToast } from "../../components/Toast";
 import { WeekSelector } from "../../components/WeekSelector";
 import { ProgressBar } from "../../components/ProgressBar";
 import { apiGet, apiPost, apiPut, apiDelete } from "../../utils/api";
-import type { Coworker, Project, TaskItem, Assignment } from "../../utils/types";
+import type {
+  Coworker,
+  Project,
+  TaskItem,
+  Assignment,
+} from "../../utils/types";
 
 // Priority and Status options
 const PRIORITIES = ["Low", "Normal", "High", "Critical"];
@@ -194,7 +199,7 @@ function Dashboard() {
     }
 
     const { error } = await apiPut(`/api/coworkers/${id}/reactivate`, {});
-    
+
     if (error) {
       logger.error("Error reactivating coworker", { error: error.message, id });
       showToast({
@@ -203,7 +208,7 @@ function Dashboard() {
       });
       return;
     }
-    
+
     showToast({
       message: "Coworker reactivated successfully!",
       type: "success",
@@ -238,9 +243,13 @@ function Dashboard() {
     if (!confirm(confirmMessage)) return;
 
     const { data: result, error } = await apiDelete(`/api/${entityType}/${id}`);
-    
+
     if (error) {
-      logger.error("Error deleting item", { error: error.message, entityType, id });
+      logger.error("Error deleting item", {
+        error: error.message,
+        entityType,
+        id,
+      });
       showToast({
         message: "Failed to delete",
         type: "error",
@@ -360,11 +369,11 @@ function Dashboard() {
         : await apiPut(endpoint, data);
 
     if (response.error) {
-      logger.error("Save failed", { 
-        error: response.error.message, 
-        data, 
-        activeEntity, 
-        modalMode 
+      logger.error("Save failed", {
+        error: response.error.message,
+        data,
+        activeEntity,
+        modalMode,
       });
       alert(`Failed to save: ${response.error.message || "Unknown error"}`);
       return;
@@ -383,7 +392,11 @@ function Dashboard() {
     });
 
     // If creating a new project, redirect to its detail page
-    if (modalMode === "create" && activeEntity === "projects" && response.data) {
+    if (
+      modalMode === "create" &&
+      activeEntity === "projects" &&
+      response.data
+    ) {
       const newProject = response.data as Project;
       router.push(`/projects/${newProject.id}?new=true`);
     } else {

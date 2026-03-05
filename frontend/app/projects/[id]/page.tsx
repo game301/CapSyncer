@@ -23,12 +23,7 @@ import type {
   Assignment,
   Coworker,
 } from "../../../utils/types";
-import {
-  apiGet,
-  apiPost,
-  apiPut,
-  apiDelete,
-} from "../../../utils/api";
+import { apiGet, apiPost, apiPut, apiDelete } from "../../../utils/api";
 
 const PRIORITIES = ["Low", "Normal", "High", "Critical"];
 const STATUSES = [
@@ -87,7 +82,10 @@ export default function ProjectDetailPage() {
       ]);
 
     if (projectRes.error) {
-      logger.error("Failed to fetch project", { error: projectRes.error.message, projectId });
+      logger.error("Failed to fetch project", {
+        error: projectRes.error.message,
+        projectId,
+      });
       setError("Failed to fetch project");
       setLoading(false);
       return;
@@ -98,11 +96,15 @@ export default function ProjectDetailPage() {
     }
 
     if (assignmentsRes.error) {
-      logger.error("Failed to fetch assignments", { error: assignmentsRes.error.message });
+      logger.error("Failed to fetch assignments", {
+        error: assignmentsRes.error.message,
+      });
     }
 
     if (coworkersRes.error) {
-      logger.error("Failed to fetch coworkers", { error: coworkersRes.error.message });
+      logger.error("Failed to fetch coworkers", {
+        error: coworkersRes.error.message,
+      });
     }
 
     const projectData = projectRes.data!;

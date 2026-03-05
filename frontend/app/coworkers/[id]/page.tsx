@@ -13,7 +13,12 @@ import { ProgressBar } from "../../../components/ProgressBar";
 import { API_BASE_URL } from "../../../utils/config";
 import { apiGet } from "../../../utils/api";
 import { logger } from "../../../utils/logger";
-import type { Coworker, Assignment, TaskItem, Project } from "../../../utils/types";
+import type {
+  Coworker,
+  Assignment,
+  TaskItem,
+  Project,
+} from "../../../utils/types";
 
 export default function CoworkerDetailPage() {
   const params = useParams();
@@ -40,11 +45,13 @@ export default function CoworkerDetailPage() {
         ]);
 
       if (coworkerRes.error) {
-        logger.error("Failed to fetch coworker", { 
+        logger.error("Failed to fetch coworker", {
           error: coworkerRes.error.message,
-          coworkerId 
+          coworkerId,
         });
-        throw new Error(coworkerRes.error.message || "Failed to fetch coworker");
+        throw new Error(
+          coworkerRes.error.message || "Failed to fetch coworker",
+        );
       }
 
       if (assignmentsRes.error || tasksRes.error || projectsRes.error) {

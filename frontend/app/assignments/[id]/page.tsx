@@ -8,7 +8,12 @@ import { LoadingPage } from "../../../components/LoadingSpinner";
 import { Button } from "../../../components/Button";
 import { apiGet } from "../../../utils/api";
 import { logger } from "../../../utils/logger";
-import type { Assignment, Coworker, TaskItem, Project } from "../../../utils/types";
+import type {
+  Assignment,
+  Coworker,
+  TaskItem,
+  Project,
+} from "../../../utils/types";
 
 export default function AssignmentDetailPage() {
   const params = useParams();
@@ -34,11 +39,13 @@ export default function AssignmentDetailPage() {
           ]);
 
         if (assignmentRes.error) {
-          logger.error("Failed to fetch assignment", { 
+          logger.error("Failed to fetch assignment", {
             error: assignmentRes.error.message,
-            assignmentId 
+            assignmentId,
           });
-          throw new Error(assignmentRes.error.message || "Failed to fetch assignment");
+          throw new Error(
+            assignmentRes.error.message || "Failed to fetch assignment",
+          );
         }
 
         if (coworkersRes.error || tasksRes.error || projectsRes.error) {

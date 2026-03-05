@@ -23,12 +23,7 @@ import type {
   Assignment,
   Coworker,
 } from "../../../utils/types";
-import {
-  apiGet,
-  apiPost,
-  apiPut,
-  apiDelete,
-} from "../../../utils/api";
+import { apiGet, apiPost, apiPut, apiDelete } from "../../../utils/api";
 
 const PRIORITIES = ["Low", "Normal", "High", "Critical"];
 const STATUSES = [
@@ -81,18 +76,25 @@ export default function TaskDetailPage() {
       ]);
 
     if (taskRes.error) {
-      logger.error("Failed to fetch task", { error: taskRes.error.message, taskId });
+      logger.error("Failed to fetch task", {
+        error: taskRes.error.message,
+        taskId,
+      });
       setError("Failed to fetch task");
       setLoading(false);
       return;
     }
 
     if (projectsRes.error) {
-      logger.error("Failed to fetch projects", { error: projectsRes.error.message });
+      logger.error("Failed to fetch projects", {
+        error: projectsRes.error.message,
+      });
     }
 
     if (assignmentsRes.error) {
-      logger.error("Failed to fetch assignments", { error: assignmentsRes.error.message });
+      logger.error("Failed to fetch assignments", {
+        error: assignmentsRes.error.message,
+      });
     }
 
     if (tasksRes.error) {
@@ -100,7 +102,9 @@ export default function TaskDetailPage() {
     }
 
     if (coworkersRes.error) {
-      logger.error("Failed to fetch coworkers", { error: coworkersRes.error.message });
+      logger.error("Failed to fetch coworkers", {
+        error: coworkersRes.error.message,
+      });
     }
 
     const taskData = taskRes.data!;
