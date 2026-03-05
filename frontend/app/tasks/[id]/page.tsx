@@ -11,7 +11,10 @@ import { Input, Select, Textarea } from "../../../components/FormInputs";
 import { logger } from "../../../utils/logger";
 import { API_BASE_URL } from "../../../utils/config";
 import { getIsoWeekNumber } from "../../../utils/date";
-import { LoadingSpinner, LoadingPage } from "../../../components/LoadingSpinner";
+import {
+  LoadingSpinner,
+  LoadingPage,
+} from "../../../components/LoadingSpinner";
 import { usePermissions } from "../../../contexts/PermissionContext";
 import { Toast, useToast } from "../../../components/Toast";
 import { ProgressBar } from "../../../components/ProgressBar";

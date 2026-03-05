@@ -471,11 +471,11 @@ dotnet test --collect:"XPlat Code Coverage"
 
 2. ✅ **Created Date Utilities Module** (`frontend/utils/date.ts`):
    - 5 reusable functions with comprehensive JSDoc documentation:
-     * `getIsoWeekNumber(date)`: ISO 8601 week calculation (1-53)
-     * `toDateTimeLocalString(date)`: HTML5 datetime-local formatting
-     * `formatDate(date, options)`: Intl.DateTimeFormat wrapper
-     * `daysBetween(start, end)`: Date arithmetic in days
-     * `weeksBetween(start, end)`: Date arithmetic in weeks
+     - `getIsoWeekNumber(date)`: ISO 8601 week calculation (1-53)
+     - `toDateTimeLocalString(date)`: HTML5 datetime-local formatting
+     - `formatDate(date, options)`: Intl.DateTimeFormat wrapper
+     - `daysBetween(start, end)`: Date arithmetic in days
+     - `weeksBetween(start, end)`: Date arithmetic in weeks
    - Removed 24-line `getIsoWeekNumber` duplication from 2 pages (48 lines total)
    - Benefits: Consistent date handling, reusable logic, well-documented API
 

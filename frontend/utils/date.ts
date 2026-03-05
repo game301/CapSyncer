@@ -30,9 +30,10 @@
  *   return week.year === weekInfo.year && week.weekNumber === weekInfo.weekNumber;
  * });
  */
-export function getIsoWeekNumber(
-  date: Date,
-): { year: number; weekNumber: number } {
+export function getIsoWeekNumber(date: Date): {
+  year: number;
+  weekNumber: number;
+} {
   // Create a copy to avoid mutating the original date
   const target = new Date(date.valueOf());
 
@@ -120,10 +121,7 @@ export function daysBetween(start: Date | string, end: Date | string): number {
  * const weeks = weeksBetween(new Date('2026-03-01'), new Date('2026-03-22'));
  * console.log(weeks); // 3
  */
-export function weeksBetween(
-  start: Date | string,
-  end: Date | string,
-): number {
+export function weeksBetween(start: Date | string, end: Date | string): number {
   const days = daysBetween(start, end);
   return Math.ceil(days / 7);
 }
