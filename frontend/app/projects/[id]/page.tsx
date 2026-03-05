@@ -9,7 +9,6 @@ import { Table } from "../../../components/Table";
 import { Modal } from "../../../components/Modal";
 import { Input, Select, Textarea } from "../../../components/FormInputs";
 import { logger } from "../../../utils/logger";
-import { API_BASE_URL } from "../../../utils/config";
 import { getIsoWeekNumber } from "../../../utils/date";
 import {
   LoadingSpinner,
@@ -18,6 +17,18 @@ import {
 import { usePermissions } from "../../../contexts/PermissionContext";
 import { Toast, useToast } from "../../../components/Toast";
 import { ProgressBar } from "../../../components/ProgressBar";
+import type {
+  Project,
+  TaskItem,
+  Assignment,
+  Coworker,
+} from "../../../utils/types";
+import {
+  apiGet,
+  apiPost,
+  apiPut,
+  apiDelete,
+} from "../../../utils/api";
 
 const PRIORITIES = ["Low", "Normal", "High", "Critical"];
 const STATUSES = [
@@ -35,43 +46,6 @@ const PROJECT_STATUSES = [
   "Completed",
   "Cancelled",
 ];
-
-interface Project {
-  id: number;
-  name: string;
-  status: string;
-  createdAt: string;
-}
-
-interface TaskItem {
-  id: number;
-  name: string;
-  projectId: number;
-  priority: string;
-  status: string;
-  estimatedHours: number;
-  weeklyEffort: number;
-  note: string;
-}
-
-interface Assignment {
-  id: number;
-  coworkerId: number;
-  taskItemId: number;
-  hoursAssigned: number;
-  assignedDate: string;
-  note?: string;
-  assignedBy: string;
-  year: number;
-  weekNumber: number;
-}
-
-interface Coworker {
-  id: number;
-  name: string;
-  capacity: number;
-  isActive: boolean;
-}
 
 type ModalType = "task" | "assignment" | null;
 
@@ -104,36 +78,46 @@ export default function ProjectDetailPage() {
   const { toasts, showToast, removeToast } = useToast();
 
   const fetchData = async () => {
-    try {
-      const [projectRes, tasksRes, assignmentsRes, coworkersRes] =
-        await Promise.all([
-          fetch(`${API_BASE_URL}/api/projects/${projectId}`),
-          fetch(`${API_BASE_URL}/api/tasks`),
-          fetch(`${API_BASE_URL}/api/assignments`),
-          fetch(`${API_BASE_URL}/api/coworkers`),
-        ]);
+    const [projectRes, tasksRes, assignmentsRes, coworkersRes] =
+      await Promise.all([
+        apiGet<Project>(`/api/projects/${projectId}`),
+        apiGet<TaskItem[]>(`/api/tasks`),
+        apiGet<Assignment[]>(`/api/assignments`),
+        apiGet<Coworker[]>(`/api/coworkers`),
+      ]);
 
-      if (!projectRes.ok) {
-        throw new Error("Failed to fetch project");
-      }
-
-      const projectData = await projectRes.json();
-      const tasksData = await tasksRes.json();
-      const assignmentsData = await assignmentsRes.json();
-      const coworkersData = await coworkersRes.json();
-
-      setProject(projectData);
-      const projectTasks = tasksData.filter(
-        (t: TaskItem) => t.projectId === projectId,
-      );
-      setTasks(projectTasks);
-      setAssignments(assignmentsData);
-      setCoworkers(coworkersData);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
-    } finally {
+    if (projectRes.error) {
+      logger.error("Failed to fetch project", { error: projectRes.error.message, projectId });
+      setError("Failed to fetch project");
       setLoading(false);
+      return;
     }
+
+    if (tasksRes.error) {
+      logger.error("Failed to fetch tasks", { error: tasksRes.error.message });
+    }
+
+    if (assignmentsRes.error) {
+      logger.error("Failed to fetch assignments", { error: assignmentsRes.error.message });
+    }
+
+    if (coworkersRes.error) {
+      logger.error("Failed to fetch coworkers", { error: coworkersRes.error.message });
+    }
+
+    const projectData = projectRes.data!;
+    const tasksData = tasksRes.data || [];
+    const assignmentsData = assignmentsRes.data || [];
+    const coworkersData = coworkersRes.data || [];
+
+    setProject(projectData);
+    const projectTasks = tasksData.filter(
+      (t: TaskItem) => t.projectId === projectId,
+    );
+    setTasks(projectTasks);
+    setAssignments(assignmentsData);
+    setCoworkers(coworkersData);
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -184,29 +168,22 @@ export default function ProjectDetailPage() {
     }
     if (!confirm("Are you sure you want to delete this task?")) return;
 
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/tasks/${id}`, {
-        method: "DELETE",
-      });
+    const { error } = await apiDelete(`/api/tasks/${id}`);
 
-      if (response.ok) {
-        showToast({
-          message: "Task deleted successfully!",
-          type: "success",
-        });
-        await fetchData();
-      } else {
-        showToast({
-          message: "Failed to delete task",
-          type: "error",
-        });
-      }
-    } catch {
+    if (error) {
+      logger.error("Error deleting task", { error: error.message, id });
       showToast({
         message: "Error deleting task",
         type: "error",
       });
+      return;
     }
+
+    showToast({
+      message: "Task deleted successfully!",
+      type: "success",
+    });
+    await fetchData();
   };
 
   const handleDeleteAssignment = async (id: number) => {
@@ -216,29 +193,22 @@ export default function ProjectDetailPage() {
     }
     if (!confirm("Are you sure you want to delete this assignment?")) return;
 
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/assignments/${id}`, {
-        method: "DELETE",
-      });
+    const { error } = await apiDelete(`/api/assignments/${id}`);
 
-      if (response.ok) {
-        showToast({
-          message: "Assignment deleted successfully!",
-          type: "success",
-        });
-        await fetchData();
-      } else {
-        showToast({
-          message: "Failed to delete assignment",
-          type: "error",
-        });
-      }
-    } catch {
+    if (error) {
+      logger.error("Error deleting assignment", { error: error.message, id });
       showToast({
         message: "Error deleting assignment",
         type: "error",
       });
+      return;
     }
+
+    showToast({
+      message: "Assignment deleted successfully!",
+      type: "success",
+    });
+    await fetchData();
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -305,44 +275,38 @@ export default function ProjectDetailPage() {
 
     logger.debug("Submitting data", { data, modalType, modalMode });
 
-    try {
-      const entityType = modalType === "task" ? "tasks" : "assignments";
-      const url =
-        modalMode === "create"
-          ? `${API_BASE_URL}/api/${entityType}`
-          : `${API_BASE_URL}/api/${entityType}/${editingEntity?.id}`;
+    const entityType = modalType === "task" ? "tasks" : "assignments";
+    const endpoint =
+      modalMode === "create"
+        ? `/api/${entityType}`
+        : `/api/${entityType}/${editingEntity?.id}`;
 
-      const response = await fetch(url, {
-        method: modalMode === "create" ? "POST" : "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+    const response =
+      modalMode === "create"
+        ? await apiPost(endpoint, data)
+        : await apiPut(endpoint, data);
+
+    if (response.error) {
+      logger.error("Save failed", {
+        error: response.error.message,
+        data,
+        modalType,
+        modalMode,
       });
-
-      if (response.ok) {
-        const entityName = modalType === "task" ? "Task" : "Assignment";
-        showToast({
-          message: `${entityName} ${modalMode === "create" ? "created" : "updated"} successfully!`,
-          type: "success",
-        });
-        setModalOpen(false);
-        await fetchData();
-      } else {
-        const errorText = await response.text();
-        console.error("Save failed:", errorText);
-        console.error("Data sent:", data);
-        showToast({
-          message: `Failed to save: ${errorText || "Unknown error"}`,
-          type: "error",
-        });
-      }
-    } catch (err) {
-      console.error("Error saving item:", err);
-      console.error("Data attempted:", data);
       showToast({
-        message: `Error saving item: ${err instanceof Error ? err.message : "Unknown error"}`,
+        message: `Failed to save: ${response.error.message || "Unknown error"}`,
         type: "error",
       });
+      return;
     }
+
+    const entityName = modalType === "task" ? "Task" : "Assignment";
+    showToast({
+      message: `${entityName} ${modalMode === "create" ? "created" : "updated"} successfully!`,
+      type: "success",
+    });
+    setModalOpen(false);
+    await fetchData();
   };
 
   const handleProjectSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -356,38 +320,23 @@ export default function ProjectDetailPage() {
 
     logger.debug("Updating project", { data, projectId });
 
-    try {
-      const response = await fetch(
-        `${API_BASE_URL}/api/projects/${projectId}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
-        },
-      );
+    const { error } = await apiPut(`/api/projects/${projectId}`, data);
 
-      if (response.ok) {
-        showToast({
-          message: "Project updated successfully!",
-          type: "success",
-        });
-        setProjectModalOpen(false);
-        await fetchData();
-      } else {
-        const errorText = await response.text();
-        console.error("Update failed:", errorText);
-        showToast({
-          message: `Failed to update project: ${errorText || "Unknown error"}`,
-          type: "error",
-        });
-      }
-    } catch (err) {
-      console.error("Error updating project:", err);
+    if (error) {
+      logger.error("Update failed", { error: error.message, data, projectId });
       showToast({
-        message: `Error updating project: ${err instanceof Error ? err.message : "Unknown error"}`,
+        message: `Failed to update project: ${error.message || "Unknown error"}`,
         type: "error",
       });
+      return;
     }
+
+    showToast({
+      message: "Project updated successfully!",
+      type: "success",
+    });
+    setProjectModalOpen(false);
+    await fetchData();
   };
 
   if (loading) {

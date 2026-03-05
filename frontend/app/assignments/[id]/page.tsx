@@ -6,38 +6,9 @@ import Link from "next/link";
 import { PageLayout } from "../../../components/PageLayout";
 import { LoadingPage } from "../../../components/LoadingSpinner";
 import { Button } from "../../../components/Button";
-import { API_BASE_URL } from "../../../utils/config";
-
-interface Assignment {
-  id: number;
-  coworkerId: number;
-  taskItemId: number;
-  hoursAssigned: number;
-  assignedDate: string;
-  note?: string;
-  assignedBy: string;
-}
-
-interface Coworker {
-  id: number;
-  name: string;
-  capacity: number;
-  isActive: boolean;
-}
-
-interface TaskItem {
-  id: number;
-  name: string;
-  projectId: number;
-  priority: string;
-  status: string;
-  estimatedHours: number;
-}
-
-interface Project {
-  id: number;
-  name: string;
-}
+import { apiGet } from "../../../utils/api";
+import { logger } from "../../../utils/logger";
+import type { Assignment, Coworker, TaskItem, Project } from "../../../utils/types";
 
 export default function AssignmentDetailPage() {
   const params = useParams();
@@ -56,20 +27,32 @@ export default function AssignmentDetailPage() {
       try {
         const [assignmentRes, coworkersRes, tasksRes, projectsRes] =
           await Promise.all([
-            fetch(`${API_BASE_URL}/api/assignments/${assignmentId}`),
-            fetch(`${API_BASE_URL}/api/coworkers`),
-            fetch(`${API_BASE_URL}/api/tasks`),
-            fetch(`${API_BASE_URL}/api/projects`),
+            apiGet<Assignment>(`/api/assignments/${assignmentId}`),
+            apiGet<Coworker[]>("/api/coworkers"),
+            apiGet<TaskItem[]>("/api/tasks"),
+            apiGet<Project[]>("/api/projects"),
           ]);
 
-        if (!assignmentRes.ok) {
-          throw new Error("Failed to fetch assignment");
+        if (assignmentRes.error) {
+          logger.error("Failed to fetch assignment", { 
+            error: assignmentRes.error.message,
+            assignmentId 
+          });
+          throw new Error(assignmentRes.error.message || "Failed to fetch assignment");
         }
 
-        const assignmentData = await assignmentRes.json();
-        const coworkersData = await coworkersRes.json();
-        const tasksData = await tasksRes.json();
-        const projectsData = await projectsRes.json();
+        if (coworkersRes.error || tasksRes.error || projectsRes.error) {
+          logger.warn("Failed to fetch related data", {
+            coworkersError: coworkersRes.error?.message,
+            tasksError: tasksRes.error?.message,
+            projectsError: projectsRes.error?.message,
+          });
+        }
+
+        const assignmentData = assignmentRes.data!;
+        const coworkersData = coworkersRes.data || [];
+        const tasksData = tasksRes.data || [];
+        const projectsData = projectsRes.data || [];
 
         setAssignment(assignmentData);
 

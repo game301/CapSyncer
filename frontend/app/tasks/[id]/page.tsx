@@ -9,7 +9,6 @@ import { Table } from "../../../components/Table";
 import { Modal } from "../../../components/Modal";
 import { Input, Select, Textarea } from "../../../components/FormInputs";
 import { logger } from "../../../utils/logger";
-import { API_BASE_URL } from "../../../utils/config";
 import { getIsoWeekNumber } from "../../../utils/date";
 import {
   LoadingSpinner,
@@ -18,6 +17,18 @@ import {
 import { usePermissions } from "../../../contexts/PermissionContext";
 import { Toast, useToast } from "../../../components/Toast";
 import { ProgressBar } from "../../../components/ProgressBar";
+import type {
+  TaskItem,
+  Project,
+  Assignment,
+  Coworker,
+} from "../../../utils/types";
+import {
+  apiGet,
+  apiPost,
+  apiPut,
+  apiDelete,
+} from "../../../utils/api";
 
 const PRIORITIES = ["Low", "Normal", "High", "Critical"];
 const STATUSES = [
@@ -28,41 +39,6 @@ const STATUSES = [
   "Continuous",
   "Cancelled",
 ];
-
-interface TaskItem {
-  id: number;
-  name: string;
-  projectId: number;
-  priority: string;
-  status: string;
-  estimatedHours: number;
-  weeklyEffort: number;
-  note: string;
-}
-
-interface Project {
-  id: number;
-  name: string;
-}
-
-interface Assignment {
-  id: number;
-  coworkerId: number;
-  taskItemId: number;
-  hoursAssigned: number;
-  assignedDate: string;
-  year: number;
-  weekNumber: number;
-  note?: string;
-  assignedBy: string;
-}
-
-interface Coworker {
-  id: number;
-  name: string;
-  capacity: number;
-  isActive: boolean;
-}
 
 export default function TaskDetailPage() {
   const params = useParams();
@@ -95,42 +71,56 @@ export default function TaskDetailPage() {
   const { toasts, showToast, removeToast } = useToast();
 
   const fetchData = async () => {
-    try {
-      const [taskRes, projectsRes, assignmentsRes, tasksRes, coworkersRes] =
-        await Promise.all([
-          fetch(`${API_BASE_URL}/api/tasks/${taskId}`),
-          fetch(`${API_BASE_URL}/api/projects`),
-          fetch(`${API_BASE_URL}/api/assignments`),
-          fetch(`${API_BASE_URL}/api/tasks`),
-          fetch(`${API_BASE_URL}/api/coworkers`),
-        ]);
+    const [taskRes, projectsRes, assignmentsRes, tasksRes, coworkersRes] =
+      await Promise.all([
+        apiGet<TaskItem>(`/api/tasks/${taskId}`),
+        apiGet<Project[]>(`/api/projects`),
+        apiGet<Assignment[]>(`/api/assignments`),
+        apiGet<TaskItem[]>(`/api/tasks`),
+        apiGet<Coworker[]>(`/api/coworkers`),
+      ]);
 
-      if (!taskRes.ok) {
-        throw new Error("Failed to fetch task");
-      }
-
-      const taskData = await taskRes.json();
-      const projectsData = await projectsRes.json();
-      const assignmentsData = await assignmentsRes.json();
-      const tasksData = await tasksRes.json();
-      const coworkersData = await coworkersRes.json();
-
-      setTask(taskData);
-      setProjects(projectsData);
-      setProject(
-        projectsData.find((p: Project) => p.id === taskData.projectId) || null,
-      );
-      setAssignments(
-        assignmentsData.filter((a: Assignment) => a.taskItemId === taskId),
-      );
-      setAllAssignments(assignmentsData);
-      setTasks(tasksData);
-      setCoworkers(coworkersData);
+    if (taskRes.error) {
+      logger.error("Failed to fetch task", { error: taskRes.error.message, taskId });
+      setError("Failed to fetch task");
       setLoading(false);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
-      setLoading(false);
+      return;
     }
+
+    if (projectsRes.error) {
+      logger.error("Failed to fetch projects", { error: projectsRes.error.message });
+    }
+
+    if (assignmentsRes.error) {
+      logger.error("Failed to fetch assignments", { error: assignmentsRes.error.message });
+    }
+
+    if (tasksRes.error) {
+      logger.error("Failed to fetch tasks", { error: tasksRes.error.message });
+    }
+
+    if (coworkersRes.error) {
+      logger.error("Failed to fetch coworkers", { error: coworkersRes.error.message });
+    }
+
+    const taskData = taskRes.data!;
+    const projectsData = projectsRes.data || [];
+    const assignmentsData = assignmentsRes.data || [];
+    const tasksData = tasksRes.data || [];
+    const coworkersData = coworkersRes.data || [];
+
+    setTask(taskData);
+    setProjects(projectsData);
+    setProject(
+      projectsData.find((p: Project) => p.id === taskData.projectId) || null,
+    );
+    setAssignments(
+      assignmentsData.filter((a: Assignment) => a.taskItemId === taskId),
+    );
+    setAllAssignments(assignmentsData);
+    setTasks(tasksData);
+    setCoworkers(coworkersData);
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -162,29 +152,22 @@ export default function TaskDetailPage() {
     }
     if (!confirm("Are you sure you want to delete this assignment?")) return;
 
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/assignments/${id}`, {
-        method: "DELETE",
-      });
+    const { error } = await apiDelete(`/api/assignments/${id}`);
 
-      if (response.ok) {
-        showToast({
-          message: "Assignment deleted successfully!",
-          type: "success",
-        });
-        await fetchData();
-      } else {
-        showToast({
-          message: "Failed to delete assignment",
-          type: "error",
-        });
-      }
-    } catch {
+    if (error) {
+      logger.error("Error deleting assignment", { error: error.message, id });
       showToast({
         message: "Error deleting assignment",
         type: "error",
       });
+      return;
     }
+
+    showToast({
+      message: "Assignment deleted successfully!",
+      type: "success",
+    });
+    await fetchData();
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -230,42 +213,35 @@ export default function TaskDetailPage() {
 
     logger.debug("Submitting assignment data", { data, modalMode });
 
-    try {
-      const url =
-        modalMode === "create"
-          ? `${API_BASE_URL}/api/assignments`
-          : `${API_BASE_URL}/api/assignments/${editingAssignment?.id}`;
+    const endpoint =
+      modalMode === "create"
+        ? `/api/assignments`
+        : `/api/assignments/${editingAssignment?.id}`;
 
-      const response = await fetch(url, {
-        method: modalMode === "create" ? "POST" : "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+    const response =
+      modalMode === "create"
+        ? await apiPost(endpoint, data)
+        : await apiPut(endpoint, data);
+
+    if (response.error) {
+      logger.error("Save failed", {
+        error: response.error.message,
+        data,
+        modalMode,
       });
-
-      if (response.ok) {
-        showToast({
-          message: `Assignment ${modalMode === "create" ? "created" : "updated"} successfully!`,
-          type: "success",
-        });
-        setModalOpen(false);
-        await fetchData();
-      } else {
-        const errorText = await response.text();
-        console.error("Save failed:", errorText);
-        console.error("Data sent:", data);
-        showToast({
-          message: `Failed to save: ${errorText || "Unknown error"}`,
-          type: "error",
-        });
-      }
-    } catch (err) {
-      console.error("Error saving assignment:", err);
-      console.error("Data attempted:", data);
       showToast({
-        message: `Error saving assignment: ${err instanceof Error ? err.message : "Unknown error"}`,
+        message: `Failed to save: ${response.error.message || "Unknown error"}`,
         type: "error",
       });
+      return;
     }
+
+    showToast({
+      message: `Assignment ${modalMode === "create" ? "created" : "updated"} successfully!`,
+      type: "success",
+    });
+    setModalOpen(false);
+    await fetchData();
   };
 
   const handleTaskSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -287,35 +263,23 @@ export default function TaskDetailPage() {
 
     logger.debug("Updating task", { data, taskId });
 
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/tasks/${taskId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
+    const { error } = await apiPut(`/api/tasks/${taskId}`, data);
 
-      if (response.ok) {
-        showToast({
-          message: "Task updated successfully!",
-          type: "success",
-        });
-        setTaskModalOpen(false);
-        await fetchData();
-      } else {
-        const errorText = await response.text();
-        console.error("Update failed:", errorText);
-        showToast({
-          message: `Failed to update task: ${errorText || "Unknown error"}`,
-          type: "error",
-        });
-      }
-    } catch (err) {
-      console.error("Error updating task:", err);
+    if (error) {
+      logger.error("Update failed", { error: error.message, data, taskId });
       showToast({
-        message: `Error updating task: ${err instanceof Error ? err.message : "Unknown error"}`,
+        message: `Failed to update task: ${error.message || "Unknown error"}`,
         type: "error",
       });
+      return;
     }
+
+    showToast({
+      message: "Task updated successfully!",
+      type: "success",
+    });
+    setTaskModalOpen(false);
+    await fetchData();
   };
 
   if (loading) {

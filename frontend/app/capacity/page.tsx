@@ -7,13 +7,9 @@ import { API_BASE_URL } from "../../utils/config";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { CreateTaskModal } from "../../components/CreateTaskModal";
 import { CreateAssignmentModal } from "../../components/CreateAssignmentModal";
-
-interface Coworker {
-  id: number;
-  name: string;
-  capacity: number;
-  isActive: boolean;
-}
+import { apiGet } from "../../utils/api";
+import type { Coworker } from "../../utils/types";
+import { logger } from "../../utils/logger";
 
 export default function CapacityPage() {
   const [coworkers, setCoworkers] = useState<Coworker[]>([]);
@@ -31,17 +27,18 @@ export default function CapacityPage() {
   const fetchCoworkers = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/coworkers`);
-      if (response.ok) {
-        const data = await response.json();
+      const { data, error } = await apiGet<Coworker[]>("/api/coworkers");
+      if (error) {
+        logger.error("Error fetching coworkers", { error: error.message });
+        return;
+      }
+      if (data) {
         const activeCoworkers = data.filter((c: Coworker) => c.isActive);
         setCoworkers(activeCoworkers);
         if (activeCoworkers.length > 0 && !selectedCoworkerId) {
           setSelectedCoworkerId(activeCoworkers[0].id);
         }
       }
-    } catch (error) {
-      console.error("Error fetching coworkers:", error);
     } finally {
       setLoading(false);
     }

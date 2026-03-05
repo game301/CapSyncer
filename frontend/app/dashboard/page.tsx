@@ -14,6 +14,8 @@ import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { Toast, useToast } from "../../components/Toast";
 import { WeekSelector } from "../../components/WeekSelector";
 import { ProgressBar } from "../../components/ProgressBar";
+import { apiGet, apiPost, apiPut, apiDelete } from "../../utils/api";
+import type { Coworker, Project, TaskItem, Assignment } from "../../utils/types";
 
 // Priority and Status options
 const PRIORITIES = ["Low", "Normal", "High", "Critical"];
@@ -32,43 +34,6 @@ const PROJECT_STATUSES = [
   "Completed",
   "Cancelled",
 ];
-
-interface Coworker {
-  id: number;
-  name: string;
-  capacity: number;
-  isActive: boolean;
-}
-
-interface Project {
-  id: number;
-  name: string;
-  status: string;
-  createdAt: string;
-}
-
-interface TaskItem {
-  id: number;
-  name: string;
-  priority: string;
-  status: string;
-  estimatedHours: number;
-  weeklyEffort: number;
-  note: string;
-  projectId: number;
-}
-
-interface Assignment {
-  id: number;
-  coworkerId: number;
-  taskItemId: number;
-  hoursAssigned: number;
-  note: string;
-  assignedDate: string;
-  assignedBy: string;
-  year: number;
-  weekNumber: number;
-}
 
 type ViewMode = "team" | "personal";
 type EntityType = "coworkers" | "projects" | "tasks" | "assignments";
@@ -106,32 +71,31 @@ function Dashboard() {
       setLoading(true);
       const [coworkersRes, projectsRes, tasksRes, assignmentsRes] =
         await Promise.all([
-          fetch(`${API_BASE_URL}/api/coworkers`),
-          fetch(`${API_BASE_URL}/api/projects`),
-          fetch(`${API_BASE_URL}/api/tasks`),
-          fetch(`${API_BASE_URL}/api/assignments`),
+          apiGet<Coworker[]>("/api/coworkers"),
+          apiGet<Project[]>("/api/projects"),
+          apiGet<TaskItem[]>("/api/tasks"),
+          apiGet<Assignment[]>("/api/assignments"),
         ]);
 
       if (
-        !coworkersRes.ok ||
-        !projectsRes.ok ||
-        !tasksRes.ok ||
-        !assignmentsRes.ok
+        coworkersRes.error ||
+        projectsRes.error ||
+        tasksRes.error ||
+        assignmentsRes.error
       ) {
+        logger.error("Failed to fetch dashboard data", {
+          coworkersError: coworkersRes.error?.message,
+          projectsError: projectsRes.error?.message,
+          tasksError: tasksRes.error?.message,
+          assignmentsError: assignmentsRes.error?.message,
+        });
         throw new Error("Failed to fetch data");
       }
 
-      const [c, p, t, a] = await Promise.all([
-        coworkersRes.json(),
-        projectsRes.json(),
-        tasksRes.json(),
-        assignmentsRes.json(),
-      ]);
-
-      setCoworkers(c || []);
-      setProjects(p || []);
-      setTasks(t || []);
-      setAssignments(a || []);
+      setCoworkers(coworkersRes.data || []);
+      setProjects(projectsRes.data || []);
+      setTasks(tasksRes.data || []);
+      setAssignments(assignmentsRes.data || []);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error");
@@ -229,33 +193,22 @@ function Dashboard() {
       return;
     }
 
-    try {
-      const response = await fetch(
-        `${API_BASE_URL}/api/coworkers/${id}/reactivate`,
-        {
-          method: "PUT",
-        },
-      );
-
-      if (response.ok) {
-        showToast({
-          message: "Coworker reactivated successfully!",
-          type: "success",
-        });
-        await fetchData();
-      } else {
-        showToast({
-          message: "Failed to reactivate coworker",
-          type: "error",
-        });
-      }
-    } catch (error) {
-      console.error("Error reactivating coworker:", error);
+    const { error } = await apiPut(`/api/coworkers/${id}/reactivate`, {});
+    
+    if (error) {
+      logger.error("Error reactivating coworker", { error: error.message, id });
       showToast({
         message: "Error reactivating coworker",
         type: "error",
       });
+      return;
     }
+    
+    showToast({
+      message: "Coworker reactivated successfully!",
+      type: "success",
+    });
+    await fetchData();
   };
 
   const handleDelete = async (entityType: EntityType, id: number) => {
@@ -284,47 +237,43 @@ function Dashboard() {
 
     if (!confirm(confirmMessage)) return;
 
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/${entityType}/${id}`, {
-        method: "DELETE",
+    const { data: result, error } = await apiDelete(`/api/${entityType}/${id}`);
+    
+    if (error) {
+      logger.error("Error deleting item", { error: error.message, entityType, id });
+      showToast({
+        message: "Failed to delete",
+        type: "error",
       });
+      return;
+    }
 
-      if (response.ok) {
-        const entityName = entityType.slice(0, -1);
+    const entityName = entityType.slice(0, -1);
 
-        // Check if it's a coworker soft delete or permanent delete
-        if (entityType === "coworkers") {
-          const result = await response.json();
-          if (result.message === "soft-delete") {
-            showToast({
-              message:
-                "Coworker deactivated (soft delete). Delete again to permanently remove.",
-              type: "success",
-              duration: 5000,
-            });
-          } else if (result.message === "permanent-delete") {
-            showToast({
-              message: "Coworker permanently deleted!",
-              type: "success",
-            });
-          }
-        } else {
-          showToast({
-            message: `${entityName.charAt(0).toUpperCase() + entityName.slice(1)} deleted successfully!`,
-            type: "success",
-          });
-        }
-
-        await fetchData();
-      } else {
+    // Check if it's a coworker soft delete or permanent delete
+    if (entityType === "coworkers" && result) {
+      const coworkerResult = result as any;
+      if (coworkerResult.message === "soft-delete") {
         showToast({
-          message: "Failed to delete",
-          type: "error",
+          message:
+            "Coworker deactivated (soft delete). Delete again to permanently remove.",
+          type: "success",
+          duration: 5000,
+        });
+      } else if (coworkerResult.message === "permanent-delete") {
+        showToast({
+          message: "Coworker permanently deleted!",
+          type: "success",
         });
       }
-    } catch {
-      alert("Error deleting item");
+    } else {
+      showToast({
+        message: `${entityName.charAt(0).toUpperCase() + entityName.slice(1)} deleted successfully!`,
+        type: "success",
+      });
     }
+
+    await fetchData();
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -400,50 +349,45 @@ function Dashboard() {
 
     logger.debug("Submitting data", { data, activeEntity, modalMode });
 
-    try {
-      const url =
-        modalMode === "create"
-          ? `${API_BASE_URL}/api/${activeEntity}`
-          : `${API_BASE_URL}/api/${activeEntity}/${editingEntity?.id}`;
+    const endpoint =
+      modalMode === "create"
+        ? `/api/${activeEntity}`
+        : `/api/${activeEntity}/${editingEntity?.id}`;
 
-      const response = await fetch(url, {
-        method: modalMode === "create" ? "POST" : "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+    const response =
+      modalMode === "create"
+        ? await apiPost(endpoint, data)
+        : await apiPut(endpoint, data);
+
+    if (response.error) {
+      logger.error("Save failed", { 
+        error: response.error.message, 
+        data, 
+        activeEntity, 
+        modalMode 
       });
+      alert(`Failed to save: ${response.error.message || "Unknown error"}`);
+      return;
+    }
 
-      if (response.ok) {
-        setModalOpen(false);
-        setSelectedCoworkerId(null);
-        setSelectedTaskId(null);
-        setHasInteractedWithCoworker(false);
+    setModalOpen(false);
+    setSelectedCoworkerId(null);
+    setSelectedTaskId(null);
+    setHasInteractedWithCoworker(false);
 
-        // Show success toast
-        const entityName = activeEntity.slice(0, -1); // Remove 's' from end
-        showToast({
-          message: `${entityName.charAt(0).toUpperCase() + entityName.slice(1)} ${modalMode === "create" ? "created" : "updated"} successfully!`,
-          type: "success",
-        });
+    // Show success toast
+    const entityName = activeEntity.slice(0, -1); // Remove 's' from end
+    showToast({
+      message: `${entityName.charAt(0).toUpperCase() + entityName.slice(1)} ${modalMode === "create" ? "created" : "updated"} successfully!`,
+      type: "success",
+    });
 
-        // If creating a new project, redirect to its detail page
-        if (modalMode === "create" && activeEntity === "projects") {
-          const newProject = await response.json();
-          router.push(`/projects/${newProject.id}?new=true`);
-        } else {
-          await fetchData();
-        }
-      } else {
-        const errorText = await response.text();
-        console.error("Save failed:", errorText);
-        console.error("Data sent:", data);
-        alert(`Failed to save: ${errorText || "Unknown error"}`);
-      }
-    } catch (err) {
-      console.error("Error saving item:", err);
-      console.error("Data attempted:", data);
-      alert(
-        `Error saving item: ${err instanceof Error ? err.message : "Unknown error"}`,
-      );
+    // If creating a new project, redirect to its detail page
+    if (modalMode === "create" && activeEntity === "projects" && response.data) {
+      const newProject = response.data as Project;
+      router.push(`/projects/${newProject.id}?new=true`);
+    } else {
+      await fetchData();
     }
   };
 
