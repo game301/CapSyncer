@@ -48,6 +48,49 @@ body {
   transition: background 0.2s;
 }
 
+/* Hide scrollbar completely */
+.scrollbar-hide {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
+}
+
+/* Show scrollbar only on hover for mobile tables */
+@media (max-width: 640px) {
+  .scrollbar-mobile-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-mobile-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Smooth momentum scrolling for touch devices */
+.scroll-smooth-mobile {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* Scroll fade indicators - only on mobile */
+@media (max-width: 639px) {
+  .scroll-fade-mobile::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 32px;
+    background: linear-gradient(to right, transparent, rgb(30 41 59));
+    pointer-events: none;
+    z-index: 1;
+  }
+}
+
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
   background: rgb(71 85 105);
 }

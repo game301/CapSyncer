@@ -447,9 +447,7 @@ export default function ProjectDetailPage() {
   const inProgressTasks = tasks.filter(
     (t) => t.status === "In Progress",
   ).length;
-  const notStartedTasks = tasks.filter(
-    (t) => t.status === "Planning",
-  ).length;
+  const notStartedTasks = tasks.filter((t) => t.status === "Planning").length;
   const onHoldTasks = tasks.filter((t) => t.status === "On Hold").length;
   const continuousTasks = tasks.filter((t) => t.status === "Continuous").length;
   const cancelledTasks = tasks.filter((t) => t.status === "Cancelled").length;
@@ -510,9 +508,9 @@ export default function ProjectDetailPage() {
 
   return (
     <PageLayout>
-      <div className="mx-auto max-w-7xl px-6 py-8">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 py-8">
         {/* Header */}
-        <div className="mb-8 flex items-center justify-between">
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <Button onClick={() => router.back()} variant="secondary">
             <svg
               className="mr-2 h-4 w-4"
@@ -1143,9 +1141,7 @@ export default function ProjectDetailPage() {
                 name="status"
                 required
                 options={STATUSES.map((s) => ({ value: s, label: s }))}
-                defaultValue={
-                  (editingEntity as TaskItem)?.status || "Planning"
-                }
+                defaultValue={(editingEntity as TaskItem)?.status || "Planning"}
               />
               <Input
                 label="Estimated Hours"

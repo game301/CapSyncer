@@ -28,19 +28,19 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={onClose}
       />
       <div className="relative z-10 w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-lg border border-slate-700 bg-slate-800 shadow-2xl">
-        <div className="sticky top-0 flex items-center justify-between border-b border-slate-700 bg-slate-900 px-6 py-4">
-          <h2 className="text-xl font-bold text-white">{title}</h2>
+        <div className="sticky top-0 flex items-center justify-between border-b border-slate-700 bg-slate-900 px-4 sm:px-6 py-4">
+          <h2 className="text-lg sm:text-xl font-bold text-white">{title}</h2>
           <Button
             onClick={onClose}
             variant="secondary"
             size="icon"
-            className="p-2"
+            className="p-2 shrink-0"
             aria-label="Close modal"
             icon={
               <svg
@@ -59,7 +59,7 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
             }
           />
         </div>
-        <div className="p-6">{children}</div>
+        <div className="p-4 sm:p-6">{children}</div>
       </div>
     </div>
   );

@@ -488,10 +488,12 @@ function Dashboard() {
   return (
     <PageLayout>
       <div className="border-b border-slate-700 bg-slate-800/50">
-        <div className="mx-auto max-w-7xl px-6 py-6">
-          <div className="flex items-center justify-between">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 py-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-white">Dashboard</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold text-white">
+                Dashboard
+              </h1>
               <p className="mt-1 text-sm text-slate-400">
                 Manage your team&apos;s capacity
               </p>
@@ -500,12 +502,16 @@ function Dashboard() {
               <Button
                 variant={viewMode === "team" ? "primary" : "secondary"}
                 onClick={() => updateViewMode("team")}
+                size="sm"
+                className="flex-1 sm:flex-none"
               >
                 Team View
               </Button>
               <Button
                 variant={viewMode === "personal" ? "primary" : "secondary"}
                 onClick={() => updateViewMode("personal")}
+                size="sm"
+                className="flex-1 sm:flex-none"
               >
                 Personal View
               </Button>
@@ -514,7 +520,7 @@ function Dashboard() {
         </div>
       </div>
 
-      <div className="mx-auto max-w-7xl px-6 py-8">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 py-8">
         <div className="min-h-[calc(100vh-300px)]">
           {viewMode === "team" ? (
             <TeamView
@@ -1004,7 +1010,7 @@ function TeamView({
 
   return (
     <div className="space-y-6">
-      <div className="flex gap-2 border-b border-slate-700">
+      <div className="flex gap-2 border-b border-slate-700 overflow-x-auto scrollbar-hide pb-2 -mb-0.5">
         <Button
           onClick={() => updateActiveTab("coworkers")}
           variant="secondary"
@@ -1057,14 +1063,16 @@ function TeamView({
 
       {activeTab === "coworkers" && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-white">Team Members</h2>
-            <div className="flex items-center gap-3">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <h2 className="text-xl sm:text-2xl font-bold text-white">
+              Team Members
+            </h2>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
               <SearchInput
                 value={coworkersSearch}
                 onChange={setCoworkersSearch}
                 placeholder="Search team members..."
-                className="w-64"
+                className="w-full sm:w-64"
               />
               {permissions.canManageCoworkers && (
                 <Button onClick={onCreateCoworker}>
@@ -1259,14 +1267,16 @@ function TeamView({
 
       {activeTab === "projects" && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-white">Projects</h2>
-            <div className="flex items-center gap-3">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <h2 className="text-xl sm:text-2xl font-bold text-white">
+              Projects
+            </h2>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
               <SearchInput
                 value={projectsSearch}
                 onChange={setProjectsSearch}
                 placeholder="Search projects..."
-                className="w-64"
+                className="w-full sm:w-64"
               />
               {permissions.canManageProjects && (
                 <Button onClick={onCreateProject}>
@@ -1436,14 +1446,14 @@ function TeamView({
 
       {activeTab === "tasks" && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-white">Tasks</h2>
-            <div className="flex items-center gap-3">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <h2 className="text-xl sm:text-2xl font-bold text-white">Tasks</h2>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
               <SearchInput
                 value={tasksSearch}
                 onChange={setTasksSearch}
                 placeholder="Search tasks..."
-                className="w-64"
+                className="w-full sm:w-64"
               />
               {permissions.canManageTasks && (
                 <Button onClick={onCreateTask} variant="primary">
@@ -1651,14 +1661,16 @@ function TeamView({
 
       {activeTab === "assignments" && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-white">Assignments</h2>
-            <div className="flex items-center gap-3">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <h2 className="text-xl sm:text-2xl font-bold text-white">
+              Assignments
+            </h2>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
               <SearchInput
                 value={assignmentsSearch}
                 onChange={setAssignmentsSearch}
                 placeholder="Search assignments..."
-                className="w-64"
+                className="w-full sm:w-64"
               />
               {permissions.canManageAssignments && (
                 <Button onClick={onCreateAssignment} variant="primary">

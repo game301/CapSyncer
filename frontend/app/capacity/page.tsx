@@ -96,24 +96,24 @@ export default function CapacityPage() {
   return (
     <PageLayout>
       <div className="border-b border-slate-700 bg-slate-800/50">
-        <div className="mx-auto max-w-7xl px-6 py-6">
-          <div className="flex items-center justify-between">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 py-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-white">
+              <h1 className="text-2xl sm:text-3xl font-bold text-white">
                 Capacity Calendar
               </h1>
               <p className="mt-1 text-sm text-slate-400">
                 Visualize team capacity across the year
               </p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
               <label className="text-sm font-medium text-slate-300">
                 Team Member:
               </label>
               <select
                 value={selectedCoworkerId || ""}
                 onChange={(e) => setSelectedCoworkerId(Number(e.target.value))}
-                className="rounded border border-slate-600 bg-slate-700 px-4 py-2 text-white focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full sm:w-auto rounded border border-slate-600 bg-slate-700 px-4 py-2 text-white focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               >
                 {coworkers.map((coworker) => (
                   <option key={coworker.id} value={coworker.id}>
@@ -126,7 +126,7 @@ export default function CapacityPage() {
         </div>
       </div>
 
-      <div className="mx-auto max-w-7xl px-6 py-8">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 py-8">
         {selectedCoworker && (
           <WeeklyCapacityView
             coworkerId={selectedCoworker.id}

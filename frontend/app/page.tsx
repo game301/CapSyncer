@@ -12,7 +12,7 @@ export default function Home() {
   return (
     <PageLayout>
       <div className="flex items-center justify-center py-12">
-        <main className="w-full max-w-5xl px-6 py-20">
+        <main className="w-full max-w-5xl px-4 sm:px-6 py-20">
           {/* Hero Section */}
           <div className="mb-16 text-center">
             <h1 className="mb-6 text-6xl font-bold text-white md:text-7xl">

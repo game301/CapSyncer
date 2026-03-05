@@ -180,14 +180,16 @@ export function WeeklyCapacityView({
   return (
     <div className="space-y-6">
       {/* Header with year selector */}
-      <div className="flex items-center justify-between rounded-lg bg-slate-800 p-4">
-        <h3 className="text-xl font-bold text-white">{coworkerName}</h3>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-lg bg-slate-800 p-4">
+        <h3 className="text-lg sm:text-xl font-bold text-white">
+          {coworkerName}
+        </h3>
         <div className="flex items-center gap-3">
           <label className="text-sm font-medium text-slate-300">Year:</label>
           <select
             value={year}
             onChange={(e) => setYear(Number(e.target.value))}
-            className="rounded border border-slate-600 bg-slate-700 px-4 py-2 text-white focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="flex-1 sm:flex-none rounded border border-slate-600 bg-slate-700 px-4 py-2 text-white focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           >
             {Array.from({ length: 5 }, (_, i) => currentYear - 1 + i).map(
               (y) => (
@@ -263,8 +265,10 @@ export function WeeklyCapacityView({
 
           return (
             <div key={month} className="space-y-4">
-              <h4 className="text-xl font-bold text-white">{month}</h4>
-              <div className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-6">
+              <h4 className="text-lg sm:text-xl font-bold text-white">
+                {month}
+              </h4>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
                 {sortedWeeks.map((week) => {
                   const isCurrentWeek =
                     year === currentYear && week.weekNumber === currentWeek;
@@ -276,7 +280,7 @@ export function WeeklyCapacityView({
                   return (
                     <div
                       key={week.weekNumber}
-                      className={`cursor-pointer rounded-lg p-3 transition-all hover:scale-105 ${
+                      className={`cursor-pointer rounded-lg p-3 sm:p-4 transition-all hover:scale-105 min-h-[100px] sm:min-h-[120px] ${
                         isCurrentWeek ? "ring-2 ring-blue-500" : ""
                       } ${getUtilizationColor(week.utilizationPercentage)}`}
                       onClick={() => {
@@ -285,7 +289,7 @@ export function WeeklyCapacityView({
                       }}
                     >
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-semibold text-white">
+                        <span className="text-sm sm:text-base font-semibold text-white">
                           W{week.weekNumber}
                         </span>
                         {isCurrentWeek && (

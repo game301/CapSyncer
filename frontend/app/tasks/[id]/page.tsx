@@ -385,9 +385,9 @@ export default function TaskDetailPage() {
 
   return (
     <PageLayout>
-      <div className="mx-auto max-w-7xl px-6 py-8">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 py-8">
         {/* Header */}
-        <div className="mb-8 flex items-center justify-between">
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <Button onClick={() => router.back()} variant="secondary">
             <svg
               className="mr-2 h-4 w-4"

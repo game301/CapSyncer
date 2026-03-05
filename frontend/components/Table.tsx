@@ -227,65 +227,98 @@ export function Table<T extends { id: number }>({
           </p>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-slate-700 bg-slate-800 scrollbar-thin -mx-6 sm:mx-0">
-          <div className="inline-block min-w-full align-middle">
-            <table className="min-w-full divide-y divide-slate-700">
-              <thead>
-                <tr className="border-b border-slate-700 bg-slate-900/50">
-                  {columns.map((col, idx) => (
-                    <th
-                      key={idx}
-                      onClick={() => handleSort(idx)}
-                      className={`px-3 py-3 sm:px-6 sm:py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-400 ${
-                        col.sortable !== false
-                          ? "cursor-pointer hover:text-slate-200 select-none"
-                          : ""
-                      }`}
-                    >
-                      <div className="flex items-center gap-1 sm:gap-2">
-                        <span>{col.header}</span>
-                        {col.sortable !== false && (
-                          <span
-                            className={`text-blue-400 transition-opacity ${
-                              sortColumn === idx ? "opacity-100" : "opacity-0"
-                            }`}
-                          >
-                            {sortColumn === idx
-                              ? sortDirection === "asc"
-                                ? "↑"
-                                : sortDirection === "desc"
-                                  ? "↓"
-                                  : "↑"
-                              : "↑"}
-                          </span>
-                        )}
-                      </div>
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-700">
-                {filteredAndSortedData.map((item) => (
-                  <tr
-                    key={item.id}
-                    className="transition-colors hover:bg-slate-700/30"
-                  >
+        <>
+          <div className="relative overflow-x-auto rounded-lg border border-slate-700 bg-slate-800 scrollbar-mobile-hide sm:scrollbar-thin scroll-smooth-mobile scroll-fade-mobile -mx-6 sm:mx-0">
+            <div className="inline-block min-w-full align-middle">
+              <table className="min-w-full divide-y divide-slate-700">
+                <thead>
+                  <tr className="border-b border-slate-700 bg-slate-900/50">
                     {columns.map((col, idx) => (
-                      <td
+                      <th
                         key={idx}
-                        className={`px-3 py-3 sm:px-6 sm:py-4 text-xs sm:text-sm text-slate-300 ${col.className || ""}`}
+                        onClick={() => handleSort(idx)}
+                        className={`px-3 py-3 sm:px-6 sm:py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-400 ${
+                          col.sortable !== false
+                            ? "cursor-pointer hover:text-slate-200 select-none"
+                            : ""
+                        }`}
                       >
-                        {typeof col.accessor === "function"
-                          ? col.accessor(item)
-                          : String(item[col.accessor])}
-                      </td>
+                        <div className="flex items-center gap-1 sm:gap-2">
+                          <span>{col.header}</span>
+                          {col.sortable !== false && (
+                            <span
+                              className={`text-blue-400 transition-opacity ${
+                                sortColumn === idx ? "opacity-100" : "opacity-0"
+                              }`}
+                            >
+                              {sortColumn === idx
+                                ? sortDirection === "asc"
+                                  ? "↑"
+                                  : sortDirection === "desc"
+                                    ? "↓"
+                                    : "↑"
+                                : "↑"}
+                            </span>
+                          )}
+                        </div>
+                      </th>
                     ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-slate-700">
+                  {filteredAndSortedData.map((item) => (
+                    <tr
+                      key={item.id}
+                      className="transition-colors hover:bg-slate-700/30"
+                    >
+                      {columns.map((col, idx) => (
+                        <td
+                          key={idx}
+                          className={`px-3 py-3 sm:px-6 sm:py-4 text-xs sm:text-sm text-slate-300 ${col.className || ""}`}
+                        >
+                          {typeof col.accessor === "function"
+                            ? col.accessor(item)
+                            : String(item[col.accessor])}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+          <div className="mt-3 text-center text-xs text-slate-500 sm:hidden">
+            <span className="inline-flex items-center gap-1.5">
+              <svg
+                className="h-3.5 w-3.5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M7 16l-4-4m0 0l4-4m-4 4h18"
+                />
+              </svg>
+              <span>Scroll for more</span>
+              <svg
+                className="h-3.5 w-3.5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M17 8l4 4m0 0l-4 4m4-4H3"
+                />
+              </svg>
+            </span>
+          </div>
+        </>
       )}
     </div>
   );
