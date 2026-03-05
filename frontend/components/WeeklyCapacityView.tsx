@@ -280,7 +280,7 @@ export function WeeklyCapacityView({
                   return (
                     <div
                       key={week.weekNumber}
-                      className={`cursor-pointer rounded-lg p-3 sm:p-4 transition-all hover:scale-105 min-h-[100px] sm:min-h-[120px] ${
+                      className={`cursor-pointer rounded-lg p-3 sm:p-4 transition-all hover:scale-105 min-h-25 sm:min-h-30 ${
                         isCurrentWeek ? "ring-2 ring-blue-500" : ""
                       } ${getUtilizationColor(week.utilizationPercentage)}`}
                       onClick={() => {

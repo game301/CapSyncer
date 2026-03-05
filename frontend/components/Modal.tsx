@@ -33,7 +33,7 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={onClose}
       />
-      <div className="relative z-10 w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-lg border border-slate-700 bg-slate-800 shadow-2xl">
+      <div className="relative z-10 w-full max-w-2xl max-h-[90vh] overflow-y-auto scrollbar-thin rounded-lg border border-slate-700 bg-slate-800 shadow-2xl">
         <div className="sticky top-0 flex items-center justify-between border-b border-slate-700 bg-slate-900 px-4 sm:px-6 py-4">
           <h2 className="text-lg sm:text-xl font-bold text-white">{title}</h2>
           <Button
