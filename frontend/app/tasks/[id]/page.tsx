@@ -9,6 +9,9 @@ import { Table } from "../../../components/Table";
 import { Modal } from "../../../components/Modal";
 import { Input, Select, Textarea } from "../../../components/FormInputs";
 import { logger } from "../../../utils/logger";
+import { API_BASE_URL } from "../../../utils/config";
+import { getIsoWeekNumber } from "../../../utils/date";
+import { LoadingSpinner, LoadingPage } from "../../../components/LoadingSpinner";
 import { usePermissions } from "../../../contexts/PermissionContext";
 import { Toast, useToast } from "../../../components/Toast";
 import { ProgressBar } from "../../../components/ProgressBar";
@@ -88,35 +91,15 @@ export default function TaskDetailPage() {
   const [taskModalOpen, setTaskModalOpen] = useState(false);
   const { toasts, showToast, removeToast } = useToast();
 
-  const apiBaseUrl =
-    process.env.NEXT_PUBLIC_API_BASEURL || "http://localhost:5128";
-
-  // Helper function to calculate ISO week number
-  const getIsoWeekNumber = (
-    date: Date,
-  ): { year: number; weekNumber: number } => {
-    const target = new Date(date.valueOf());
-    const dayNr = (date.getDay() + 6) % 7;
-    target.setDate(target.getDate() - dayNr + 3);
-    const firstThursday = target.valueOf();
-    target.setMonth(0, 1);
-    if (target.getDay() !== 4) {
-      target.setMonth(0, 1 + ((4 - target.getDay() + 7) % 7));
-    }
-    const weekNumber =
-      1 + Math.ceil((firstThursday - target.valueOf()) / 604800000);
-    return { year: target.getFullYear(), weekNumber };
-  };
-
   const fetchData = async () => {
     try {
       const [taskRes, projectsRes, assignmentsRes, tasksRes, coworkersRes] =
         await Promise.all([
-          fetch(`${apiBaseUrl}/api/tasks/${taskId}`),
-          fetch(`${apiBaseUrl}/api/projects`),
-          fetch(`${apiBaseUrl}/api/assignments`),
-          fetch(`${apiBaseUrl}/api/tasks`),
-          fetch(`${apiBaseUrl}/api/coworkers`),
+          fetch(`${API_BASE_URL}/api/tasks/${taskId}`),
+          fetch(`${API_BASE_URL}/api/projects`),
+          fetch(`${API_BASE_URL}/api/assignments`),
+          fetch(`${API_BASE_URL}/api/tasks`),
+          fetch(`${API_BASE_URL}/api/coworkers`),
         ]);
 
       if (!taskRes.ok) {
@@ -149,7 +132,7 @@ export default function TaskDetailPage() {
 
   useEffect(() => {
     fetchData();
-  }, [taskId, apiBaseUrl]);
+  }, [taskId]);
 
   const handleCreateAssignment = () => {
     setModalMode("create");
@@ -177,7 +160,7 @@ export default function TaskDetailPage() {
     if (!confirm("Are you sure you want to delete this assignment?")) return;
 
     try {
-      const response = await fetch(`${apiBaseUrl}/api/assignments/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/assignments/${id}`, {
         method: "DELETE",
       });
 
@@ -247,8 +230,8 @@ export default function TaskDetailPage() {
     try {
       const url =
         modalMode === "create"
-          ? `${apiBaseUrl}/api/assignments`
-          : `${apiBaseUrl}/api/assignments/${editingAssignment?.id}`;
+          ? `${API_BASE_URL}/api/assignments`
+          : `${API_BASE_URL}/api/assignments/${editingAssignment?.id}`;
 
       const response = await fetch(url, {
         method: modalMode === "create" ? "POST" : "PUT",
@@ -302,7 +285,7 @@ export default function TaskDetailPage() {
     logger.debug("Updating task", { data, taskId });
 
     try {
-      const response = await fetch(`${apiBaseUrl}/api/tasks/${taskId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/tasks/${taskId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -333,16 +316,7 @@ export default function TaskDetailPage() {
   };
 
   if (loading) {
-    return (
-      <PageLayout>
-        <div className="flex min-h-[60vh] items-center justify-center">
-          <div className="text-center">
-            <div className="mb-4 h-12 w-12 animate-spin rounded-full border-4 border-slate-700 border-t-blue-500 mx-auto"></div>
-            <p className="text-slate-400">Loading task details...</p>
-          </div>
-        </div>
-      </PageLayout>
-    );
+    return <LoadingPage message="Loading task details..." />;
   }
 
   if (error || !task) {

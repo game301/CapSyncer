@@ -9,6 +9,8 @@ import { Input, Select, Textarea } from "../../components/FormInputs";
 import { PageLayout } from "../../components/PageLayout";
 import { usePermissions } from "../../contexts/PermissionContext";
 import { logger } from "../../utils/logger";
+import { API_BASE_URL } from "../../utils/config";
+import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { Toast, useToast } from "../../components/Toast";
 import { WeekSelector } from "../../components/WeekSelector";
 import { ProgressBar } from "../../components/ProgressBar";
@@ -99,18 +101,15 @@ function Dashboard() {
     useState(false);
   const { toasts, showToast, removeToast } = useToast();
 
-  const apiBaseUrl =
-    process.env.NEXT_PUBLIC_API_BASEURL || "http://localhost:5128";
-
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       const [coworkersRes, projectsRes, tasksRes, assignmentsRes] =
         await Promise.all([
-          fetch(`${apiBaseUrl}/api/coworkers`),
-          fetch(`${apiBaseUrl}/api/projects`),
-          fetch(`${apiBaseUrl}/api/tasks`),
-          fetch(`${apiBaseUrl}/api/assignments`),
+          fetch(`${API_BASE_URL}/api/coworkers`),
+          fetch(`${API_BASE_URL}/api/projects`),
+          fetch(`${API_BASE_URL}/api/tasks`),
+          fetch(`${API_BASE_URL}/api/assignments`),
         ]);
 
       if (
@@ -139,7 +138,7 @@ function Dashboard() {
     } finally {
       setLoading(false);
     }
-  }, [apiBaseUrl]);
+  }, []);
 
   useEffect(() => {
     fetchData();
@@ -232,7 +231,7 @@ function Dashboard() {
 
     try {
       const response = await fetch(
-        `${apiBaseUrl}/api/coworkers/${id}/reactivate`,
+        `${API_BASE_URL}/api/coworkers/${id}/reactivate`,
         {
           method: "PUT",
         },
@@ -286,7 +285,7 @@ function Dashboard() {
     if (!confirm(confirmMessage)) return;
 
     try {
-      const response = await fetch(`${apiBaseUrl}/api/${entityType}/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/${entityType}/${id}`, {
         method: "DELETE",
       });
 
@@ -404,8 +403,8 @@ function Dashboard() {
     try {
       const url =
         modalMode === "create"
-          ? `${apiBaseUrl}/api/${activeEntity}`
-          : `${apiBaseUrl}/api/${activeEntity}/${editingEntity?.id}`;
+          ? `${API_BASE_URL}/api/${activeEntity}`
+          : `${API_BASE_URL}/api/${activeEntity}/${editingEntity?.id}`;
 
       const response = await fetch(url, {
         method: modalMode === "create" ? "POST" : "PUT",
@@ -459,16 +458,7 @@ function Dashboard() {
   };
 
   if (loading) {
-    return (
-      <PageLayout>
-        <div className="flex min-h-[60vh] items-center justify-center">
-          <div className="text-center">
-            <div className="mb-4 h-12 w-12 animate-spin rounded-full border-4 border-slate-700 border-t-blue-500 mx-auto"></div>
-            <p className="text-slate-400">Loading dashboard...</p>
-          </div>
-        </div>
-      </PageLayout>
-    );
+    return <LoadingSpinner fullScreen message="Loading dashboard..." />;
   }
 
   if (error) {

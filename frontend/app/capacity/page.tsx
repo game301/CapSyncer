@@ -3,6 +3,8 @@
 import { useEffect, useState, useCallback } from "react";
 import { PageLayout } from "../../components/PageLayout";
 import { WeeklyCapacityView } from "../../components/WeeklyCapacityView";
+import { API_BASE_URL } from "../../utils/config";
+import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { CreateTaskModal } from "../../components/CreateTaskModal";
 import { CreateAssignmentModal } from "../../components/CreateAssignmentModal";
 
@@ -26,13 +28,10 @@ export default function CapacityPage() {
     number | null
   >(null);
 
-  const apiBaseUrl =
-    process.env.NEXT_PUBLIC_API_BASEURL || "http://localhost:5128";
-
   const fetchCoworkers = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${apiBaseUrl}/api/coworkers`);
+      const response = await fetch(`${API_BASE_URL}/api/coworkers`);
       if (response.ok) {
         const data = await response.json();
         const activeCoworkers = data.filter((c: Coworker) => c.isActive);
@@ -46,7 +45,7 @@ export default function CapacityPage() {
     } finally {
       setLoading(false);
     }
-  }, [apiBaseUrl, selectedCoworkerId]);
+  }, [selectedCoworkerId]);
 
   useEffect(() => {
     fetchCoworkers();
@@ -142,7 +141,7 @@ export default function CapacityPage() {
         isOpen={taskModalOpen}
         onClose={() => setTaskModalOpen(false)}
         onSuccess={fetchCoworkers}
-        apiBaseUrl={apiBaseUrl}
+        apiBaseUrl={API_BASE_URL}
       />
 
       <CreateAssignmentModal
@@ -152,7 +151,7 @@ export default function CapacityPage() {
           setAssignmentCoworkerId(null);
         }}
         onSuccess={fetchCoworkers}
-        apiBaseUrl={apiBaseUrl}
+        apiBaseUrl={API_BASE_URL}
         prefilledCoworkerId={assignmentCoworkerId || undefined}
       />
     </PageLayout>

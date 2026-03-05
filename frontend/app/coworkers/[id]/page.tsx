@@ -4,11 +4,13 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { PageLayout } from "../../../components/PageLayout";
+import { LoadingPage } from "../../../components/LoadingSpinner";
 import { Button } from "../../../components/Button";
 import { Table } from "../../../components/Table";
 import { CreateTaskModal } from "../../../components/CreateTaskModal";
 import { CreateAssignmentModal } from "../../../components/CreateAssignmentModal";
 import { ProgressBar } from "../../../components/ProgressBar";
+import { API_BASE_URL } from "../../../utils/config";
 
 interface Coworker {
   id: number;
@@ -55,17 +57,14 @@ export default function CoworkerDetailPage() {
   const [taskModalOpen, setTaskModalOpen] = useState(false);
   const [assignmentModalOpen, setAssignmentModalOpen] = useState(false);
 
-  const apiBaseUrl =
-    process.env.NEXT_PUBLIC_API_BASEURL || "http://localhost:5128";
-
   const fetchData = async () => {
     try {
       const [coworkerRes, assignmentsRes, tasksRes, projectsRes] =
         await Promise.all([
-          fetch(`${apiBaseUrl}/api/coworkers/${coworkerId}`),
-          fetch(`${apiBaseUrl}/api/assignments`),
-          fetch(`${apiBaseUrl}/api/tasks`),
-          fetch(`${apiBaseUrl}/api/projects`),
+          fetch(`${API_BASE_URL}/api/coworkers/${coworkerId}`),
+          fetch(`${API_BASE_URL}/api/assignments`),
+          fetch(`${API_BASE_URL}/api/tasks`),
+          fetch(`${API_BASE_URL}/api/projects`),
         ]);
 
       if (!coworkerRes.ok) {
@@ -93,19 +92,10 @@ export default function CoworkerDetailPage() {
   useEffect(() => {
     fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [coworkerId, apiBaseUrl]);
+  }, [coworkerId]);
 
   if (loading) {
-    return (
-      <PageLayout>
-        <div className="flex min-h-[60vh] items-center justify-center">
-          <div className="text-center">
-            <div className="mb-4 h-12 w-12 animate-spin rounded-full border-4 border-slate-700 border-t-blue-500 mx-auto"></div>
-            <p className="text-slate-400">Loading coworker details...</p>
-          </div>
-        </div>
-      </PageLayout>
-    );
+    return <LoadingPage message="Loading coworker details..." />;
   }
 
   if (error || !coworker) {
@@ -482,14 +472,14 @@ export default function CoworkerDetailPage() {
         isOpen={taskModalOpen}
         onClose={() => setTaskModalOpen(false)}
         onSuccess={fetchData}
-        apiBaseUrl={apiBaseUrl}
+        apiBaseUrl={API_BASE_URL}
       />
 
       <CreateAssignmentModal
         isOpen={assignmentModalOpen}
         onClose={() => setAssignmentModalOpen(false)}
         onSuccess={fetchData}
-        apiBaseUrl={apiBaseUrl}
+        apiBaseUrl={API_BASE_URL}
         prefilledCoworkerId={coworkerId}
       />
     </PageLayout>

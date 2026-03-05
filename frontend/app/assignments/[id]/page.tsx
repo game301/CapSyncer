@@ -4,7 +4,9 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { PageLayout } from "../../../components/PageLayout";
+import { LoadingPage } from "../../../components/LoadingSpinner";
 import { Button } from "../../../components/Button";
+import { API_BASE_URL } from "../../../utils/config";
 
 interface Assignment {
   id: number;
@@ -49,18 +51,15 @@ export default function AssignmentDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const apiBaseUrl =
-    process.env.NEXT_PUBLIC_API_BASEURL || "http://localhost:5128";
-
   useEffect(() => {
     async function fetchData() {
       try {
         const [assignmentRes, coworkersRes, tasksRes, projectsRes] =
           await Promise.all([
-            fetch(`${apiBaseUrl}/api/assignments/${assignmentId}`),
-            fetch(`${apiBaseUrl}/api/coworkers`),
-            fetch(`${apiBaseUrl}/api/tasks`),
-            fetch(`${apiBaseUrl}/api/projects`),
+            fetch(`${API_BASE_URL}/api/assignments/${assignmentId}`),
+            fetch(`${API_BASE_URL}/api/coworkers`),
+            fetch(`${API_BASE_URL}/api/tasks`),
+            fetch(`${API_BASE_URL}/api/projects`),
           ]);
 
         if (!assignmentRes.ok) {
@@ -98,19 +97,10 @@ export default function AssignmentDetailPage() {
     }
 
     fetchData();
-  }, [assignmentId, apiBaseUrl]);
+  }, [assignmentId]);
 
   if (loading) {
-    return (
-      <PageLayout>
-        <div className="flex min-h-[60vh] items-center justify-center">
-          <div className="text-center">
-            <div className="mb-4 h-12 w-12 animate-spin rounded-full border-4 border-slate-700 border-t-blue-500 mx-auto"></div>
-            <p className="text-slate-400">Loading assignment details...</p>
-          </div>
-        </div>
-      </PageLayout>
-    );
+    return <LoadingPage message="Loading assignment details..." />;
   }
 
   if (error || !assignment) {

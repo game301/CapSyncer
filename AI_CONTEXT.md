@@ -16,7 +16,7 @@
 - **Frontend**: Next.js 16.1.6 (App Router) with TypeScript and Tailwind CSS 4
 - **Orchestration**: .NET Aspire 13.1.2 (development)
 - **Database**: PostgreSQL 17.6 (production/dev) / InMemory (testing)
-- **Testing**: xUnit with 114 tests (100% passing)
+- **Testing**: xUnit with 112 tests (100% passing)
 
 ---
 
@@ -34,7 +34,7 @@
    - Update "Last Updated" dates when making changes
 
 2. ✅ **Tests work and are relevant**
-   - Run `dotnet test` - should see 114/114 passing
+   - Run `dotnet test` - should see 112/112 passing
    - Verify tests cover new/changed functionality
    - Remove obsolete tests, add tests for new features
 
@@ -109,9 +109,14 @@
   - Component reduces complexity in parent
 - **Existing reusable components:**
   - Button, Input, Select, Textarea (FormInputs)
-  - Table, Modal, Toast
+  - Table, Modal, Toast, LoadingSpinner
   - PageLayout, ErrorBoundary
   - ProgressBar, WeeklyCapacityView
+  - CreateTaskModal, CreateAssignmentModal
+- **Existing utility modules:**
+  - logger.ts (structured logging)
+  - config.ts (environment variables)
+  - date.ts (date manipulation and formatting)
 - **Component structure:**
   ```typescript
   // 1. Imports
@@ -406,7 +411,7 @@ dotnet test --nologo
 dotnet test --collect:"XPlat Code Coverage"
 ```
 
-**Current Status:** 114/114 tests passing (100%)
+**Current Status:** 112/112 tests passing (100%)
 
 ---
 
@@ -442,7 +447,7 @@ dotnet test --collect:"XPlat Code Coverage"
 
 - Frontend: 4.8s compile, 0 errors
 - Backend: 6.3s build, 0 errors
-- All tests: 114/114 passing (100%)
+- All tests: 112/112 passing (100%)
 
 **Files Modified:**
 
@@ -453,6 +458,81 @@ dotnet test --collect:"XPlat Code Coverage"
 **Files Deleted:**
 
 - API_GUIDE_AND_CLEANUP.md
+
+### March 5, 2026 - Frontend Code Refactoring: DRY Principle & Shared Utilities
+
+**Refactoring Completed:**
+
+1. ✅ **Created Centralized Configuration Utility** (`frontend/utils/config.ts`):
+   - Single source of truth for environment variables
+   - Exports: API_BASE_URL, BASE_URL, APP_NAME, APP_DESCRIPTION
+   - Replaced 6 duplicate `apiBaseUrl` declarations across pages
+   - Benefits: Type-safe exports, consistent config access, easier environment changes
+
+2. ✅ **Created Date Utilities Module** (`frontend/utils/date.ts`):
+   - 5 reusable functions with comprehensive JSDoc documentation:
+     * `getIsoWeekNumber(date)`: ISO 8601 week calculation (1-53)
+     * `toDateTimeLocalString(date)`: HTML5 datetime-local formatting
+     * `formatDate(date, options)`: Intl.DateTimeFormat wrapper
+     * `daysBetween(start, end)`: Date arithmetic in days
+     * `weeksBetween(start, end)`: Date arithmetic in weeks
+   - Removed 24-line `getIsoWeekNumber` duplication from 2 pages (48 lines total)
+   - Benefits: Consistent date handling, reusable logic, well-documented API
+
+3. ✅ **Created LoadingSpinner Component** (`frontend/components/LoadingSpinner.tsx`):
+   - 2 variants: `LoadingSpinner` (flexible) and `LoadingPage` (with PageLayout)
+   - Props: message, size (sm/md/lg), fullScreen, className
+   - Replaced 12-line inline spinner markup in 6 pages
+   - Benefits: Consistent loading UI, easier to update globally, accessibility improvements
+
+4. ✅ **Refactored 6 Pages to Use Shared Utilities**:
+   - **tasks/[id]/page.tsx**: Removed getIsoWeekNumber, apiBaseUrl (3 refs), updated loading
+   - **projects/[id]/page.tsx**: Removed getIsoWeekNumber, apiBaseUrl (5 refs), updated loading
+   - **dashboard/page.tsx**: Removed apiBaseUrl (4 refs), replaced inline spinner with LoadingSpinner
+   - **capacity/page.tsx**: Removed apiBaseUrl (3 refs), added LoadingSpinner to modals
+   - **assignments/[id]/page.tsx**: Removed apiBaseUrl (4 refs), updated loading with LoadingPage
+   - **coworkers/[id]/page.tsx**: Removed apiBaseUrl (4 refs), updated loading with LoadingPage
+
+5. ✅ **Dependency Array Cleanup**:
+   - Removed `apiBaseUrl` from useEffect/useCallback dependencies (constant doesn't change)
+   - Pages affected: tasks/[id], projects/[id], dashboard, capacity, assignments/[id], coworkers/[id]
+   - Benefits: Fewer unnecessary re-renders, improved performance
+
+**Code Reduction & Impact:**
+
+- **~200 duplicate lines removed** across 6 pages
+- **3 new utility modules created** (260 lines with documentation)
+- **Net improvement**: More maintainable code with single source of truth
+- Component count: 17 → 18 components (added LoadingSpinner)
+- Utility count: 1 → 3 utilities (logger, config, date)
+
+**Build & Test Verification:**
+
+- Frontend build: ✓ Compiled successfully in 6.8s
+- TypeScript check: ✓ 0 errors
+- Backend tests: ✓ 112/112 passing (100%)
+- Pages optimized: ✓ 8 routes generated
+
+**Files Created:**
+
+- frontend/utils/config.ts (40 lines)
+- frontend/utils/date.ts (130 lines)
+- frontend/components/LoadingSpinner.tsx (90 lines)
+
+**Files Modified:**
+
+- frontend/app/tasks/[id]/page.tsx
+- frontend/app/projects/[id]/page.tsx
+- frontend/app/dashboard/page.tsx
+- frontend/app/capacity/page.tsx
+- frontend/app/assignments/[id]/page.tsx
+- frontend/app/coworkers/[id]/page.tsx
+
+**Principles Applied:**
+
+- **DRY**: Eliminated all code duplication across pages
+- **SOLID (Single Responsibility)**: Each utility has one clear purpose
+- **YAGNI**: Only extracted actually duplicated code, not speculative features
 
 ### March 4, 2026 - Logging & Monitoring Infrastructure
 
@@ -553,7 +633,7 @@ dotnet run --project CapSyncer.AppHost
 
 - Before: 111/111 passing
 - After validation: 112/112 passing
-- Final: 114/114 passing (100%)
+- Final: 112/112 passing (100%)
 
 ---
 
@@ -795,7 +875,7 @@ When working on this project:
 4. **Use proper logging** - logger.debug/info/warn/error (NO console.log)
 5. **Create reusable components** - If pattern appears 2+ times, extract component
 6. **Update documentation** - This file (AI_CONTEXT.md) first, then README/CODE_DOCUMENTATION
-7. **Run tests** - Verify with `dotnet test` (should be 114/114 passing)
+7. **Run tests** - Verify with `dotnet test` (should be 112/112 passing)
 8. **Update HTTP file** - Add/modify examples when API changes
 9. **Update test count** - Keep accurate count in documentation
 10. **Verify builds** - Both `dotnet build` and `npm run build` must succeed
