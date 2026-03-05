@@ -33,7 +33,7 @@ export function Navbar() {
               Dashboard
             </Link>
             <Link
-              href="/capacity"
+              href="/calendar"
               className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-purple-700"
             >
               Calendar
@@ -90,7 +90,7 @@ export function Navbar() {
               Dashboard
             </Link>
             <Link
-              href="/capacity"
+              href="/calendar"
               onClick={() => setMobileMenuOpen(false)}
               className="block rounded-lg bg-purple-600 px-4 py-3 text-center text-sm font-medium text-white transition hover:bg-purple-700"
             >

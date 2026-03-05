@@ -45,7 +45,7 @@ export default function Home() {
               </Link>
               <Link
                 className="group flex h-14 items-center justify-center gap-2 rounded-full border-2 border-slate-600 bg-slate-800/50 px-10 text-lg font-semibold text-white backdrop-blur-sm transition hover:border-slate-500 hover:bg-slate-700/50"
-                href="/capacity"
+                href="/calendar"
               >
                 <svg
                   className="h-5 w-5"
