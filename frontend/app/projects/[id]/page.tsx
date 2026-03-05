@@ -8,6 +8,7 @@ import { Button } from "../../../components/Button";
 import { Table } from "../../../components/Table";
 import { Modal } from "../../../components/Modal";
 import { Input, Select, Textarea } from "../../../components/FormInputs";
+import { logger } from "../../../utils/logger";
 import { usePermissions } from "../../../contexts/PermissionContext";
 import { Toast, useToast } from "../../../components/Toast";
 import { ProgressBar } from "../../../components/ProgressBar";
@@ -316,7 +317,7 @@ export default function ProjectDetailPage() {
       }
     }
 
-    console.log("Submitting data:", data);
+    logger.debug("Submitting data", { data, modalType, modalMode });
 
     try {
       const entityType = modalType === "task" ? "tasks" : "assignments";
@@ -367,7 +368,7 @@ export default function ProjectDetailPage() {
       data[key] = String(value);
     });
 
-    console.log("Updating project:", data);
+    logger.debug("Updating project", { data, projectId });
 
     try {
       const response = await fetch(`${apiBaseUrl}/api/projects/${projectId}`, {

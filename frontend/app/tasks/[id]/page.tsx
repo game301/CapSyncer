@@ -8,6 +8,7 @@ import { Button } from "../../../components/Button";
 import { Table } from "../../../components/Table";
 import { Modal } from "../../../components/Modal";
 import { Input, Select, Textarea } from "../../../components/FormInputs";
+import { logger } from "../../../utils/logger";
 import { usePermissions } from "../../../contexts/PermissionContext";
 import { Toast, useToast } from "../../../components/Toast";
 import { ProgressBar } from "../../../components/ProgressBar";
@@ -241,7 +242,7 @@ export default function TaskDetailPage() {
       return;
     }
 
-    console.log("Submitting assignment data:", data);
+    logger.debug("Submitting assignment data", { data, modalMode });
 
     try {
       const url =
@@ -298,7 +299,7 @@ export default function TaskDetailPage() {
       }
     });
 
-    console.log("Updating task:", data);
+    logger.debug("Updating task", { data, taskId });
 
     try {
       const response = await fetch(`${apiBaseUrl}/api/tasks/${taskId}`, {

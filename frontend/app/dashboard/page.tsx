@@ -8,6 +8,7 @@ import { Button } from "../../components/Button";
 import { Input, Select, Textarea } from "../../components/FormInputs";
 import { PageLayout } from "../../components/PageLayout";
 import { usePermissions } from "../../contexts/PermissionContext";
+import { logger } from "../../utils/logger";
 import { Toast, useToast } from "../../components/Toast";
 import { WeekSelector } from "../../components/WeekSelector";
 import { ProgressBar } from "../../components/ProgressBar";
@@ -398,7 +399,7 @@ function Dashboard() {
       }
     }
 
-    console.log("Submitting data:", data);
+    logger.debug("Submitting data", { data, activeEntity, modalMode });
 
     try {
       const url =
