@@ -10,9 +10,9 @@ Write-Host ""
 Write-Host "Checking Docker..." -ForegroundColor Yellow
 try {
     docker ps | Out-Null
-    Write-Host "✓ Docker is running" -ForegroundColor Green
+    Write-Host "OK Docker is running" -ForegroundColor Green
 } catch {
-    Write-Host "✗ Docker is not running. Please start Docker Desktop first." -ForegroundColor Red
+    Write-Host "ERROR Docker is not running. Please start Docker Desktop first." -ForegroundColor Red
     exit 1
 }
 
@@ -23,14 +23,16 @@ Write-Host "Checking PostgreSQL..." -ForegroundColor Yellow
 $postgresRunning = docker ps --filter "name=capsyncer-postgres" --format "{{.Names}}" 2>$null
 
 if ($postgresRunning -eq "capsyncer-postgres") {
-    Write-Host "✓ PostgreSQL is running" -ForegroundColor Green
+    Write-Host "OK PostgreSQL is running" -ForegroundColor Green
 } else {
-    Write-Host "⚠ PostgreSQL not running. Starting it now..." -ForegroundColor Yellow
-    docker-compose up -d
+    Write-Host "WARNING PostgreSQL not running. Starting it now..." -ForegroundColor Yellow
+    docker-compose up -d postgres
     if ($LASTEXITCODE -eq 0) {
-        Write-Host "✓ PostgreSQL started" -ForegroundColor Green
+        Write-Host "OK PostgreSQL started" -ForegroundColor Green
+        Write-Host "Waiting for PostgreSQL to be ready..." -ForegroundColor Yellow
+        Start-Sleep -Seconds 3
     } else {
-        Write-Host "✗ Failed to start PostgreSQL" -ForegroundColor Red
+        Write-Host "ERROR Failed to start PostgreSQL" -ForegroundColor Red
         exit 1
     }
 }
