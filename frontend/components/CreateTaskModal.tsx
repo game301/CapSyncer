@@ -56,6 +56,21 @@ export function CreateTaskModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate weeklyEffort > 0
+    const weeklyEffortValue = Number(formData.weeklyEffort);
+    if (!weeklyEffortValue || weeklyEffortValue <= 0) {
+      alert("Weekly Effort must be greater than 0");
+      return;
+    }
+
+    // Validate estimatedHours > 0
+    const estimatedHoursValue = Number(formData.estimatedHours);
+    if (!estimatedHoursValue || estimatedHoursValue <= 0) {
+      alert("Estimated Hours must be greater than 0");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -67,8 +82,8 @@ export function CreateTaskModal({
           projectId: Number(formData.projectId),
           priority: formData.priority,
           status: formData.status,
-          estimatedHours: Number(formData.estimatedHours),
-          weeklyEffort: Number(formData.weeklyEffort),
+          estimatedHours: estimatedHoursValue,
+          weeklyEffort: weeklyEffortValue,
           note: formData.note || undefined,
         }),
       });
@@ -86,7 +101,9 @@ export function CreateTaskModal({
         onSuccess();
         onClose();
       } else {
-        alert("Failed to create task");
+        // Extract error message from backend response
+        const errorText = await response.text();
+        alert(`Failed to create task: ${errorText || "Unknown error"}`);
       }
     } catch (error) {
       console.error("Error creating task:", error);
@@ -191,7 +208,7 @@ export function CreateTaskModal({
           <input
             type="number"
             required
-            min="0"
+            min="0.5"
             step="0.5"
             value={formData.estimatedHours}
             onChange={(e) =>
@@ -208,7 +225,7 @@ export function CreateTaskModal({
           <input
             type="number"
             required
-            min="0"
+            min="0.5"
             step="0.5"
             value={formData.weeklyEffort}
             onChange={(e) =>

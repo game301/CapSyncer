@@ -273,6 +273,10 @@ export default function ProjectDetailPage() {
         alert("Please enter estimated hours (must be greater than 0)");
         return;
       }
+      if (!data.weeklyEffort || data.weeklyEffort === 0) {
+        alert("Please enter weekly effort (must be greater than 0)");
+        return;
+      }
     }
 
     logger.debug("Submitting data", { data, modalType, modalMode });

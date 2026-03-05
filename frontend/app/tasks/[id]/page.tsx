@@ -265,6 +265,24 @@ export default function TaskDetailPage() {
       }
     });
 
+    // Validate weeklyEffort > 0
+    if (!data.weeklyEffort || data.weeklyEffort <= 0) {
+      showToast({
+        message: "Weekly Effort must be greater than 0",
+        type: "error",
+      });
+      return;
+    }
+
+    // Validate estimatedHours > 0
+    if (!data.estimatedHours || data.estimatedHours <= 0) {
+      showToast({
+        message: "Estimated Hours must be greater than 0",
+        type: "error",
+      });
+      return;
+    }
+
     logger.debug("Updating task", { data, taskId });
 
     const { error } = await apiPut(`/api/tasks/${taskId}`, data);
