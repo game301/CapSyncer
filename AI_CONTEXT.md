@@ -185,6 +185,8 @@
   - ✅ Error messages (without sensitive context)
   - ✅ Performance metrics
 - Use `logger.debug()` for detailed logs (automatically disabled in production)
+- **Backend**: ALWAYS use `ILogger<Program>` (never Console.WriteLine)
+- **Frontend**: ALWAYS use `logger` utility (never console.log in production code)
 
 ##### 8. Dependency Security
 
@@ -556,6 +558,85 @@ dotnet test --collect:"XPlat Code Coverage"
 > **Purpose:** Track recent work sessions, decisions, and changes for continuity between AI sessions.
 > **Maintenance:** Add new entries at the top (most recent first). Archive old entries after 30 days.
 
+### March 5, 2026 - Backend Logging Implementation (COMPREHENSIVE)
+
+**✅ FULLY IMPLEMENTED** - All backend endpoints now have professional structured logging
+
+**Problem Identified:**
+
+- Backend had **10 instances of Console.WriteLine** instead of proper logging
+- **26 API endpoints had ZERO logging** (no operation tracking)
+- Only 1 endpoint (`/api/status`) had logging
+- Documentation claimed logging was "properly implemented" (incorrect)
+- Frontend had excellent logging, but backend was severely lacking
+
+**Solution Implemented:**
+
+1. ✅ **Replaced Console.WriteLine with ILogger** (10 instances):
+   - Database initialization section now uses structured logging
+   - All startup messages use proper log levels
+   - Error handling uses LogError with exception context
+   - Changed from generic Console.WriteLine to structured ILogger
+
+2. ✅ **Added Logging to ALL CRUD Endpoints** (26 endpoints total):
+   - **Coworkers (6 endpoints)**: GET all/by ID, POST, PUT, DELETE, reactivate
+   - **Projects (5 endpoints)**: GET all/by ID, POST, PUT, DELETE with cascade info
+   - **Tasks (6 endpoints)**: GET all/by ID, POST, PUT with validation, DELETE
+   - **Assignments (5 endpoints)**: GET all/by ID, POST, PUT, DELETE
+   - **Capacity (4 endpoints)**: Weekly/yearly queries, current week, date conversions
+
+3. ✅ **Comprehensive Error Handling**:
+   - All endpoints wrapped in try-catch blocks
+   - LogError for exceptions with full context
+   - LogWarning for not-found and validation failures
+   - LogInformation for successful operations
+   - Generic error messages returned to clients (security best practice)
+
+4. ✅ **Structured Logging Patterns**:
+
+   ```csharp
+   logger.LogInformation("Creating new coworker: {CoworkerName} with capacity {Capacity}h",
+       c.Name, c.Capacity);
+   logger.LogError(ex, "Failed to create coworker: {CoworkerName}", c.Name);
+   logger.LogWarning("Coworker not found: ID {CoworkerId}", id);
+   ```
+
+5. ✅ **Updated Documentation**:
+   - AI_CONTEXT.md: Added comprehensive logging section with examples
+   - Pre-Work Checklist: Added backend logging requirement
+   - Code Quality Checklist: Added logging validation
+   - Removed false claim that logging was "properly implemented"
+
+**Logging Coverage:**
+
+- ✅ 26/26 endpoints have logging (100%)
+- ✅ 0 Console.WriteLine statements (was 10)
+- ✅ Database initialization fully logged
+- ✅ All operations tracked with context
+- ✅ Error handling with exceptions
+- ✅ Validation failures logged
+
+**Benefits:**
+
+- **Observability**: Every operation is now tracked with context
+- **Debugging**: Stack traces and error context in logs
+- **Monitoring**: Can track usage patterns, error rates
+- **Production-ready**: Structured logs work with Aspire Dashboard
+- **Security**: No sensitive data in logs, generic error messages to users
+- **Performance**: Can identify slow operations via log timestamps
+
+**Files Modified:**
+
+- backend/Program.cs (~200 lines of logging additions)
+- AI_CONTEXT.md (logging section rewritten, checklist updated)
+
+**Impact:**
+
+- No breaking changes (all tests should still pass)
+- Adds ~2-5 log entries per API request
+- Aspire Dashboard can now show detailed operation history
+- Ready for Azure Application Insights integration
+
 ### March 5, 2026 - Code Refactoring & Logger Implementation
 
 **Refactoring Completed:**
@@ -925,9 +1006,44 @@ className = "bg-red-100 text-red-800 border-red-200";
 
 ## � Logging & Monitoring
 
-### Backend (Aspire + OpenTelemetry)
+### Backend Logging (ASP.NET Core + OpenTelemetry + ILogger)
 
-**Automatically Tracked:**
+**✅ FULLY IMPLEMENTED** - All 26 API endpoints have comprehensive structured logging
+
+**Logging Standards:**
+
+- ✅ **ILogger<Program>** injected into all endpoints
+- ✅ **LogInformation** - Successful operations (creates, updates, retrievals)
+- ✅ **LogWarning** - Not found, validation failures, soft deletes
+- ✅ **LogError** - Exceptions with full context and stack traces
+- ✅ **LogDebug** - Low-priority info (current week, date conversions)
+- ✅ **Structured logging** - Named parameters for filtering/searching
+- ✅ **Database initialization** - All startup logging uses ILogger
+- ❌ **NO Console.WriteLine** - Removed all 10 instances
+
+**Example Logging Patterns:**
+
+```csharp
+// ✅ GOOD - Structured logging with context
+logger.LogInformation("Creating new coworker: {CoworkerName} with capacity {Capacity}h",
+    c.Name, c.Capacity);
+
+// ✅ GOOD - Error logging with exception
+logger.LogError(ex, "Failed to create coworker: {CoworkerName}", c.Name);
+
+// ❌ BAD - Console.WriteLine (removed from codebase)
+Console.WriteLine($"Creating coworker: {c.Name}");
+```
+
+**Logged Operations by Entity:**
+
+- **Coworkers (6 endpoints)**: Retrieval, creation, updates, soft/hard deletes, reactivation
+- **Projects (5 endpoints)**: Retrieval, creation, updates, cascade deletes with counts
+- **Tasks (6 endpoints)**: Retrieval, creation with validation, updates, deletes
+- **Assignments (5 endpoints)**: Retrieval, creation, updates, deletes with context
+- **Capacity (4 endpoints)**: Weekly/yearly queries, current week, date conversions
+
+**OpenTelemetry Integration (via Aspire):**
 
 - ✅ HTTP requests (duration, status codes, routes)
 - ✅ Database queries (EF Core timing and commands)
@@ -936,12 +1052,13 @@ className = "bg-red-100 text-red-800 border-red-200";
 - ✅ Health checks (database connectivity)
 - ✅ Structured logs (JSON formatted, searchable)
 
-**Implementation:**
+**Configuration:**
 
 - `builder.AddServiceDefaults()` in Program.cs enables all telemetry
 - `app.MapDefaultEndpoints()` adds /health, /alive endpoints
 - Health check for DbContext monitors database
-- Logs configured in appsettings.json (Information level default)
+- **appsettings.json**: JSON formatted logging, single-line with timestamps
+- Log levels: Information (default), Warning (EF Core, ASP.NET Core)
 
 **Access:**
 
