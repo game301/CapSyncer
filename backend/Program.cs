@@ -11,7 +11,7 @@
  * Technology Stack:
  * - .NET 10.0 Minimal APIs
  * - Entity Framework Core with PostgreSQL
- * - xUnit for testing (114 tests)
+ * - xUnit for testing (112 tests passing)
  */
 
 using CapSyncer.Server.Models;
