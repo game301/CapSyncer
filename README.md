@@ -1,438 +1,433 @@
-# CapSyncer
+# CapSyncer 🎯
 
-A modern team capacity management system built with .NET Aspire and Next.js.
+> **Modern team capacity management system** - Track your team's workload, manage projects, and optimize resource allocation with real-time insights.
 
-**Last Updated:** March 5, 2026
+![.NET](https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet) ![Next.js](https://img.shields.io/badge/Next.js-16.1.6-black?logo=next.js) ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript) ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17.6-336791?logo=postgresql) ![Tests](https://img.shields.io/badge/Tests-112%20passing-success)
 
-## Overview
+---
 
-CapSyncer helps teams manage workload capacity by tracking team members, projects, tasks, and assignments. It provides a comprehensive dashboard to visualize and manage team resources efficiently.
+## 📖 Table of Contents
 
-## Tech Stack
+- [What is CapSyncer?](#what-is-capsyncer)
+- [Key Features](#key-features)
+- [Quick Start](#quick-start)
+- [Technology Stack](#technology-stack)
+- [Project Structure](#project-structure)
+- [Documentation](#documentation)
+- [Contributing](#contributing)
+- [License](#license)
 
-### Backend
+---
 
-- **.NET 10** - Latest .NET runtime
-- **ASP.NET Core Minimal APIs** - Lightweight REST API endpoints
-- **Entity Framework Core 10.0.3** - ORM for database operations
-- **.NET Aspire 13.1.2** - Cloud-native orchestration and service discovery
-- **PostgreSQL 17.6** - Primary database
+## What is CapSyncer?
 
-### Frontend
+CapSyncer helps teams answer critical questions:
 
-- **Next.js 16.1.6** - React framework with App Router
-- **React 19.2.3** - Latest React for UI components
-- **TypeScript 5** - Type-safe JavaScript
-- **Tailwind CSS 4** - Utility-first CSS framework
-- **Custom Components** - Purpose-built UI components
+- 👥 **Who's available?** - See team capacity at a glance
+- 📊 **Who's overloaded?** - Identify bottlenecks before they happen
+- 📅 **What's due this week?** - Track assignments by week
+- 🎯 **Where should I focus?** - Prioritize work based on team capacity
 
-## Features
+Built for **project managers**, **team leads**, and **individual contributors** who need visibility into team workload distribution.
 
-### Dashboard
+---
 
-- 📊 Team and Personal views
-- 📈 Real-time capacity tracking
-- 🎯 Visual workload distribution
+## Key Features
 
-### Entity Management
+### 🎛️ Dashboard Views
 
-- 👥 **Coworkers** - Team member profiles with role and contact info
-- 📁 **Projects** - Project tracking with timelines
-- ✅ **Tasks** - Task management with priorities and status
-- 📝 **Assignments** - Link team members to tasks with hour allocation
+- **Team View** - See everyone's capacity and assignments
+- **Personal View** - Focus on your own tasks and deadlines
+- **Calendar View** - Weekly breakdown with ISO week numbers
+- **Real-time Metrics** - Capacity utilization with visual progress bars
 
-### Navigation
+### 📋 Project Management
 
-- 🔗 Click-through navigation between related entities
-- 📄 Detailed views for each entity type
-- 🧭 Breadcrumb navigation and back buttons
+- **Projects** - Organize work into trackable projects with statuses
+- **Tasks** - Break projects into tasks with priorities and effort estimates
+- **Assignments** - Link team members to tasks with hour allocations
+- **Coworkers** - Manage team profiles with weekly capacity limits
 
-### UI Components & Utilities
+### 🔄 Smart Navigation
 
-**Reusable Components:**
+- Click through related entities (Project → Tasks → Assignments → Coworkers)
+- Breadcrumb navigation for easy orientation
+- Detail pages with full CRUD operations
+- Search and filter capabilities
 
-- Table component with sorting and actions
-- Modal dialogs for CRUD operations
-- Form inputs (Input, Select, Textarea) with validation
-- Button, LoadingSpinner, Toast notifications
-- ProgressBar, ErrorBoundary
-- Consistent layout with PageLayout, Navbar and Footer
+### 🎨 Modern UI
 
-**Utility Modules:**
+- Clean, responsive design built with **Tailwind CSS**
+- Custom component library (no external UI framework)
+- Color-coded statuses and priorities
+- Mobile-friendly interface
 
-- **logger.ts** - Structured logging (production-safe debug levels)
-- **config.ts** - Environment variable access with type safety
-- **date.ts** - ISO week calculations and date formatting
-- **types.ts** - Shared TypeScript interfaces (single source of truth)
-- **api.ts** - Standardized API wrappers with automatic logging
+---
 
-## Project Structure
-
-```
-CapSyncer/
-├── backend/                    # ASP.NET Core backend
-│   ├── Models/                # EF Core models and DbContext
-│   ├── Migrations/            # Database migrations
-│   └── Program.cs             # API endpoints and startup
-├── frontend/                   # Next.js frontend
-│   ├── app/                   # App Router pages
-│   │   ├── dashboard/         # Main dashboard
-│   │   ├── coworkers/[id]/   # Coworker detail pages
-│   │   ├── projects/[id]/    # Project detail pages
-│   │   ├── tasks/[id]/       # Task detail pages
-│   │   └── assignments/[id]/ # Assignment detail pages
-│   ├── components/            # Shared React components
-│   ├── utils/                 # Utility modules (logger, api, types, config, date)
-│   └── contexts/              # React contexts (PermissionContext)
-├── CapSyncer.AppHost/         # .NET Aspire orchestrator
-└── CapSyncer.ServiceDefaults/ # Shared service configuration
-```
-
-## Getting Started
+## Quick Start
 
 ### Prerequisites
 
-- [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
-- [Node.js 20+](https://nodejs.org/)
-- [Docker Desktop](https://www.docker.com/products/docker-desktop) (for PostgreSQL only)
-- [.NET Aspire workload](https://learn.microsoft.com/en-us/dotnet/aspire/fundamentals/setup-tooling) (recommended)
+Make sure you have these installed:
 
-### Quick Start with Aspire (Recommended)
+- ✅ [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) - Backend runtime
+- ✅ [Node.js 20+](https://nodejs.org/) - Frontend runtime
+- ✅ [Docker Desktop](https://www.docker.com/products/docker-desktop) - For PostgreSQL database
 
-**This is the primary development workflow.**
+### Option 1: One-Command Setup (Recommended)
 
-1. **Install Aspire workload** (one-time setup)
-
-   ```powershell
-   dotnet workload install aspire
-   ```
-
-2. **Run the application**
-   ```powershell
-   dotnet run --project CapSyncer.AppHost
-   ```
-
-That's it! Aspire will:
-
-- ✅ Automatically start PostgreSQL in a container
-- ✅ Start the backend API on http://localhost:5128
-- ✅ Start the frontend on http://localhost:3000
-- ✅ Open the Aspire Dashboard (browser opens automatically, typically http://localhost:17xxx)
-- ✅ Auto-create the database and run migrations
-- ✅ Provide real-time logs and health monitoring
-
-> **Note:** Docker is only used for PostgreSQL. The backend and frontend run natively, not in containers.
-
-### Alternative: Using Setup Scripts
-
-If you have the setup scripts:
+**First time setup:**
 
 ```powershell
 # Windows
-.\setup.ps1    # First time only
-.\start.ps1    # Start the application
+.\setup.ps1
 
 # Linux/Mac
-chmod +x setup.sh start.sh
-./setup.sh     # First time only
-./start.sh     # Start the application
+chmod +x setup.sh && ./setup.sh
 ```
 
-> **Note for Windows users:** If you get an execution policy error, run:
->
-> ```powershell
-> Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
-> ```
+This installs dependencies and starts PostgreSQL.
 
-### Manual Setup (Without Aspire)
-
-**Only use this if you cannot use Aspire.**
-
-1. **Clone the repository**
-   ```bash
-   git clone <your-repo-url>
-   cd CapSyncer
-   ```
-
-````
-
-2. **Start PostgreSQL with Docker Compose**
-
-   ```bash
-   docker-compose up -d
-   ```
-
-   This will:
-   - Start PostgreSQL 17.6 in Docker on port 5432
-   - Create `capsyncerdb` database automatically
-   - Set up persistent volume for data storage
-   - Configure health checks
-
-3. **Install frontend dependencies (first time only)**
-
-   ```bash
-   cd frontend
-   npm install
-   cd ..
-   ```
-
-4. **Start everything with Aspire**
-
-   ```bash
-   dotnet run --project CapSyncer.AppHost/CapSyncer.AppHost.csproj
-   ```
-
-   This single command will:
-   - Auto-create the database if it doesn't exist
-   - Run all EF Core migrations automatically
-   - Start the backend API on http://localhost:5128
-   - **Start the frontend on http://localhost:3000**
-   - Open the Aspire Dashboard
-
-   **Note:** After the first `npm install`, you don't need to run the frontend separately. AppHost manages both backend and frontend.
-
-### Database Connection
-
-To connect with **pgAdmin** or other database tools:
-
-- **Host:** localhost
-- **Port:** 5432
-- **Database:** capsyncerdb
-- **Username:** postgres
-- **Password:** postgres
-
-The database is automatically created and migrated on first run. All tables (Coworkers, Projects, Tasks, Assignments) are set up using EF Core migrations.
-
-To stop the database:
-
-```bash
-docker-compose down
-```
-
-To stop and **remove all data**:
-
-```bash
-docker-compose down -v
-```
-
-### Database Management
-
-**View database contents:**
+**Start the application:**
 
 ```powershell
-.\view-database.ps1
+# Windows
+.\start.ps1
+
+# Linux/Mac
+./start.sh
 ```
 
-**Test API endpoints:**
+This starts everything and opens your browser automatically.
+
+**Done!** 🎉 The app is running at:
+
+- **Frontend**: <http://localhost:3000>
+- **Backend API**: <http://localhost:5128>
+- **Aspire Dashboard**: Opens automatically (monitoring & logs)
+
+### Option 2: Manual Setup
+
+<!-- markdownlint-disable MD033 -->
+<details>
+<summary>Click to expand manual setup instructions</summary>
+<!-- markdownlint-enable MD033 -->
+
+**1. Install .NET Aspire workload** (one-time):
 
 ```powershell
-.\test-api.ps1
+dotnet workload install aspire
 ```
 
-## API Endpoints
+**2. Start PostgreSQL:**
 
-### Coworkers
+```powershell
+docker-compose up -d postgres
+```
 
-- `GET /api/coworkers` - List all team members
-- `GET /api/coworkers/{id}` - Get specific coworker
-- `POST /api/coworkers` - Create new coworker
-- `PUT /api/coworkers/{id}` - Update coworker
-- `DELETE /api/coworkers/{id}` - Delete coworker
+**3. Install frontend dependencies:**
 
-### Projects
+```powershell
+cd frontend
+npm install
+cd ..
+```
 
-- `GET /api/projects` - List all projects
-- `GET /api/projects/{id}` - Get specific project
-- `POST /api/projects` - Create new project
-- `PUT /api/projects/{id}` - Update project
-- `DELETE /api/projects/{id}` - Delete project
+**4. Start the application:**
 
-### Tasks
+```powershell
+dotnet run --project CapSyncer.AppHost
+```
 
-- `GET /api/tasks` - List all tasks
-- `GET /api/tasks/{id}` - Get specific task
-- `POST /api/tasks` - Create new task
-- `PUT /api/tasks/{id}` - Update task
-- `DELETE /api/tasks/{id}` - Delete task
+Aspire automatically:
 
-### Assignments
+- ✅ Creates the database
+- ✅ Runs migrations
+- ✅ Starts the backend
+- ✅ Starts the frontend
+- ✅ Opens the monitoring dashboard
 
-- `GET /api/assignments` - List all assignments
-- `GET /api/assignments/{id}` - Get specific assignment
-- `POST /api/assignments` - Create new assignment
-- `PUT /api/assignments/{id}` - Update assignment
-- `DELETE /api/assignments/{id}` - Delete assignment
+<!-- markdownlint-disable MD033 -->
+</details>
+<!-- markdownlint-enable MD033 -->
+
+### What's Running?
+
+| Service              | URL                     | Description           |
+| -------------------- | ----------------------- | --------------------- |
+| **Frontend**         | <http://localhost:3000> | Main application UI   |
+| **Backend API**      | <http://localhost:5128> | REST API endpoints    |
+| **Aspire Dashboard** | Auto-opens (browser)    | Logs, traces, metrics |
+| **PostgreSQL**       | `localhost:5432`        | Database (Docker)     |
+
+---
+
+## Technology Stack
+
+### Backend
+
+| Technology                    | Version | Purpose                       |
+| ----------------------------- | ------- | ----------------------------- |
+| **.NET**                      | 10.0    | Modern web runtime            |
+| **ASP.NET Core Minimal APIs** | 10.0    | Lightweight REST API          |
+| **Entity Framework Core**     | 10.0.3  | ORM for database              |
+| **PostgreSQL**                | 17.6    | Production database           |
+| **.NET Aspire**               | 13.1.2  | Orchestration & observability |
+| **xUnit**                     | Latest  | Unit & integration testing    |
+
+### Frontend
+
+| Technology       | Version | Purpose                      |
+| ---------------- | ------- | ---------------------------- |
+| **Next.js**      | 16.1.6  | React framework (App Router) |
+| **React**        | 19.2.3  | UI library                   |
+| **TypeScript**   | 5.x     | Type-safe JavaScript         |
+| **Tailwind CSS** | 4.x     | Utility-first CSS            |
+| **Jest**         | Latest  | Component testing            |
+| **Playwright**   | Latest  | E2E testing                  |
+
+### Why These Technologies?
+
+- **Modern & Future-Proof** - Latest stable versions with long-term support
+- **Performance** - Minimal APIs and React 19 for maximum speed
+- **Developer Experience** - Hot reload, strong typing, excellent tooling
+- **Observability** - Aspire provides built-in monitoring and logging
+- **No UI Framework Lock-in** - Custom components, full control
+
+---
+
+## Project Structure
+
+```text
+CapSyncer/
+├── backend/                      # .NET Backend API
+│   ├── Program.cs               # 26 API endpoints
+│   ├── Models/                  # EF Core data models
+│   └── Migrations/              # Database migrations
+├── frontend/                     # Next.js Frontend
+│   ├── app/                     # Pages & routes
+│   ├── components/              # 18 reusable components
+│   ├── contexts/                # React contexts
+│   └── utils/                   # 5 utility modules
+├── CapSyncer.AppHost/           # Aspire orchestration
+├── CapSyncer.Server.Tests/     # 112 backend tests
+│   ├── Unit/                    # Unit tests
+│   └── Integration/             # Integration tests
+├── e2e/                         # Playwright E2E tests
+├── docker-compose.yml           # PostgreSQL for dev
+└── *.md                         # Documentation
+
+```
+
+### Data Models
+
+The system tracks four main entities with relationships:
+
+```text
+Coworker ──< Assignment >── TaskItem >── Project
+```
+
+- **Coworker**: Team members with weekly capacity (hours)
+- **Project**: High-level project management with status tracking
+- **Task**: Individual work items with priorities and effort estimates
+- **Assignment**: Links coworkers to tasks with specific hours per week
+
+Database is automatically created and migrated on first run.
+
+**Stop Database:**
+
+```bash
+docker-compose down        # Keep data
+docker-compose down -v     # Remove all data
+```
+
+---
 
 ## Development
 
 ### Backend Development
 
-The backend uses Entity Framework Code-First migrations. To add a new migration:
-
 ```bash
+# Add new migration
 cd backend
 dotnet ef migrations add MigrationName
+
+# Apply migrations
+dotnet ef database update
+
+# Run tests
+cd ../CapSyncer.Server.Tests
+dotnet test
 ```
 
 ### Frontend Development
 
-Components are organized in `/frontend/components` for better reusability. Pages use the Next.js 16 App Router pattern with dynamic routes for detail views.
+```bash
+cd frontend
+
+# Development server with hot reload
+npm run dev
+
+# Build for production
+npm run build
+
+# Run component tests
+npm test
+```
 
 ### Testing
 
-CapSyncer has a comprehensive test suite covering unit, integration, and E2E tests.
+**Test Structure:**
 
-**Package Management:** Tests use **separate package.json files** for clean dependency management:
+- `CapSyncer.Server.Tests/` - Backend unit & integration tests (112 tests)
+- `frontend/__tests__/` - Component tests (Jest + React Testing Library)
+- `e2e/` - E2E tests (Playwright)
 
-- `frontend/package.json` - Component tests (Jest + React Testing Library)
-- `e2e/package.json` - E2E tests (Playwright - independent)
-- `backend.tests/` - .NET xUnit tests (no Node.js packages)
+See [TESTING.md](TESTING.md) for complete testing guide.
 
-**Run all tests:**
+---
+
+## Documentation
+
+### For Developers
+
+- **[AGENTS.md](AGENTS.md)** - AI agent guide, coding standards, critical rules
+- **[CODE_DOCUMENTATION.md](CODE_DOCUMENTATION.md)** - Architecture deep-dive, patterns, conventions
+- **[TESTING.md](TESTING.md)** - Testing strategy, test structure, how to run tests
+- **[MONITORING.md](MONITORING.md)** - Logging, observability, Aspire dashboard guide
+
+### For DevOps
+
+- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Production deployment guide, Docker setup
+
+### API Reference
+
+- **[backend/CapSyncer.Server.http](backend/CapSyncer.Server.http)** - All 26 API endpoints with examples
+
+---
+
+## Common Tasks
+
+### Database Management
 
 ```powershell
-# Windows
-.\run-all-tests.ps1
+# Create new migration
+cd backend
+dotnet ef migrations add MigrationName
+
+# Apply migrations
+dotnet ef database update
+
+# Reset database (WARNING: Deletes all data)
+dotnet ef database drop --force
+dotnet ef database update
+```
+
+### Access Database
+
+Use any PostgreSQL client:
+
+- **Host**: localhost:5432
+- **Database**: capsyncerdb
+- **Username**: postgres
+- **Password**: postgres
+
+**Recommended tools**: [pgAdmin](https://www.pgadmin.org/), [DBeaver](https://dbeaver.io/), [TablePlus](https://tableplus.com/)
+
+---
+
+## Troubleshooting
+
+### "Cannot connect to database"
+
+```powershell
+# Check PostgreSQL status
+docker ps | findstr postgres
+
+# Restart PostgreSQL
+docker-compose restart postgres
+
+# Verify connection
+docker exec -it capsyncer-postgres psql -U postgres -d capsyncerdb -c "SELECT 1;"
+```
+
+### "Port already in use"
+
+```powershell
+# Windows: Find process
+netstat -ano | findstr :5128
+
+# Kill process (replace PID)
+taskkill /PID <PID> /F
 
 # Linux/Mac
-chmod +x run-all-tests.sh
-./run-all-tests.sh
+lsof -ti:5128 | xargs kill -9
 ```
 
-**Run specific test suites:**
-
-```bash
-# Backend unit tests
-cd backend.tests
-dotnet test --filter "FullyQualifiedName~Unit"
-
-# Backend integration tests
-dotnet test --filter "FullyQualifiedName~Integration"
-
-# Frontend component tests
-cd frontend
-npm test
-
-# E2E tests (requires app running)
-cd e2e
-npm install
-npx playwright install
-npm run test:e2e
-```
-
-See [TESTING.md](TESTING.md) for detailed testing documentation.
-
-**Test Coverage:**
-
-- ✅ Backend Unit Tests (Models, Business Logic)
-- ✅ Backend Integration Tests (API Endpoints)
-- ✅ Frontend Component Tests (React Components)
-- ✅ Context Tests (React Context, Hooks)
-- ✅ E2E Tests (Complete User Workflows)
-
-## 📚 Documentation
-
-Comprehensive documentation is available to help you understand and work with CapSyncer:
-
-### Core Documentation
-
-- **[AI_CONTEXT.md](AI_CONTEXT.md)** - AI agent memory and project context
-  - Complete project overview and architecture
-  - Business rules and conventions (status values, validation rules)
-  - API endpoints reference (27 total endpoints)
-  - Recent changes history
-  - Development workflow and testing guide
-  - **📌 START HERE for AI agents and new developers**
-
-- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Production deployment guide
-  - Docker deployment with docker-compose
-  - Production environment setup
-  - SSL/HTTPS configuration with Nginx
-  - Database backups and maintenance
-  - Monitoring and health checks
-  - Troubleshooting common issues
-
-### Additional Guides
-
-- **[LOCAL_DEV_SETUP.md](LOCAL_DEV_SETUP.md)** - Local development setup guide
-- **[TESTING.md](TESTING.md)** - Complete testing guide (unit, integration, E2E)
-- **[MONITORING.md](MONITORING.md)** - Observability and monitoring guide
-- **[CODE_DOCUMENTATION.md](CODE_DOCUMENTATION.md)** - Technical architecture and code guide
-
-### Configuration Files
-
-- **[backend/.env.example](backend/.env.example)** - Backend environment variables template
-- **[frontend/.env.example](frontend/.env.example)** - Frontend environment variables template
-- **[backend/CapSyncer.Server.http](backend/CapSyncer.Server.http)** - HTTP test file with all 27 endpoints
-
-### Docker & Deployment
-
-- **[docker-compose.yml](docker-compose.yml)** - Multi-service orchestration (PostgreSQL, Backend, Frontend)
-- **[backend/Dockerfile](backend/Dockerfile)** - .NET API containerization
-- **[frontend/Dockerfile](frontend/Dockerfile)** - Next.js frontend containerization
-- **[backend/.dockerignore](backend/.dockerignore)** - Backend Docker ignore rules
-- **[frontend/.dockerignore](frontend/.dockerignore)** - Frontend Docker ignore rules
-
-## 🐳 Docker Deployment
-
-**Important:** CapSyncer uses **.NET Aspire** for development. Docker containers are for **production deployment only**. The PostgreSQL database can run in Docker for both development and production.
-
-### Development (Aspire - Recommended)
+### "Tests failing"
 
 ```powershell
-# Install Aspire workload (one-time)
-dotnet workload install aspire
+# Clean and rebuild
+dotnet clean && dotnet build
 
-# Run everything
-dotnet run --project CapSyncer.AppHost
+# Run with verbose output
+dotnet test -v detailed
 ```
 
-Aspire automatically manages:
-- PostgreSQL container
-- Backend API (http://localhost:5128)
-- Frontend (http://localhost:3000)
-- Aspire Dashboard (opens in browser automatically)
+### "Aspire Dashboard won't open"
 
-### Production (Docker)
+Look for this line in terminal:
 
-```bash
-# 1. Create environment files
-cp backend/.env.example backend/.env
-cp frontend/.env.example frontend/.env.local
-
-# 2. Start all services (PostgreSQL + Backend + Frontend)
-docker-compose up -d --build
-
-# 3. Access the application
-# Frontend: http://localhost:3000
-# Backend: http://localhost:5128
-# PostgreSQL: localhost:5432
+```text
+Now listening on: http://localhost:17xxx
 ```
 
-See [DEPLOYMENT.md](DEPLOYMENT.md) for complete deployment instructions including:
-- Production configuration
-- Nginx reverse proxy setup
-- SSL certificates with Let's Encrypt
-- Database backups
-- Monitoring and troubleshooting
+Open that URL manually.
 
-## Git Workflow
+---
 
-This project uses [Conventional Commits](https://www.conventionalcommits.org/):
+## Contributing
 
-- `feat:` - New features
-- `fix:` - Bug fixes
-- `docs:` - Documentation changes
-- `refactor:` - Code refactoring
-- `style:` - Code style changes
-- `test:` - Test additions or changes
-- `chore:` - Maintenance tasks
+### Code Standards
+
+- Follow patterns in existing code
+- Use TypeScript (no `any` types)
+- Add tests for new features
+- Update documentation with changes
+- Use conventional commits
+
+### Before Submitting PR
+
+- [ ] Tests pass (`dotnet test`)
+- [ ] Code builds without warnings
+- [ ] Documentation updated
+- [ ] No `console.log`/`Console.WriteLine`
+- [ ] Follow status conventions
+
+See [AGENTS.md](AGENTS.md) for detailed standards.
+
+---
+
+## Project Status
+
+**Current State (March 2026):**
+
+- ✅ 26 API endpoints with full CRUD
+- ✅ 112 passing tests (unit + integration)
+- ✅ 18 reusable UI components
+- ✅ Aspire observability integration
+- ✅ Complete documentation
+
+**Planned Features:**
+
+- 🚧 Authentication (Azure AD B2C)
+- 🚧 Real-time updates (SignalR)
+- 🚧 Export/reporting (PDF/Excel)
 
 ## License
 
-MIT
+MIT License - Free for personal and commercial use.
 
-## Author
+---
 
-Built with ❤️ using .NET Aspire and Next.js
-````
+Built with ❤️ using .NET 10 and Next.js 16

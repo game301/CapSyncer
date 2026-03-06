@@ -8,14 +8,14 @@
 
 ## 📋 Table of Contents
 
-- [Prerequisites](#prerequisites)
-- [Development Setup](#development-setup)
-- [Docker Deployment](#docker-deployment)
-- [Production Deployment](#production-deployment)
-- [Environment Variables](#environment-variables)
-- [Database Setup](#database-setup)
-- [Monitoring & Health Checks](#monitoring--health-checks)
-- [Troubleshooting](#troubleshooting)
+- [Prerequisites](#-prerequisites)
+- [Development Setup](#-development-setup)
+- [Docker Deployment](#-docker-deployment)
+- [Production Deployment](#-production-deployment)
+- [Environment Variables](#-environment-variables)
+- [Database Setup](#%EF%B8%8F-database-setup)
+- [Monitoring & Health Checks](#-monitoring--health-checks)
+- [Troubleshooting](#-troubleshooting)
 
 ---
 
@@ -49,20 +49,31 @@
 
 **This is the primary development workflow for CapSyncer.**
 
+**⚠️ IMPORTANT:** PostgreSQL must be started separately before running Aspire.
+
 ```powershell
-# Install Aspire workload (one-time setup)
+# 1. Start PostgreSQL (required first)
+docker-compose up -d postgres
+
+# 2. Install Aspire workload (one-time setup)
 dotnet workload install aspire
 
-# Run the entire application stack
+# 3. Run the application stack
 dotnet run --project CapSyncer.AppHost
+```
+
+**Or use the start.ps1 script (recommended):**
+
+```powershell
+.\start.ps1    # Handles PostgreSQL + Aspire
 ```
 
 Aspire will:
 
-- ✅ Start PostgreSQL container automatically
-- ✅ Start backend API on http://localhost:5128
-- ✅ Start frontend on http://localhost:3000
+- ✅ Start backend API on <http://localhost:5128>
+- ✅ Start frontend on <http://localhost:3000>
 - ✅ Open Aspire Dashboard (browser opens automatically)
+- ✅ Auto-create database and run migrations
 - ✅ Handle service discovery and health checks
 
 **Aspire Dashboard provides:**
@@ -98,7 +109,7 @@ cd backend
 dotnet run
 ```
 
-Backend API: http://localhost:5128
+Backend API: <http://localhost:5128>
 
 **3. Start Frontend:**
 
@@ -108,7 +119,7 @@ npm install
 npm run dev
 ```
 
-Frontend: http://localhost:3000
+Frontend: <http://localhost:3000>
 
 ### Running Tests
 
@@ -145,7 +156,7 @@ cp backend/.env.example backend/.env
 cp frontend/.env.example frontend/.env.local
 ```
 
-**2. Edit environment files with production values**
+#### 2. Edit environment files with production values
 
 **3. Build and start all services:**
 
@@ -155,8 +166,8 @@ docker-compose up -d --build
 
 **Services:**
 
-- Frontend: http://localhost:3000
-- Backend API: http://localhost:5128
+- Frontend: <http://localhost:3000>
+- Backend API: <http://localhost:5128>
 - PostgreSQL: localhost:5432
 
 **4. Check service health:**
@@ -202,7 +213,7 @@ docker run -p 3000:3000 \
 
 **Important:** The Docker setup is designed for production. Development uses Aspire orchestration without containerizing the backend and frontend.
 
-### Prerequisites
+### Production Prerequisites
 
 1. **Domain name** with DNS configured
 2. **SSL certificates** (Let's Encrypt recommended)
@@ -380,14 +391,12 @@ docker-compose logs -f
 
 ### Frontend Environment Variables
 
-| Variable                  | Description               | Default               | Required |
-| ------------------------- | ------------------------- | --------------------- | -------- |
-| `NEXT_PUBLIC_API_URL`     | Backend API URL           | http://localhost:5128 | ✅       |
-| `NEXT_PUBLIC_BASE_URL`    | Frontend base URL for SEO | http://localhost:3000 | ✅       |
-| `NODE_ENV`                | Node environment          | development           | ❌       |
-| `NEXT_TELEMETRY_DISABLED` | Disable Next.js telemetry | 1                     | ❌       |
-
----
+| Variable                  | Description               | Default                 | Required |
+| ------------------------- | ------------------------- | ----------------------- | -------- |
+| `NEXT_PUBLIC_API_URL`     | Backend API URL           | <http://localhost:5128> | ✅       |
+| `NEXT_PUBLIC_BASE_URL`    | Frontend base URL for SEO | <http://localhost:3000> | ✅       |
+| `NODE_ENV`                | Node environment          | development             | ❌       |
+| `NEXT_TELEMETRY_DISABLED` | Disable Next.js telemetry | 1                       | ❌       |
 
 ## 🗄️ Database Setup
 
@@ -550,8 +559,8 @@ deploy:
 
 ### Getting Help
 
-- **Issues**: https://github.com/game301/CapSyncer/issues
-- **Documentation**: Check `AI_CONTEXT.md` for detailed project information
+- **Issues**: <https://github.com/game301/CapSyncer/issues>
+- **Documentation**: Check `AGENTS.md` for detailed project information
 - **Logs**: Always check `docker-compose logs` for detailed error messages
 
 ---
@@ -597,13 +606,8 @@ crontab -e
 
 ## 📝 Additional Resources
 
-- [API Documentation](API_GUIDE_AND_CLEANUP.md)
+- [API Reference](../backend/CapSyncer.Server.http) - HTTP test file with all endpoints
 - [Testing Guide](TESTING.md)
-- [Database Guide](HOW_TO_VIEW_DATABASE.md)
-- [AI Context](AI_CONTEXT.md)
-- [Project Status](PROJECT_STATUS.md)
-
----
-
-**Last Updated:** March 4, 2026
-**Version:** 1.0.0
+- [AI Context](AGENTS.md)
+- [Code Documentation](CODE_DOCUMENTATION.md)
+- [Monitoring Guide](MONITORING.md)

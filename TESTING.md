@@ -80,7 +80,7 @@ This separation ensures:
 
 ## Running Tests
 
-### Backend Tests
+### Backend Test Commands
 
 ```bash
 # Run all backend tests
@@ -123,7 +123,7 @@ npm test Button.test.tsx
 npm test -- -u
 ```
 
-### E2E Tests
+### E2E Test Commands
 
 ```bash
 # Install Playwright browsers (first time only)
@@ -153,30 +153,31 @@ npx playwright test coworkers.spec.ts
 npx playwright test --project=chromium
 ```
 
-## Test Scripts
+## Running All Tests
 
-### All Tests Runner
-
-Run all tests at once (except E2E which requires app running):
-
-**Windows:**
+### Running Backend Tests
 
 ```powershell
-.\run-all-tests.ps1
+# From root directory
+cd backend.tests
+dotnet test
 ```
 
-**Linux/Mac:**
+### Running Frontend Tests
 
-```bash
-./run-all-tests.sh
+```powershell
+# From root directory
+cd frontend
+npm test
 ```
 
-This script runs:
+### Running E2E Tests
 
-1. Backend unit tests
-2. Backend integration tests
-3. Frontend component tests
-4. _(E2E tests optional - requires app running)_
+```powershell
+# From root directory (requires app running)
+cd e2e
+npm run test:e2e
+```
 
 ## CI/CD Integration
 
@@ -236,20 +237,20 @@ jobs:
 
 ## Test Data Management
 
-### Backend
+### Backend Test Data
 
 - Uses **in-memory database** (`UseInMemoryDatabase`) for each test
 - Fresh database instance per test class
 - No test pollution between runs
 - Each test class gets unique database name
 
-### Frontend
+### Frontend Test Data
 
 - **localStorage** cleared before each test
 - Mock API responses where needed
 - Isolated test environment via `@testing-library/react`
 
-### E2E
+### E2E Test Data
 
 - Tests run against **real backend API**
 - **Option 1**: Use test database that resets between runs
@@ -350,7 +351,7 @@ it('should handle button click', async () => {
 })
 ```
 
-### E2E Tests
+### E2E Testing Best Practices
 
 ✅ Test real user workflows (create → edit → delete)  
 ✅ Avoid testing implementation details  
@@ -374,7 +375,7 @@ test("should create and assign task", async ({ page }) => {
 
 ## Debugging Tests
 
-### Backend
+### Backend Tests Debugging
 
 ```bash
 # Run single test with verbose output
@@ -384,7 +385,7 @@ dotnet test --filter "FullyQualifiedName~TestName" -v detailed
 # Or attach to test process
 ```
 
-### Frontend
+### Frontend Tests Debugging
 
 ```bash
 # Debug specific test
@@ -397,7 +398,7 @@ node --inspect-brk node_modules/.bin/jest --runInBand
 # Or add debugger; statement in test
 ```
 
-### E2E
+### E2E Tests Debugging (Playwright)
 
 ```bash
 # Debug with Playwright Inspector (step through)

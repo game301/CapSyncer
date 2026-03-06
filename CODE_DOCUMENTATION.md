@@ -2,15 +2,13 @@
 
 > Comprehensive guide to the CapSyncer codebase architecture and conventions
 
-**Last Updated:** March 5, 2026  
-**Version:** 1.0.0
-
 **⚠️ Important Notes:**
 
 - Development uses **.NET Aspire 13.1.2** for orchestration (not Docker)
 - Docker files are for **production deployment only**
 - Tech stack: .NET 10, Next.js 16.1.6, React 19.2.3, Tailwind CSS 4
-- No external UI component library (custom components)
+- Custom UI components (no external component library)
+- **26 API endpoints**, **112 tests passing**
 
 ---
 
@@ -18,39 +16,41 @@
 
 - [Architecture Overview](#architecture-overview)
 - [Backend Architecture](#backend-architecture)
-- [Frontend Architecture](#frontend-architecture)
-- [Data Models](#data-models)
-- [API Design](#api-design)
-- [State Management](#state-management)
-- [Styling Conventions](#styling-conventions)
-- [Monitoring & Observability](#monitoring--observability)
-- [Testing Strategy](#testing-strategy)
-- [Code Conventions](#code-conventions)
+- [🎨 Frontend Architecture](#-frontend-architecture)
+- [📊 Data Models](#-data-models)
+- [🎯 API Design](#-api-design)
+- [🛠️ Frontend Utilities (March 2026 Refactoring)](#%EF%B8%8F-frontend-utilities-march-2026-refactoring)
+- [🔄 State Management](#-state-management)
+- [🎨 Styling Conventions](#-styling-conventions)
+- [📊 Monitoring & Observability](#-monitoring--observability)
+- [🧪 Testing Strategy](#-testing-strategy)
+- [📝 Code Conventions](#-code-conventions)
 
 ---
 
-## 🏗️ Architecture Overview
+## Architecture Overview
 
 CapSyncer follows a **modern n-tier architecture** with clear separation of concerns:
 
-```
+```text
 ┌─────────────────────────────────────────────────┐
 │              Frontend (Next.js)                  │
 │  ┌──────────────────────────────────────────┐  │
 │  │  Pages (App Router)                       │  │
 │  │  ├── layout.tsx (Root Layout + SEO)      │  │
-│  │  ├── page.tsx (Home/Landing)             │  │
+│  │  ├── page.tsx (Dashboard)                │  │
 │  │  └── [entity]/[id]/ (Detail Pages)       │  │
 │  └──────────────────────────────────────────┘  │
 │  ┌──────────────────────────────────────────┐  │
-│  │  Components                               │  │
-│  │  ├── Custom Components                   │  │
+│  │  Components (18 reusable)                │  │
+│  │  ├── UI Components                       │  │
 │  │  ├── Business Components                 │  │
 │  │  └── Layout Components                   │  │
 │  └──────────────────────────────────────────┘  │
 │  ┌──────────────────────────────────────────┐  │
-│  │  Contexts (React Context API)            │  │
-│  │  └── PermissionContext                   │  │
+│  │  Contexts & Utils                        │  │
+│  │  ├── PermissionContext                   │  │
+│  │  └── 5 utility modules                   │  │
 │  └──────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────┘
                       ▼ HTTP/REST
@@ -63,15 +63,15 @@ CapSyncer follows a **modern n-tier architecture** with clear separation of conc
 │  │  ├── Tasks (5 endpoints)                 │  │
 │  │  ├── Assignments (5 endpoints)           │  │
 │  │  ├── Calendar (4 endpoints)              │  │
-│  │  └── Health (2 endpoints)                │  │
+│  │  └── Status (1 endpoint)                 │  │
 │  └──────────────────────────────────────────┘  │
 │  ┌──────────────────────────────────────────┐  │
 │  │  Models (EF Core)                        │  │
-│  │  ├── Coworker                            │  │
-│  │  ├── Project                             │  │
-│  │  ├── TaskItem                            │  │
-│  │  ├── Assignment                          │  │
-│  │  └── CapSyncerDbContext                  │  │
+│  │  └── CapSyncerDbContext.cs              │  │
+│  │      ├── Coworker                        │  │
+│  │      ├── Project                         │  │
+│  │      ├── TaskItem                        │  │
+│  │      └── Assignment                      │  │
 │  └──────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────┘
                       ▼ EF Core
@@ -84,56 +84,31 @@ CapSyncer follows a **modern n-tier architecture** with clear separation of conc
 
 ---
 
-## 🔧 Backend Architecture
+## Backend Architecture
 
 ### Technology Stack
 
 - **.NET 10.0** - Latest runtime
 - **ASP.NET Core Minimal APIs** - Lightweight HTTP APIs
-- **Entity Framework Core 10.0** - ORM
+- **Entity Framework Core 10.0.3** - ORM
 - **Npgsql** - PostgreSQL provider
-- **xUnit** - Testing framework
+- **xUnit** - Testing framework (112 tests)
 
 ### File Structure
 
-```
+```text
 backend/
-├── Program.cs              # API endpoints, DI, middleware
+├── Program.cs              # API endpoints, DI, middleware (~900 lines)
 ├── appsettings.json        # Configuration
 ├── appsettings.Development.json
 ├── CapSyncer.Server.csproj # Project file
-├── CapSyncer.Server.http   # HTTP test file
-├── Dockerfile              # Container definition
-├── .dockerignore           # Docker build exclusions
+├── CapSyncer.Server.http   # HTTP test file (26 endpoints)
+├── Dockerfile              # Production container
+├── .dockerignore           # Docker exclusions
 ├── .env.example            # Environment template
 └── Models/
-    └── CapSyncerDbContext.cs  # EF Core models
+    └── CapSyncerDbContext.cs  # EF Core models & relationships
 ```
-
-### Program.cs Architecture
-
-**Program.cs** contains all API logic in ~600 lines, organized into sections:
-
-1. **Service Configuration** (Lines 1-60)
-   - JSON serialization (circular reference handling)
-   - DbContext (InMemory for testing, PostgreSQL for dev/prod)
-   - CORS policies (DevCors, ProdCors)
-
-2. **Middleware Pipeline** (Lines 61-150)
-   - HTTPS redirection (production only)
-   - CORS
-   - Database auto-creation and migration (development)
-
-3. **API Endpoints** (Lines 151-550)
-   - Coworkers (6 endpoints) - Lines 155-250
-   - Projects (5 endpoints) - Lines 256-350
-   - Tasks (5 endpoints) - Lines 356-390
-   - Assignments (5 endpoints) - Lines 391-433
-   - Calendar (4 endpoints) - Lines 434-547
-   - Health (2 endpoints) - Lines 548-556
-
-4. **Helper Methods** (Lines 557-600)
-   - ISO week calculation
 
 ### Data Access Patterns
 
@@ -248,7 +223,7 @@ await db.SaveChangesAsync();
 
 ## 🎨 Frontend Architecture
 
-### Technology Stack
+### Frontend Technology Stack
 
 - **Next.js 16.1.6** - React framework with App Router
 - **React 19.2.3** - UI library
@@ -256,9 +231,9 @@ await db.SaveChangesAsync();
 - **Tailwind CSS 4** - Utility-first CSS
 - **Custom Components** - No external component library (custom Button, Modal, Table, etc.)
 
-### File Structure
+### Frontend File Structure
 
-```
+```text
 frontend/
 ├── app/                    # Next.js App Router
 │   ├── layout.tsx         # Root layout + SEO
@@ -413,7 +388,7 @@ interface TableProps<T> {
 
 ### Entity Relationship Diagram
 
-```
+```text
 ┌──────────────┐         ┌──────────────┐
 │   Coworker   │         │   Project    │
 ├──────────────┤         ├──────────────┤
@@ -904,7 +879,7 @@ const priorityColors = {
 
 ## 📊 Monitoring & Observability
 
-### Overview
+### Monitoring Overview
 
 CapSyncer implements comprehensive monitoring through:
 
@@ -1077,6 +1052,7 @@ const response = await fetchWithLogging("/api/tasks", { method: "GET" });
    ```
 
 2. **Configure connection string**:
+
    ```json
    {
      "ApplicationInsights": {
@@ -1113,7 +1089,7 @@ See [MONITORING.md](MONITORING.md) for complete setup guide.
 
 ### Test Pyramid
 
-```
+```text
         ┌─────────────┐
         │   E2E (?)    │  ← Playwright (if implemented)
         └─────────────┘
@@ -1125,7 +1101,9 @@ See [MONITORING.md](MONITORING.md) for complete setup guide.
     └───────────────────────┘
 ```
 
-**Total: 112 tests (100% passing)**
+#### Test Coverage
+
+Total: 112 tests (100% passing)
 
 ### Backend Testing
 
@@ -1189,8 +1167,3 @@ public class EntityIntegrationTests : IAsyncLifetime
 - **C#:** PascalCase - `CapSyncerDbContext.cs`
 - **TypeScript:** PascalCase for components - `CreateTaskModal.tsx`
 - **TypeScript:** kebab-case for utilities - `date-utils.ts`
-
----
-
-**Last Updated:** March 4, 2026
-**Version:** 1.0.0

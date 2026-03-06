@@ -144,7 +144,7 @@ if (!string.IsNullOrEmpty(builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_
 }
 ```
 
-3. **Add connection string to environment variables:**
+1. **Add connection string to environment variables:**
 
 ```powershell
 # Production environment
@@ -159,7 +159,7 @@ APPLICATIONINSIGHTS_CONNECTION_STRING=InstrumentationKey=xxx...
 npm install @sentry/nextjs
 ```
 
-2. **Initialize in `frontend/utils/logger.ts`:**
+1. **Initialize in `frontend/utils/logger.ts`:**
 
 ```typescript
 import * as Sentry from "@sentry/nextjs";
@@ -168,7 +168,7 @@ import * as Sentry from "@sentry/nextjs";
 Sentry.captureException(logData);
 ```
 
-3. **Add Sentry config:**
+1. **Add Sentry config:**
 
 ```typescript
 // frontend/sentry.client.config.ts
