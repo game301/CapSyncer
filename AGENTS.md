@@ -2,6 +2,7 @@
 
 > **PRIMARY AI CONTEXT FILE** - This document contains critical information for AI agents working on CapSyncer.
 > Optimized for LLM consumption with structured, actionable information.
+> **⚠️ IMPORTANT FOR AI AGENTS:** Read this ENTIRE file at the start of EVERY session. If you only receive a partial view in your initial context, use `read_file` to load the complete content. This file contains critical workflows, conventions, and rules that must be followed.
 
 ---
 
@@ -260,6 +261,103 @@ cd frontend
 npm run build  # Includes TypeScript type checking
 ```
 
+### Git Workflow
+
+**After making ANY code changes, follow this process:**
+
+1. **Update Documentation** - See "Documentation Update Protocol" (Critical Rule #1)
+   - Update AGENTS.md FIRST (source of truth for AI agents)
+   - Update README.md if user-facing changes
+   - Update CODE_DOCUMENTATION.md if technical/architectural changes
+   - Update specialized docs as needed (DEPLOYMENT.md, TESTING.md, MONITORING.md)
+
+2. **Run Quality Checks**
+   - Backend: `dotnet build` and `dotnet test` (112 tests must pass)
+   - Frontend: `npm run build` and `npm test`
+   - E2E (if applicable): `npm run test:e2e`
+   - Verify no `console.log` or `Console.WriteLine` statements
+
+3. **Stage Changes**
+
+   ```powershell
+   git add <files>           # Stage specific files
+   # or
+   git add -A                # Stage all changes (use cautiously)
+   ```
+
+4. **Commit with Conventional Commits**
+
+   **Format:** `<type>(<scope>): <short summary>`
+
+   **Types:**
+   - `feat`: New feature or enhancement
+   - `fix`: Bug fix
+   - `docs`: Documentation only changes
+   - `style`: Code style/formatting (no logic change)
+   - `refactor`: Code restructuring (no behavior change)
+   - `test`: Adding or updating tests
+   - `chore`: Maintenance tasks (dependencies, config, scripts)
+   - `perf`: Performance improvements
+   - `ci`: CI/CD pipeline changes
+
+   **Scope (optional):** backend, frontend, setup, docs, tests, e2e
+
+   **Examples:**
+
+   ```bash
+   # Feature with detailed body
+   git commit -m "feat(backend): add cascade delete for projects to tasks
+
+   - Implement cascade delete in EF Core configuration
+   - Update integration tests to verify cascade behavior
+   - Add migration for foreign key constraints
+   - Update CODE_DOCUMENTATION.md with cascade rules"
+
+   # Bug fix
+   git commit -m "fix(frontend): correct capacity calculation in WeeklyCapacityView
+
+   - Fix off-by-one error in week number calculation
+   - Add test case for edge case scenario
+   - Update date utility documentation"
+
+   # Documentation update
+   git commit -m "docs: update setup scripts with prerequisite checks
+
+   - Add .NET SDK and Node.js version verification
+   - Fix bash scripts to isolate PostgreSQL service
+   - Update AGENTS.md and README.md with new workflow"
+
+   # Chore (setup/config)
+   git commit -m "chore(setup): add E2E test dependencies to setup scripts
+
+   - Install Playwright packages in both setup.ps1 and setup.sh
+   - Update step numbering to reflect new installation step"
+   ```
+
+5. **Push Changes** (when ready)
+
+   ```powershell
+   git push origin main      # Or your feature branch
+   ```
+
+**Commit Message Guidelines:**
+
+- **First line (summary):** Max 72 characters, imperative mood ("add" not "added")
+- **Body (optional):** Detailed explanation, wrap at 72 characters
+- **Use bullet points** for multiple changes
+- **Reference issues/PRs** if applicable: "Fixes #123" or "Closes #45"
+- **Document what AND why**, not how (code shows how)
+
+**When to Commit:**
+
+- ✅ After completing a logical unit of work (feature, fix, refactor)
+- ✅ After updating all affected documentation
+- ✅ After all tests pass
+- ✅ Before switching context or starting new work
+- ❌ Don't commit broken/untested code
+- ❌ Don't commit commented-out code or debug statements
+- ❌ Don't commit secrets or `.env` files
+
 ---
 
 ## 🔧 Configuration & Environment
@@ -436,6 +534,11 @@ When working on this project:
    - Documentation is NEVER optional
 6. **Run tests** - Verify with `dotnet test` (should be 112/112 passing)
 7. **Verify builds** - Both `dotnet build` and `npm run build` must succeed
+8. **⚠️ COMMIT CHANGES (MANDATORY)** - See "Git Workflow" section above
+   - Stage affected files with `git add`
+   - Use Conventional Commits format for commit messages
+   - Include detailed body explaining what and why
+   - Push when ready
 
 ---
 
