@@ -1,77 +1,82 @@
 # AI AGENT GUIDE - CapSyncer Project
 
-> **PRIMARY AI CONTEXT FILE** - This document contains critical information for AI agents working on CapSyncer.
-> Optimized for LLM consumption with structured, actionable information.
-> **⚠️ IMPORTANT FOR AI AGENTS:** Read this ENTIRE file at the start of EVERY session. If you only receive a partial view in your initial context, use `read_file` to load the complete content. This file contains critical workflows, conventions, and rules that must be followed.
+> **⚠️ READ THIS FIRST:** This is the source of truth for AI agents. If you receive a partial view, use `read_file` to load the complete content.
 
 ---
 
-## 🎯 QUICK REFERENCE (Critical Facts)
+## 🚦 AGENT WORKFLOW (Follow This Order)
 
-**Project Type:** Team capacity management system (tracks coworkers, projects, tasks, assignments)
+**Before ANY code changes:**
 
-**Tech Stack:**
+1. Read relevant sections of this file
+2. Check existing components/utilities before creating new ones
+3. Verify status values and validation rules
+4. Plan documentation updates
 
-- Backend: .NET 10.0 Minimal APIs, EF Core 10.0.3, PostgreSQL 17.6
-- Frontend: Next.js 16.1.6, React 19.2.3, TypeScript 5, Tailwind CSS 4
-- Orchestration: .NET Aspire 13.1.2 (dev only, not Docker)
-- Testing: xUnit (backend), Jest (frontend), Playwright (e2e)
+**After making changes (MANDATORY):**
 
-**Current State:**
-
-- 26 API endpoints (Coworkers: 6, Projects: 5, Tasks: 5, Assignments: 5, Calendar: 4, Status: 1)
-- 112 passing tests (verified)
-- 18 reusable UI components
-- 5 utility modules (logger, config, date, types, api)
-- Full CRUD operations on all entities
-- Aspire-based observability (OpenTelemetry, structured logging)
+1. Update **AGENTS.md** first (keep metrics current)
+2. Update **README.md** if user-facing
+3. Update **CODE_DOCUMENTATION.md** if architectural
+4. Run `dotnet build` and `dotnet test` (backend)
+5. Run `npm run build` and `npm test` (frontend)
+6. Commit with Conventional Commits format
+7. Push when ready
 
 ---
 
-## ⚠️ CRITICAL RULES (Enforce Always)
+## 🎯 PROJECT SNAPSHOT
 
-### 1. Documentation Update Protocol
+| Category       | Details                                                                                    |
+| -------------- | ------------------------------------------------------------------------------------------ |
+| **Domain**     | Team capacity management (coworkers, projects, tasks, assignments)                         |
+| **Backend**    | .NET 10.0, EF Core 10.0.3, PostgreSQL 17.6, Minimal APIs                                   |
+| **Frontend**   | Next.js 16.1.6, React 19.2.3, TypeScript 5, Tailwind 4                                     |
+| **Dev Stack**  | .NET Aspire 13.1.2, Docker (PostgreSQL only)                                               |
+| **Testing**    | 112 tests passing (xUnit, Jest, Playwright)                                                |
+| **APIs**       | 26 endpoints (Coworkers: 6, Projects: 5, Tasks: 5, Assignments: 5, Calendar: 4, Status: 1) |
+| **Components** | 18 reusable UI components, 5 utility modules                                               |
+| **Ports**      | Backend: 5128, Frontend: 3000, PostgreSQL: 5432                                            |
 
-**MANDATORY:** Update documentation IMMEDIATELY with ANY code change.
+---
 
-**Update Order:**
+## ⚠️ CRITICAL RULES (Non-Negotiable)
 
-1. **AGENTS.md** (this file) - Source of truth for AI agents
-2. **README.md** - If user-facing changes (features, setup, usage)
-3. **CODE_DOCUMENTATION.md** - If technical changes (architecture, patterns, APIs)
-4. **Specialized docs** - As needed (DEPLOYMENT.md, TESTING.md, MONITORING.md)
+### Status Values (Use Exact Strings)
 
-**Why:** Documentation drift wastes time and causes confusion. Outdated docs are worse than no docs.
+| Entity      | Valid Values                                                                                       |
+| ----------- | -------------------------------------------------------------------------------------------------- |
+| **Task**    | `"Planning"` \| `"In Progress"` \| `"On Hold"` \| `"Completed"` \| `"Continuous"` \| `"Cancelled"` |
+| **Project** | `"Planning"` \| `"In Progress"` \| `"On Hold"` \| `"Completed"` \| `"Cancelled"`                   |
 
-### 2. Logging Standards
+❌ **NEVER use:** "Not started", "In progress" (lowercase p), or any other variants
 
-- Backend: Use `ILogger<Program>` only (NEVER `Console.WriteLine`)
-- Frontend: Use `logger.debug/info/warn/error` (NEVER `console.log`)
-- Error boundaries catch React errors automatically
-- Aspire provides OpenTelemetry tracing/metrics/logs
+### Logging (No Exceptions)
 
-### 3. Status Values (Use Exact Strings)
+| Context  | Use                            | Never Use           |
+| -------- | ------------------------------ | ------------------- |
+| Backend  | `ILogger<Program>`             | `Console.WriteLine` |
+| Frontend | `logger.debug/info/warn/error` | `console.log`       |
 
-**Task Statuses:** `"Planning"` | `"In Progress"` | `"On Hold"` | `"Completed"` | `"Continuous"` | `"Cancelled"`  
-**Project Statuses:** `"Planning"` | `"In Progress"` | `"On Hold"` | `"Completed"` | `"Cancelled"`
+### Validation Rules
 
-**NEVER use:** "Not started", "In progress" (lowercase p), or any other variants
+| Rule                | Constraint                                 |
+| ------------------- | ------------------------------------------ |
+| `Task.WeeklyEffort` | Must be > 0 (validated on POST/PUT)        |
+| `Coworker.Capacity` | Must be > 0                                |
+| Coworker deletion   | Soft delete via `IsActive` flag            |
+| Cascade behavior    | Projects → Tasks → Assignments (automatic) |
 
-### 4. Validation Rules
+### Security (Built-In)
 
-- `Task.WeeklyEffort` > 0 (validated on POST/PUT)
-- `Coworker.Capacity` > 0
-- Soft delete for Coworkers (`IsActive` flag)
-- Cascade delete: Projects → Tasks → Assignments
+✅ **Automatic protections:**  
+SQL injection (EF Core parameterized queries) · XSS (React auto-escaping) · CORS (localhost:3000/3001 dev)
 
-### 5. Security Requirements
+❌ **Never commit:**  
+`.env` files · Passwords · Tokens · PII
 
-- ✅ EF Core parameterized queries (automatic SQL injection prevention)
-- ✅ React auto-escaping (automatic XSS prevention)
-- ✅ CORS: localhost:3000/3001 (dev), configure domain (prod)
-- ✅ Secrets: `.env` files (git-ignored) or Azure Key Vault (prod)
-- ❌ NEVER commit `.env` files or log passwords/tokens/PII
-- ❌ NEVER use `dangerouslySetInnerHTML` or `AllowAnyOrigin()`
+❌ **Never use:**  
+`dangerouslySetInnerHTML` · `AllowAnyOrigin()`
 
 ---
 
@@ -85,43 +90,29 @@
 **CRUD** - All entities support Create, Read, Update, Delete (RESTful conventions).  
 **ACID** - EF Core handles database transactions automatically.
 
-### Component Creation Rules (Frontend)
+| Principle   | Application                                                                 |
+| ----------- | --------------------------------------------------------------------------- |
+| **YAGNI**   | Don't add features until needed. Remove unused code/imports.                |
+| **DRY**     | Extract repeated logic (2+ occurrences) into reusable functions/components. |
+| **SOLID**   | Single responsibility, composition over modification, small interfaces.     |
+| **RESTful** | All entities support standard CRUD operations.                              |
 
-**Create reusable component when:**
+### Reusable Assets (Check Before Creating)
 
-- Pattern appears 2+ times across different pages
-- Component is self-contained with clear props
-- Component reduces parent complexity
+**Components (18):** ActionButtons · Button · CreateAssignmentModal · CreateTaskModal · ErrorBoundary · Footer · FormInputs · LoadingSpinner · Modal · Navbar · PageLayout · ProgressBar · RoleSwitcher · Table · Toast · UserSettings · WeeklyCapacityView · WeekSelector
 
-**Existing reusable components (18 total):**
-ActionButtons, Button, CreateAssignmentModal, CreateTaskModal, ErrorBoundary, Footer, FormInputs, LoadingSpinner, Modal, Navbar, PageLayout, ProgressBar, RoleSwitcher, Table, Toast, UserSettings, WeeklyCapacityView, WeekSelector
+**Utilities (5):** `logger.ts` (structured logging) · `config.ts` (env vars) · `date.ts` (ISO weeks) · `types.ts` (interfaces) · `api.ts` (API wrappers)
 
-**Existing utilities (5 total):**
+**Create new component when:** Pattern appears 2+ times, self-contained with clear props, reduces parent complexity.
 
-- `logger.ts` - Structured logging with log levels
-- `config.ts` - Type-safe environment variable access
-- `date.ts` - ISO week calculations, date formatting
-- `types.ts` - Shared TypeScript interfaces (single source of truth)
-- `api.ts` - API wrappers with automatic error logging
+### Pre-Commit Checklist
 
-### Code Quality Checklist
-
-**Before committing:**
-
-- [ ] `dotnet build` succeeds (backend)
-- [ ] `npm run build` succeeds (frontend + TypeScript check)
-- [ ] `dotnet test` passes (112 tests must pass)
-- [ ] No `console.log` (use `logger.debug`)
+- [ ] Backend: `dotnet build` and `dotnet test` pass (112 tests)
+- [ ] Frontend: `npm run build` and `npm test` pass
+- [ ] No `console.log` or `Console.WriteLine`
 - [ ] No commented-out code
-- [ ] Documentation updated (AGENTS.md, README.md, CODE_DOCUMENTATION.md)
-- [ ] Status values use exact strings ("Planning", "In Progress", etc.)
-- [ ] New tests added for new features
-
----
-
-## 🏗️ ARCHITECTURE OVERVIEW
-
-### Backend Structure
+- [ ] Documentation updated (AGENTS.md → README.md → CODE_DOCUMENTATION.md)
+- [ ] Status values use exact strings
 
 ```text
 backend/
@@ -174,393 +165,171 @@ Coworker (1) ──< Assignments >── (1) TaskItem
 
 ---
 
-## 🚀 DEVELOPMENT WORKFLOW
+## 🚀 COMMON TASKS
 
-### Starting the Application
+### Start Development
 
-**⚠️ CRITICAL:** PostgreSQL must be started in Docker BEFORE running Aspire.
-
-**Prerequisites:**
-
-- .NET 10 SDK
-- Node.js 20+
-- Docker Desktop
-
-> **Note:** Setup scripts automatically verify all prerequisites and display download links if anything is missing.
-
-#### Recommended: Use Scripts
+**Prerequisites:** .NET 10 SDK, Node.js 20+, Docker Desktop
 
 ```powershell
-# First run (one-time setup)
-.\setup.ps1    # Checks prerequisites, installs Aspire workload, starts PostgreSQL, restores backend, installs frontend + e2e dependencies
+# One-time setup
+.\setup.ps1    # Windows
+./setup.sh     # Linux/Mac
 
 # Every subsequent run
-.\start.ps1    # Checks PostgreSQL, starts Aspire
+.\start.ps1    # Windows (checks PostgreSQL, starts Aspire)
+./start.sh     # Linux/Mac
 ```
 
-**Linux/Mac:**
-
-```bash
-# First run (one-time setup)
-./setup.sh     # Checks prerequisites, installs Aspire workload, starts PostgreSQL, restores backend, installs frontend + e2e dependencies
-
-# Every subsequent run
-./start.sh     # Checks PostgreSQL, starts Aspire
-```
-
-#### Manual Method
+**Manual (if scripts fail):**
 
 ```powershell
-# 1. Start PostgreSQL (REQUIRED FIRST)
 docker-compose up -d postgres
-
-# 2. Start Aspire AppHost
 dotnet run --project CapSyncer.AppHost
 ```
 
-**Aspire manages:**
+**What Aspire manages:** Backend (5128) · Frontend (3000) · Dashboard · Database migrations · Health checks
 
-- ✅ Backend API (<http://localhost:5128>)
-- ✅ Frontend (<http://localhost:3000>)
-- ✅ Aspire Dashboard (auto-opens in browser)
-- ✅ Database creation and migrations
-- ✅ Health checks and logging
+⚠️ **PostgreSQL must start BEFORE Aspire.** Docker is dev-only for PostgreSQL. See DEPLOYMENT.md for production.
 
-**Important:** Docker is ONLY for PostgreSQL in dev. Backend/frontend run natively. Full Docker deployment is production-only (see DEPLOYMENT.md).
+### Run Tests
 
-### Running Tests
+| Command                                       | Purpose                                        |
+| --------------------------------------------- | ---------------------------------------------- |
+| `dotnet test`                                 | Backend tests (from `CapSyncer.Server.Tests/`) |
+| `dotnet test --collect:"XPlat Code Coverage"` | With coverage                                  |
+| `npm test`                                    | Frontend tests (from `frontend/`)              |
+| `npm run test:watch`                          | Watch mode                                     |
+| `npm run test:e2e`                            | E2E tests (from `e2e/`)                        |
 
-```powershell
-# Backend tests (112 total)
-cd CapSyncer.Server.Tests
-dotnet test --nologo
-
-# With coverage
-dotnet test --collect:"XPlat Code Coverage"
-
-# Frontend tests
-cd frontend
-npm test               # Run once
-npm run test:watch     # Watch mode
-npm run test:coverage  # With coverage
-
-# E2E tests (Playwright)
-cd e2e
-npm run test:e2e
-```
-
-### Building
+### Build
 
 ```powershell
 # Backend
-cd backend
-dotnet build --nologo
+cd backend; dotnet build --nologo
 
-# Frontend
-cd frontend
-npm run build  # Includes TypeScript type checking
+# Frontend (includes TypeScript check)
+cd frontend; npm run build
 ```
 
-### Git Workflow
+### Commit Changes (Conventional Commits)
 
-**After making ANY code changes, follow this process:**
+**Format:** `<type>(<scope>): <summary>` (max 72 chars, imperative mood)
 
-1. **Update Documentation** - See "Documentation Update Protocol" (Critical Rule #1)
-   - Update AGENTS.md FIRST (source of truth for AI agents)
-   - Update README.md if user-facing changes
-   - Update CODE_DOCUMENTATION.md if technical/architectural changes
-   - Update specialized docs as needed (DEPLOYMENT.md, TESTING.md, MONITORING.md)
+**Types:** `feat` · `fix` · `docs` · `style` · `refactor` · `test` · `chore` · `perf` · `ci`  
+**Scopes:** backend · frontend · setup · docs · tests · e2e
 
-2. **Run Quality Checks**
-   - Backend: `dotnet build` and `dotnet test` (112 tests must pass)
-   - Frontend: `npm run build` and `npm test`
-   - E2E (if applicable): `npm run test:e2e`
-   - Verify no `console.log` or `Console.WriteLine` statements
+**Example:**
 
-3. **Stage Changes**
+```bash
+git commit -m "feat(backend): add cascade delete for projects to tasks
 
-   ```powershell
-   git add <files>           # Stage specific files
-   # or
-   git add -A                # Stage all changes (use cautiously)
-   ```
+- Implement cascade delete in EF Core configuration
+- Update integration tests to verify cascade behavior
+- Add migration for foreign key constraints
+- Update CODE_DOCUMENTATION.md with cascade rules"
+```
 
-4. **Commit with Conventional Commits**
-
-   **Format:** `<type>(<scope>): <short summary>`
-
-   **Types:**
-   - `feat`: New feature or enhancement
-   - `fix`: Bug fix
-   - `docs`: Documentation only changes
-   - `style`: Code style/formatting (no logic change)
-   - `refactor`: Code restructuring (no behavior change)
-   - `test`: Adding or updating tests
-   - `chore`: Maintenance tasks (dependencies, config, scripts)
-   - `perf`: Performance improvements
-   - `ci`: CI/CD pipeline changes
-
-   **Scope (optional):** backend, frontend, setup, docs, tests, e2e
-
-   **Examples:**
-
-   ```bash
-   # Feature with detailed body
-   git commit -m "feat(backend): add cascade delete for projects to tasks
-
-   - Implement cascade delete in EF Core configuration
-   - Update integration tests to verify cascade behavior
-   - Add migration for foreign key constraints
-   - Update CODE_DOCUMENTATION.md with cascade rules"
-
-   # Bug fix
-   git commit -m "fix(frontend): correct capacity calculation in WeeklyCapacityView
-
-   - Fix off-by-one error in week number calculation
-   - Add test case for edge case scenario
-   - Update date utility documentation"
-
-   # Documentation update
-   git commit -m "docs: update setup scripts with prerequisite checks
-
-   - Add .NET SDK and Node.js version verification
-   - Fix bash scripts to isolate PostgreSQL service
-   - Update AGENTS.md and README.md with new workflow"
-
-   # Chore (setup/config)
-   git commit -m "chore(setup): add E2E test dependencies to setup scripts
-
-   - Install Playwright packages in both setup.ps1 and setup.sh
-   - Update step numbering to reflect new installation step"
-   ```
-
-5. **Push Changes** (when ready)
-
-   ```powershell
-   git push origin main      # Or your feature branch
-   ```
-
-**Commit Message Guidelines:**
-
-- **First line (summary):** Max 72 characters, imperative mood ("add" not "added")
-- **Body (optional):** Detailed explanation, wrap at 72 characters
-- **Use bullet points** for multiple changes
-- **Reference issues/PRs** if applicable: "Fixes #123" or "Closes #45"
-- **Document what AND why**, not how (code shows how)
-
-**When to Commit:**
-
-- ✅ After completing a logical unit of work (feature, fix, refactor)
-- ✅ After updating all affected documentation
-- ✅ After all tests pass
-- ✅ Before switching context or starting new work
-- ❌ Don't commit broken/untested code
-- ❌ Don't commit commented-out code or debug statements
-- ❌ Don't commit secrets or `.env` files
+**Commit when:**  
+✅ Logical unit complete · Documentation updated · Tests pass  
+❌ Broken code · Debug statements · Secrets
 
 ---
 
-## 🔧 Configuration & Environment
+## ⚙️ CONFIGURATION
 
-### Backend Configuration
+### Backend (appsettings.json)
 
-**Connection String (appsettings.json):**
+| Setting           | Dev Value                                                                           | Notes                                 |
+| ----------------- | ----------------------------------------------------------------------------------- | ------------------------------------- |
+| Connection String | `Host=localhost;Port=5432;Database=capsyncerdb;Username=postgres;Password=postgres` | Use `.env` for secrets                |
+| Environment       | `Testing` → InMemory DB · `Development`/`Production` → PostgreSQL                   | Unique DB per test run                |
+| CORS              | DevCors: localhost:3000/3001                                                        | Update ProdCors for production domain |
 
-```json
-"ConnectionStrings": {
-  "capsyncerdb": "Host=localhost;Port=5432;Database=capsyncerdb;Username=postgres;Password=postgres"
-}
-```
+### Frontend (.env)
 
-**Environment Detection:**
-
-- `Testing` → InMemory database (unique per test run)
-- `Development`/`Production` → PostgreSQL
-
-**CORS Policies:**
-
-- `DevCors`: <http://localhost:3000>, <http://localhost:3001>
-- `ProdCors`: <https://your-production-domain.com> (update for actual domain)
-
-### Frontend Configuration
-
-**Environment Variables:**
-
-- `NEXT_PUBLIC_API_URL` - Backend API URL (default: <http://localhost:5128>)
-- `NEXT_PUBLIC_BASE_URL` - Frontend base URL for SEO
+| Variable               | Default                 | Purpose              |
+| ---------------------- | ----------------------- | -------------------- |
+| `NEXT_PUBLIC_API_URL`  | `http://localhost:5128` | Backend API endpoint |
+| `NEXT_PUBLIC_BASE_URL` | -                       | SEO base URL         |
 
 ---
 
-## 🧪 Testing
+## 🧪 TESTING
 
-### Test Structure
+**Current Status:** 112/112 passing (100%)
 
-```text
-CapSyncer.Server.Tests/
-├── Integration/              # 70+ integration tests
-│   ├── ProjectsIntegrationTests.cs
-│   ├── TasksIntegrationTests.cs
-│   ├── AssignmentsIntegrationTests.cs
-│   └── CapacityIntegrationTests.cs
-├── Unit/                     # 42+ unit tests
-│   ├── ProjectTests.cs
-│   └── TaskTests.cs
-└── TasksApiTests.cs          # Additional API tests
-```
+| Type        | Count | Location                              |
+| ----------- | ----- | ------------------------------------- |
+| Integration | 70+   | `CapSyncer.Server.Tests/Integration/` |
+| Unit        | 42+   | `CapSyncer.Server.Tests/Unit/`        |
+| Frontend    | -     | `frontend/__tests__/`                 |
+| E2E         | -     | `e2e/tests/`                          |
 
-**Running Tests:**
-
-```powershell
-dotnet test --nologo
-# Or with coverage
-dotnet test --collect:"XPlat Code Coverage"
-```
-
-**Current Test Status:** 112/112 tests passing (100%)
+**See TESTING.md for comprehensive testing guide.**
 
 ---
 
-## 🎨 UI/UX Conventions
+## 🎨 UI CONVENTIONS
 
-### Status Badge Colors
+### Status Badge Colors (Tailwind)
 
-```typescript
-// Planning - Blue
-className = "bg-blue-100 text-blue-800 border-blue-200";
-
-// In Progress - Green
-className = "bg-green-100 text-green-800 border-green-200";
-
-// On Hold - Yellow
-className = "bg-yellow-100 text-yellow-800 border-yellow-200";
-
-// Completed - Purple
-className = "bg-purple-100 text-purple-800 border-purple-200";
-
-// Continuous - Cyan
-className = "bg-cyan-100 text-cyan-800 border-cyan-200";
-
-// Cancelled - Red
-className = "bg-red-100 text-red-800 border-red-200";
-```
+| Status      | Classes                                           |
+| ----------- | ------------------------------------------------- |
+| Planning    | `bg-blue-100 text-blue-800 border-blue-200`       |
+| In Progress | `bg-green-100 text-green-800 border-green-200`    |
+| On Hold     | `bg-yellow-100 text-yellow-800 border-yellow-200` |
+| Completed   | `bg-purple-100 text-purple-800 border-purple-200` |
+| Continuous  | `bg-cyan-100 text-cyan-800 border-cyan-200`       |
+| Cancelled   | `bg-red-100 text-red-800 border-red-200`          |
 
 ### Priority Colors
 
-- Emergency: Red
-- High: Orange
-- Normal: Blue
-- Low: Gray
+| Priority  | Color  |
+| --------- | ------ |
+| Emergency | Red    |
+| High      | Orange |
+| Normal    | Blue   |
+| Low       | Gray   |
 
 ---
 
-## ⚠️ Known Issues & Gotchas
+## 🔍 LOGGING & MONITORING
 
-1. **Test Database**: Each test run uses unique InMemory database (prevents interference).
+**Status:** ✅ Fully implemented across all 26 API endpoints
 
-2. **CORS in Production**: Remember to update ProdCors policy with actual production domain in `backend/Program.cs`.
+| Layer         | Tool               | Log Levels                                                       | Access                          |
+| ------------- | ------------------ | ---------------------------------------------------------------- | ------------------------------- |
+| Backend       | `ILogger<Program>` | Info (success) · Warning (not found) · Error (exception) · Debug | Aspire Dashboard                |
+| Frontend      | `logger` utility   | `info` · `warn` · `error` · `debug`                              | Browser console + ErrorBoundary |
+| Observability | OpenTelemetry      | HTTP requests · DB queries · Traces · Metrics                    | Aspire Dashboard (auto-opens)   |
+| Health Checks | Built-in           | `/health` · `/alive` · `/api/status`                             | Direct access                   |
 
----
-
-## � Logging & Monitoring
-
-### Backend Logging
-
-**✅ FULLY IMPLEMENTED** - All 26 API endpoints use structured logging
-
-**Logging Standards:**
-
-- Use **ILogger&lt;Program&gt;** (never Console.WriteLine)
-- **LogInformation** - Successful operations
-- **LogWarning** - Not found, validation failures
-- **LogError** - Exceptions with context
-- **LogDebug** - Low-priority info
-- Structured logging with named parameters
-
-**OpenTelemetry via Aspire:**
-
-- HTTP requests, database queries, traces, runtime metrics
-- Health checks: /health, /alive, /api/status
-- Access Aspire Dashboard: `dotnet run --project CapSyncer.AppHost` (auto-opens browser)
-
-**See MONITORING.md for detailed logging configuration and production setup.**
-
-### Frontend Logging
-
-**ErrorBoundary + Logger Utility:**
-
-- `<ErrorBoundary>` catches React errors (in layout.tsx)
-- `logger` utility (utils/logger.ts) for manual logging
-- Use `logger.info/warn/error/debug` (never console.log)
-- Ready for Sentry integration in production
-
-**See MONITORING.md for frontend logging setup and production integration.**
+**See MONITORING.md for detailed configuration and production setup (Sentry integration ready).**
 
 ---
 
-## DOCUMENTATION FILES
+## 📚 DOCUMENTATION MAP
 
-**Core Documentation:**
-
-- `AGENTS.md` - **This file** - AI agent reference (update FIRST)
-- `README.md` - User guide and quick start (human-friendly)
-- `CODE_DOCUMENTATION.md` - Architecture, patterns, code conventions
-- `DEPLOYMENT.md` - Production deployment guide (Docker-based)
-- `TESTING.md` - Complete testing guide
-- `MONITORING.md` - Logging and monitoring guide
-
-**API Reference:**
-
-- `backend/CapSyncer.Server.http` - HTTP test file with all 26 endpoints
-
-**Environment Templates:**
-
-- `backend/.env.example` - Backend configuration template
-- `frontend/.env.example` - Frontend configuration template
+| File                            | Purpose                        | Update When                                  |
+| ------------------------------- | ------------------------------ | -------------------------------------------- |
+| **AGENTS.md**                   | AI agent reference (this file) | ANY code change (update FIRST)               |
+| **README.md**                   | User guide and quick start     | User-facing changes (features, setup, usage) |
+| **CODE_DOCUMENTATION.md**       | Architecture and patterns      | Technical/architectural changes              |
+| **DEPLOYMENT.md**               | Production deployment          | Infrastructure or Docker changes             |
+| **TESTING.md**                  | Testing guide                  | Test strategy or tooling changes             |
+| **MONITORING.md**               | Logging and observability      | Logging or monitoring changes                |
+| `backend/CapSyncer.Server.http` | API endpoint samples           | New/modified endpoints                       |
+| `backend/.env.example`          | Config template                | Backend environment variables                |
+| `frontend/.env.example`         | Config template                | Frontend environment variables               |
 
 ---
 
-## 🔄 UPDATE INSTRUCTIONS FOR AI AGENTS
+## ⚠️ GOTCHAS
 
-When working on this project:
-
-1. **Follow CRITICAL RULES** - Status values, logging standards, validation rules
-2. **Apply CODING STANDARDS** - YAGNI, DRY, SOLID principles
-3. **Use proper logging** - `logger.debug/info/warn/error` (NO `console.log`)
-4. **Create reusable components** - If pattern appears 2+ times, extract
-5. **⚠️ UPDATE DOCUMENTATION (MANDATORY)** - See "Documentation Update Protocol" above
-   - Update AGENTS.md FIRST (source of truth)
-   - Update README.md if user-facing changes
-   - Update CODE_DOCUMENTATION.md if technical changes
-   - Documentation is NEVER optional
-6. **Run tests** - Verify with `dotnet test` (should be 112/112 passing)
-7. **Verify builds** - Both `dotnet build` and `npm run build` must succeed
-8. **⚠️ COMMIT CHANGES (MANDATORY)** - See "Git Workflow" section above
-   - Stage affected files with `git add`
-   - Use Conventional Commits format for commit messages
-   - Include detailed body explaining what and why
-   - Push when ready
-
----
-
-## 📞 QUICK REFERENCE
-
-**Default Ports:**
-
-- Backend API: `5128`
-- Frontend: `3000`
-- PostgreSQL: `5432`
-
-**Default Credentials (Dev):**
-
-- PostgreSQL: `postgres` / `postgres`
-- Database: `capsyncerdb`
-
-**Key Dependencies:**
-
-- .NET 10.0
-- Entity Framework Core 10.0.3
-- .NET Aspire 13.1.2
-- Next.js 16.1.6
-- React 19.2.3
-- TypeScript 5
-- Tailwind CSS 4
+- **Test Database:** Each test uses unique InMemory DB (prevents interference, no cleanup needed)
+- **CORS in Prod:** Update `ProdCors` policy in `backend/Program.cs` with actual domain
+- **PostgreSQL First:** Must start PostgreSQL container BEFORE running Aspire
+- **Docker Dev Only:** Docker is only for PostgreSQL in dev; see DEPLOYMENT.md for production
+- **Status Casing:** "In Progress" (capital P) is correct, "In progress" will fail validation
+- **Migration Order:** Aspire automatically applies migrations on startup
