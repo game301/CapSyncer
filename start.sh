@@ -24,8 +24,10 @@ if docker ps --filter "name=capsyncer-postgres" --format "{{.Names}}" | grep -q 
     echo "✓ PostgreSQL is running"
 else
     echo "⚠ PostgreSQL not running. Starting it now..."
-    if docker-compose up -d; then
+    if docker-compose up -d postgres; then
         echo "✓ PostgreSQL started"
+        echo "Waiting for PostgreSQL to be ready..."
+        sleep 3
     else
         echo "✗ Failed to start PostgreSQL"
         exit 1

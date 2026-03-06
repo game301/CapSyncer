@@ -179,14 +179,32 @@ Coworker (1) ──< Assignments >── (1) TaskItem
 
 **⚠️ CRITICAL:** PostgreSQL must be started in Docker BEFORE running Aspire.
 
+**Prerequisites:**
+
+- .NET 10 SDK
+- Node.js 20+
+- Docker Desktop
+
+> **Note:** Setup scripts automatically verify all prerequisites and display download links if anything is missing.
+
 #### Recommended: Use Scripts
 
 ```powershell
 # First run (one-time setup)
-.\setup.ps1    # Installs dependencies, starts PostgreSQL
+.\setup.ps1    # Checks prerequisites, installs Aspire workload, starts PostgreSQL, restores backend, installs frontend + e2e dependencies
 
 # Every subsequent run
 .\start.ps1    # Checks PostgreSQL, starts Aspire
+```
+
+**Linux/Mac:**
+
+```bash
+# First run (one-time setup)
+./setup.sh     # Checks prerequisites, installs Aspire workload, starts PostgreSQL, restores backend, installs frontend + e2e dependencies
+
+# Every subsequent run
+./start.sh     # Checks PostgreSQL, starts Aspire
 ```
 
 #### Manual Method

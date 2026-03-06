@@ -68,11 +68,13 @@ Built for **project managers**, **team leads**, and **individual contributors** 
 
 ### Prerequisites
 
-Make sure you have these installed:
+The setup scripts will verify you have these installed:
 
 - ✅ [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) - Backend runtime
 - ✅ [Node.js 20+](https://nodejs.org/) - Frontend runtime
 - ✅ [Docker Desktop](https://www.docker.com/products/docker-desktop) - For PostgreSQL database
+
+> **Note:** If any prerequisite is missing, the setup script will display a download link.
 
 ### Option 1: One-Command Setup (Recommended)
 
