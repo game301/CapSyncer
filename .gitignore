@@ -156,10 +156,6 @@ appsettings.Development.json
 !backend/appsettings.Development.json
 !CapSyncer.AppHost/appsettings.Development.json
 
-# Docker
-docker-compose.override.yml
-.dockerignore
-
 # E2E Test artifacts
 e2e/test-results/
 e2e/playwright-report/
