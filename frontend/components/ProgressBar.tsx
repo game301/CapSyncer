@@ -89,7 +89,13 @@ export function ProgressBar({
 
   return (
     <div className={className}>
-      <div className={`h-3 overflow-hidden rounded-full bg-slate-700 ${width}`}>
+      <div
+        className={`h-3 overflow-hidden rounded-full bg-slate-700 ${width}`}
+        role="progressbar"
+        aria-valuenow={Math.round(percentage)}
+        aria-valuemin={0}
+        aria-valuemax={100}
+      >
         <div
           className={`h-full transition-all ${getColorClass()}`}
           style={{ width: `${Math.min(percentage, 100)}%` }}
