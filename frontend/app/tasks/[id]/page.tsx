@@ -266,7 +266,8 @@ export default function TaskDetailPage() {
     });
 
     // Validate weeklyEffort > 0
-    if (!data.weeklyEffort || data.weeklyEffort <= 0) {
+    const weeklyEffort = Number(data.weeklyEffort);
+    if (!data.weeklyEffort || weeklyEffort <= 0) {
       showToast({
         message: "Weekly Effort must be greater than 0",
         type: "error",
@@ -275,7 +276,8 @@ export default function TaskDetailPage() {
     }
 
     // Validate estimatedHours > 0
-    if (!data.estimatedHours || data.estimatedHours <= 0) {
+    const estimatedHours = Number(data.estimatedHours);
+    if (!data.estimatedHours || estimatedHours <= 0) {
       showToast({
         message: "Estimated Hours must be greater than 0",
         type: "error",

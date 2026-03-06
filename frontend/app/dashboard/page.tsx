@@ -9,7 +9,6 @@ import { Input, Select, Textarea } from "../../components/FormInputs";
 import { PageLayout } from "../../components/PageLayout";
 import { usePermissions } from "../../contexts/PermissionContext";
 import { logger } from "../../utils/logger";
-import { API_BASE_URL } from "../../utils/config";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { Toast, useToast } from "../../components/Toast";
 import { WeekSelector } from "../../components/WeekSelector";
@@ -42,6 +41,7 @@ const PROJECT_STATUSES = [
 
 type ViewMode = "team" | "personal";
 type EntityType = "coworkers" | "projects" | "tasks" | "assignments";
+type CoworkerDeleteResult = { message: "soft-delete" | "permanent-delete" };
 
 function Dashboard() {
   const router = useRouter();
@@ -109,10 +109,13 @@ function Dashboard() {
     }
   }, []);
 
+  // Fetch data only once on mount
   useEffect(() => {
     fetchData();
+  }, [fetchData]);
 
-    // Handle query params for pre-filling forms
+  // Handle query params for pre-filling forms (separate effect)
+  useEffect(() => {
     const createParam = searchParams.get("create");
     const coworkerIdParam = searchParams.get("coworkerId");
 
@@ -146,7 +149,7 @@ function Dashboard() {
         router.replace(`/dashboard?${params.toString()}`);
       }
     }
-  }, [fetchData, searchParams, router]);
+  }, [searchParams, router]);
 
   // Update URL when viewMode changes
   const updateViewMode = (mode: ViewMode) => {
@@ -261,7 +264,7 @@ function Dashboard() {
 
     // Check if it's a coworker soft delete or permanent delete
     if (entityType === "coworkers" && result) {
-      const coworkerResult = result as any;
+      const coworkerResult = result as CoworkerDeleteResult;
       if (coworkerResult.message === "soft-delete") {
         showToast({
           message:
