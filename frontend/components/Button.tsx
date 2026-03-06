@@ -23,6 +23,7 @@ export function Button({
   children,
   icon,
   iconPosition = "left",
+  type = "button",
   ...props
 }: ButtonProps) {
   const baseStyles =
@@ -53,6 +54,7 @@ export function Button({
 
   return (
     <button
+      type={type}
       className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`}
       aria-label={props["aria-label"]}
       {...props}

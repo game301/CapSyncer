@@ -23,26 +23,34 @@ export default function CapacityPage() {
   const [assignmentCoworkerId, setAssignmentCoworkerId] = useState<
     number | null
   >(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  const fetchCoworkers = useCallback(async () => {
-    setLoading(true);
-    try {
-      const { data, error } = await apiGet<Coworker[]>("/api/coworkers");
-      if (error) {
-        logger.error("Error fetching coworkers", { error: error.message });
-        return;
+  const fetchCoworkers = useCallback(
+    async (showLoading = true) => {
+      if (showLoading) {
+        setLoading(true);
       }
-      if (data) {
-        const activeCoworkers = data.filter((c: Coworker) => c.isActive);
-        setCoworkers(activeCoworkers);
-        if (activeCoworkers.length > 0 && !selectedCoworkerId) {
-          setSelectedCoworkerId(activeCoworkers[0].id);
+      try {
+        const { data, error } = await apiGet<Coworker[]>("/api/coworkers");
+        if (error) {
+          logger.error("Error fetching coworkers", { error: error.message });
+          return;
+        }
+        if (data) {
+          const activeCoworkers = data.filter((c: Coworker) => c.isActive);
+          setCoworkers(activeCoworkers);
+          if (activeCoworkers.length > 0 && !selectedCoworkerId) {
+            setSelectedCoworkerId(activeCoworkers[0].id);
+          }
+        }
+      } finally {
+        if (showLoading) {
+          setLoading(false);
         }
       }
-    } finally {
-      setLoading(false);
-    }
-  }, [selectedCoworkerId]);
+    },
+    [selectedCoworkerId],
+  );
 
   useEffect(() => {
     fetchCoworkers();
@@ -55,6 +63,16 @@ export default function CapacityPage() {
   const handleCreateAssignment = (coworkerId: number) => {
     setAssignmentCoworkerId(coworkerId);
     setAssignmentModalOpen(true);
+  };
+
+  const handleTaskSuccess = async () => {
+    await fetchCoworkers(false); // Don't show loading spinner on refresh
+    setRefreshKey((prev) => prev + 1); // Force WeeklyCapacityView to refresh
+  };
+
+  const handleAssignmentSuccess = async () => {
+    await fetchCoworkers(false); // Don't show loading spinner on refresh
+    setRefreshKey((prev) => prev + 1); // Force WeeklyCapacityView to refresh
   };
 
   const selectedCoworker = coworkers.find((c) => c.id === selectedCoworkerId);
@@ -130,6 +148,7 @@ export default function CapacityPage() {
             year={currentYear}
             onCreateTask={handleCreateTask}
             onCreateAssignment={handleCreateAssignment}
+            refreshTrigger={refreshKey}
           />
         )}
       </div>
@@ -137,7 +156,7 @@ export default function CapacityPage() {
       <CreateTaskModal
         isOpen={taskModalOpen}
         onClose={() => setTaskModalOpen(false)}
-        onSuccess={fetchCoworkers}
+        onSuccess={handleTaskSuccess}
         apiBaseUrl={API_BASE_URL}
       />
 
@@ -147,7 +166,7 @@ export default function CapacityPage() {
           setAssignmentModalOpen(false);
           setAssignmentCoworkerId(null);
         }}
-        onSuccess={fetchCoworkers}
+        onSuccess={handleAssignmentSuccess}
         apiBaseUrl={API_BASE_URL}
         prefilledCoworkerId={assignmentCoworkerId || undefined}
       />

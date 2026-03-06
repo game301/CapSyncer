@@ -71,9 +71,11 @@ function Dashboard() {
     useState(false);
   const { toasts, showToast, removeToast } = useToast();
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (showLoading = true) => {
     try {
-      setLoading(true);
+      if (showLoading) {
+        setLoading(true);
+      }
       const [coworkersRes, projectsRes, tasksRes, assignmentsRes] =
         await Promise.all([
           apiGet<Coworker[]>("/api/coworkers"),
@@ -105,7 +107,9 @@ function Dashboard() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error");
     } finally {
-      setLoading(false);
+      if (showLoading) {
+        setLoading(false);
+      }
     }
   }, []);
 
@@ -216,7 +220,7 @@ function Dashboard() {
       message: "Coworker reactivated successfully!",
       type: "success",
     });
-    await fetchData();
+    await fetchData(false); // Don't show loading spinner on refresh
   };
 
   const handleDelete = async (entityType: EntityType, id: number) => {
@@ -285,7 +289,7 @@ function Dashboard() {
       });
     }
 
-    await fetchData();
+    await fetchData(false); // Don't show loading spinner on refresh
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -407,7 +411,7 @@ function Dashboard() {
       const newProject = response.data as Project;
       router.push(`/projects/${newProject.id}?new=true`);
     } else {
-      await fetchData();
+      await fetchData(false); // Don't show loading spinner on refresh
     }
   };
 

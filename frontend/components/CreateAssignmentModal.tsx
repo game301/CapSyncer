@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Modal } from "./Modal";
 import { Button } from "./Button";
 import { usePermissions } from "../contexts/PermissionContext";
+import { logger } from "../utils/logger";
 
 interface Coworker {
   id: number;
@@ -121,22 +122,9 @@ export function CreateAssignmentModal({
         setCoworkers(activeCoworkers);
         setTasks(tasksData);
         setAssignments(assignmentsData);
-
-        if (!formData.coworkerId && activeCoworkers.length > 0) {
-          setFormData((prev) => ({
-            ...prev,
-            coworkerId: String(activeCoworkers[0].id),
-          }));
-        }
-        if (!formData.taskItemId && tasksData.length > 0) {
-          setFormData((prev) => ({
-            ...prev,
-            taskItemId: String(tasksData[0].id),
-          }));
-        }
       }
     } catch (error) {
-      console.error("Error fetching data:", error);
+      logger.error("Error fetching assignment creation data", { error });
     }
   };
 
@@ -169,8 +157,8 @@ export function CreateAssignmentModal({
 
       if (response.ok) {
         setFormData({
-          coworkerId: coworkers[0]?.id ? String(coworkers[0].id) : "",
-          taskItemId: tasks[0]?.id ? String(tasks[0].id) : "",
+          coworkerId: "",
+          taskItemId: "",
           hoursAssigned: "",
           assignedDate: new Date().toISOString().split("T")[0],
           note: "",
@@ -179,15 +167,14 @@ export function CreateAssignmentModal({
         onClose();
       } else {
         const errorText = await response.text();
-        console.error(
-          "Failed to create assignment:",
-          response.status,
+        logger.error("Failed to create assignment", {
+          status: response.status,
           errorText,
-        );
+        });
         alert(`Failed to create assignment: ${response.status} ${errorText}`);
       }
     } catch (error) {
-      console.error("Error creating assignment:", error);
+      logger.error("Error creating assignment", { error });
       alert(
         "Error creating assignment: " +
           (error instanceof Error ? error.message : String(error)),
@@ -199,8 +186,8 @@ export function CreateAssignmentModal({
 
   const handleClose = () => {
     setFormData({
-      coworkerId: coworkers[0]?.id ? String(coworkers[0].id) : "",
-      taskItemId: tasks[0]?.id ? String(tasks[0].id) : "",
+      coworkerId: "",
+      taskItemId: "",
       hoursAssigned: "",
       assignedDate: new Date().toISOString().split("T")[0],
       note: "",

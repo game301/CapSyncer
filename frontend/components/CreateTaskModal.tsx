@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Modal } from "./Modal";
 import { Button } from "./Button";
+import { logger } from "../utils/logger";
 
 interface Project {
   id: number;
@@ -45,12 +46,10 @@ export function CreateTaskModal({
       if (response.ok) {
         const data = await response.json();
         setProjects(data);
-        if (data.length > 0 && !formData.projectId) {
-          setFormData((prev) => ({ ...prev, projectId: String(data[0].id) }));
-        }
+        // Don't auto-select - let user choose a project
       }
     } catch (error) {
-      console.error("Error fetching projects:", error);
+      logger.error("Error fetching projects", { error });
     }
   };
 
@@ -91,7 +90,7 @@ export function CreateTaskModal({
       if (response.ok) {
         setFormData({
           name: "",
-          projectId: projects[0]?.id ? String(projects[0].id) : "",
+          projectId: "",
           priority: "Medium",
           status: "Planning",
           estimatedHours: "",
@@ -106,7 +105,7 @@ export function CreateTaskModal({
         alert(`Failed to create task: ${errorText || "Unknown error"}`);
       }
     } catch (error) {
-      console.error("Error creating task:", error);
+      logger.error("Error creating task", { error });
       alert("Error creating task");
     } finally {
       setLoading(false);
@@ -116,7 +115,7 @@ export function CreateTaskModal({
   const handleClose = () => {
     setFormData({
       name: "",
-      projectId: projects[0]?.id ? String(projects[0].id) : "",
+      projectId: "",
       priority: "Medium",
       status: "Planning",
       estimatedHours: "",
@@ -154,6 +153,7 @@ export function CreateTaskModal({
             }
             className="w-full rounded border border-slate-600 bg-slate-700 px-3 py-2 text-white"
           >
+            <option value="">Select a project</option>
             {projects.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.name}

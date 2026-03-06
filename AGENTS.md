@@ -58,6 +58,8 @@
 | Backend  | `ILogger<Program>`             | `Console.WriteLine` |
 | Frontend | `logger.debug/info/warn/error` | `console.log`       |
 
+**Frontend logging is enforced in all components and modals.**
+
 ### Validation Rules
 
 | Rule                | Constraint                                 |
@@ -333,3 +335,7 @@ git commit -m "feat(backend): add cascade delete for projects to tasks
 - **Docker Dev Only:** Docker is only for PostgreSQL in dev; see DEPLOYMENT.md for production
 - **Status Casing:** "In Progress" (capital P) is correct, "In progress" will fail validation
 - **Migration Order:** Aspire automatically applies migrations on startup
+- **Button Type:** All Button components default to `type="button"` to prevent accidental form submissions
+- **Loading States:** Data refresh operations (create/update/delete) skip loading spinner to prevent page flashes via optional `showLoading` parameter
+- **Component Refresh:** WeeklyCapacityView uses `refreshTrigger` prop instead of key-based remounting to avoid loading spinners
+- **Modal Defaults:** CreateTaskModal and CreateAssignmentModal default to empty selection (no auto-select for projects, coworkers, or tasks)

@@ -5,6 +5,7 @@ import { Modal } from "./Modal";
 import { ActionButtons } from "./ActionButtons";
 import Link from "next/link";
 import { ProgressBar } from "./ProgressBar";
+import { logger } from "../utils/logger";
 
 interface WeeklyCapacityProps {
   coworkerId: number;
@@ -12,6 +13,7 @@ interface WeeklyCapacityProps {
   year: number;
   onCreateTask?: () => void;
   onCreateAssignment?: (coworkerId: number) => void;
+  refreshTrigger?: number; // Add this to trigger refresh without remounting
 }
 
 interface WeekData {
@@ -58,6 +60,7 @@ export function WeeklyCapacityView({
   year: initialYear,
   onCreateTask,
   onCreateAssignment,
+  refreshTrigger,
 }: WeeklyCapacityProps) {
   const [year, setYear] = useState(initialYear);
   const [weekData, setWeekData] = useState<WeekData[]>([]);
@@ -71,24 +74,33 @@ export function WeeklyCapacityView({
   const apiBaseUrl =
     process.env.NEXT_PUBLIC_API_BASEURL || "http://localhost:5128";
 
-  const fetchWeeklyData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await fetch(
-        `${apiBaseUrl}/api/calendar/weekly/${coworkerId}/${year}`,
-      );
-      if (response.ok) {
-        const data = await response.json();
-        setWeekData(data);
-      } else {
-        console.error("Failed to fetch weekly capacity data");
+  const fetchWeeklyData = useCallback(
+    async (showLoading = true) => {
+      if (showLoading) {
+        setLoading(true);
       }
-    } catch (error) {
-      console.error("Error fetching weekly capacity:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, [apiBaseUrl, coworkerId, year]);
+      try {
+        const response = await fetch(
+          `${apiBaseUrl}/api/calendar/weekly/${coworkerId}/${year}`,
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setWeekData(data);
+        } else {
+          logger.error("Failed to fetch weekly capacity data", {
+            status: response.status,
+          });
+        }
+      } catch (error) {
+        logger.error("Error fetching weekly capacity", { error });
+      } finally {
+        if (showLoading) {
+          setLoading(false);
+        }
+      }
+    },
+    [apiBaseUrl, coworkerId, year],
+  );
 
   const fetchAssignmentsAndTasks = useCallback(async () => {
     try {
@@ -111,7 +123,7 @@ export function WeeklyCapacityView({
         setProjects(data);
       }
     } catch (error) {
-      console.error("Error fetching data:", error);
+      logger.error("Error fetching assignments and tasks", { error });
     }
   }, [apiBaseUrl]);
 
@@ -119,6 +131,15 @@ export function WeeklyCapacityView({
     fetchWeeklyData();
     fetchAssignmentsAndTasks();
   }, [fetchWeeklyData, fetchAssignmentsAndTasks]);
+
+  // Refresh data when refreshTrigger changes (without showing loading spinner)
+  useEffect(() => {
+    if (refreshTrigger !== undefined && refreshTrigger > 0) {
+      fetchWeeklyData(false); // Don't show loading spinner on refresh
+      fetchAssignmentsAndTasks();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshTrigger]);
 
   const getUtilizationColor = (percentage: number) => {
     if (percentage === 0) return "bg-slate-700";
@@ -451,7 +472,7 @@ export function WeeklyCapacityView({
                         return (
                           <div
                             key={assignment.id}
-                            className="rounded-lg bg-slate-800 p-4 transition hover:bg-slate-750"
+                            className="rounded-lg bg-slate-800 p-4 transition hover:bg-slate-700"
                           >
                             <div className="flex items-start justify-between">
                               <div className="flex-1">

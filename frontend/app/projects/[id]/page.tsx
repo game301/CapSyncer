@@ -72,7 +72,11 @@ export default function ProjectDetailPage() {
   );
   const { toasts, showToast, removeToast } = useToast();
 
-  const fetchData = async () => {
+  const fetchData = async (showLoading = true) => {
+    if (showLoading) {
+      setLoading(true);
+    }
+
     const [projectRes, tasksRes, assignmentsRes, coworkersRes] =
       await Promise.all([
         apiGet<Project>(`/api/projects/${projectId}`),
@@ -87,7 +91,9 @@ export default function ProjectDetailPage() {
         projectId,
       });
       setError("Failed to fetch project");
-      setLoading(false);
+      if (showLoading) {
+        setLoading(false);
+      }
       return;
     }
 
@@ -119,7 +125,9 @@ export default function ProjectDetailPage() {
     setTasks(projectTasks);
     setAssignments(assignmentsData);
     setCoworkers(coworkersData);
-    setLoading(false);
+    if (showLoading) {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -185,7 +193,7 @@ export default function ProjectDetailPage() {
       message: "Task deleted successfully!",
       type: "success",
     });
-    await fetchData();
+    await fetchData(false);
   };
 
   const handleDeleteAssignment = async (id: number) => {
@@ -210,7 +218,7 @@ export default function ProjectDetailPage() {
       message: "Assignment deleted successfully!",
       type: "success",
     });
-    await fetchData();
+    await fetchData(false);
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -312,7 +320,7 @@ export default function ProjectDetailPage() {
       type: "success",
     });
     setModalOpen(false);
-    await fetchData();
+    await fetchData(false);
   };
 
   const handleProjectSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -342,7 +350,7 @@ export default function ProjectDetailPage() {
       type: "success",
     });
     setProjectModalOpen(false);
-    await fetchData();
+    await fetchData(false);
   };
 
   if (loading) {
